@@ -1,0 +1,33 @@
+Reference
+=========
+
+.. currentmodule:: pak
+
+Packets
+#######
+.. autosummary::
+    :toctree: reference
+    :nosignatures:
+
+    ~packets
+
+Types
+#####
+.. autosummary::
+    :toctree: reference
+    :nosignatures:
+
+    ~types.array
+    ~types.misc
+    ~types.numeric
+    ~types.type
+
+Utilities
+#########
+.. autosummary::
+    :toctree: reference
+    :nosignatures:
+
+    ~util.exceptions
+    ~util.inspection
+    ~util.interfaces

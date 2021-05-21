@@ -1,0 +1,3 @@
+sphinx==3.5.4
+furo
+sphinx-copybutton
