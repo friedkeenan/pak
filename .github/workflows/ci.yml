@@ -21,6 +21,9 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      - name: Install pytest
+        run: pip install pytest
+
       - name: Install pak.py
         run: pip install .
 
