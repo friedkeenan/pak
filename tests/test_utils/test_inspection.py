@@ -1,4 +1,3 @@
-import sys
 import inspect
 import pytest
 from pak import *

@@ -5,6 +5,8 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    env:
+      PYTEST_ADDOPTS: "--color=yes"
     strategy:
       fail-fast: false
       matrix:
@@ -28,9 +30,12 @@ jobs:
         run: pip install .
 
       - name: Run tests
-        run: pytest --color=yes
+        run: pytest
 
-      - name: Run doctests
+      - name: Run doctests in docstrings
+        run: pytest --doctest-modules pak
+
+      - name: Run doctests in rst files
         run: |
           cd docs
           pip install -r requirements.txt

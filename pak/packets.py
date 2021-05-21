@@ -68,7 +68,7 @@ class Packet:
     Additonally your attributes can be properties::
 
         >>> class MyPacket(pak.Packet):
-        ...     prop: Int8
+        ...     prop: pak.Int8
         ...     @property
         ...     def prop(self):
         ...         return self._prop
@@ -77,8 +77,8 @@ class Packet:
         ...         self._prop = value + 1
         ...
         >>> p = MyPacket()
-        >>> p
-        MyPacket(prop=1) # Int8's default is 0, plus 1 is 1
+        >>> p # Int8's default is 0, plus 1 is 1
+        MyPacket(prop=1)
         >>> p.prop = 2
         >>> p
         MyPacket(prop=3)
