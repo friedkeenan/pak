@@ -6,6 +6,7 @@ import copy
 import functools
 
 from .. import util
+from ..dyn_value import DynamicValue
 
 __all__ = [
     "TypeContext",
@@ -38,7 +39,7 @@ class TypeContext:
     """
 
     def __init__(self, packet=None, *, ctx=None):
-        self.packet = packet
+        self.packet     = packet
         self.packet_ctx = ctx
 
     def __getattr__(self, attr):
@@ -48,6 +49,9 @@ class Type(abc.ABC):
     r"""A definition of how to marshal raw data to and from values.
 
     Typically used for the types of :class:`~.Packet` fields.
+
+    When :class:`Types <Type>` are called, their :meth:`_call`
+    :class:`classmethod` gets called, returning a new :class:`Type`.
 
     :class:`~.Array` types can be constructed using indexing syntax,
     like so::
@@ -166,6 +170,9 @@ class Type(abc.ABC):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
+        cls._size    = DynamicValue(inspect.getattr_static(cls, "_size"))
+        cls._default = DynamicValue(inspect.getattr_static(cls, "_default"))
+
         # Set __new__ to _call's underlying function.
         # We don't just override __new__ instead of
         # _call so that it's more clear that calling
@@ -174,7 +181,7 @@ class Type(abc.ABC):
         cls.__new__ = cls._call.__func__
 
     def __init__(self):
-        raise ValueError("Types do not get initialized normally.")
+        raise TypeError("Types do not get initialized normally.")
 
     @classmethod
     def descriptor(cls):
@@ -217,6 +224,10 @@ class Type(abc.ABC):
         The return value of the :class:`classmethod` wil be returned from
         this method.
 
+        Else, if the :attr:`_size` attribute is a :class:`DynamicValue`,
+        which it is automatically transformed into on class construction
+        if applicable, the the dynamic value of that is returned.
+
         Otherwise, if the :attr:`_size` attribute is any value
         other than ``None``, that value will be returned.
 
@@ -242,6 +253,9 @@ class Type(abc.ABC):
         if inspect.ismethod(cls._size):
             return cls._size(ctx=ctx)
 
+        if isinstance(cls._size, DynamicValue):
+            return cls._size.get(ctx=ctx)
+
         return cls._size
 
     @classmethod
@@ -257,6 +271,10 @@ class Type(abc.ABC):
 
         The return value of the :class:`classmethod` will be returned from
         this method.
+
+        Else, if the :attr:`_default` attribute is a :class:`DynamicValue`,
+        which it is automatically transformed into on class construction
+        if applicable, then the dynamic value of that is returned.
 
         Otherwise, if the :attr:`_default` attribute is any value
         other than ``None``, a deepcopy of that value will be returned.
@@ -282,6 +300,9 @@ class Type(abc.ABC):
 
         if inspect.ismethod(cls._default):
             return cls._default(ctx=ctx)
+
+        if isinstance(cls._default, DynamicValue):
+            return cls._default.get(ctx=ctx)
 
         # Deepcopy because the default could be mutable.
         return copy.deepcopy(cls._default)

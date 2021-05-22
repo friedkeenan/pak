@@ -38,3 +38,33 @@ def test_prepare_types():
 
     # Nones will be converted to EmptyType
     test(1, None, None, None, test=None, other_test=None)
+
+def test_dynamic_size():
+    class StringToIntDynamicValue(DynamicValue):
+        _type = str
+
+        def __init__(self, string):
+            self.string = string
+
+        def get(self, *, ctx=None):
+            return int(self.string)
+
+    class TestSize(Type):
+        _size = "1"
+
+    assert TestSize.size() == 1
+
+def test_dynamic_default():
+    class StringToIntDynamicValue(DynamicValue):
+        _type = str
+
+        def __init__(self, string):
+            self.string = string
+
+        def get(self, *, ctx=None):
+            return int(self.string)
+
+    class TestDefault(Type):
+        _default = "1"
+
+    assert TestDefault.default() == 1

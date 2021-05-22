@@ -3,8 +3,33 @@
 import inspect
 
 __all__ = [
+    "subclasses",
     "arg_annotations",
 ]
+
+def subclasses(*classes):
+    """Gets the recursive subclasses of the arguments.
+
+    Parameters
+    ----------
+    *classes : :class:`type`
+        The types to get the subclasses of.
+
+    Returns
+    -------
+    :class:`set`
+        The recursive subclasses of the arguments.
+    """
+
+    recursive_subclasses = set()
+
+    for cls in classes:
+        direct_subclasses = cls.__subclasses__()
+
+        recursive_subclasses |= set(direct_subclasses)
+        recursive_subclasses |= subclasses(*direct_subclasses)
+
+    return recursive_subclasses
 
 def arg_annotations(func, *args, **kwargs):
     """Maps function arguments to their annotations.

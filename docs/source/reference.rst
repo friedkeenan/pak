@@ -31,3 +31,11 @@ Utilities
     ~util.exceptions
     ~util.inspection
     ~util.interfaces
+
+Other Modules
+#############
+.. autosummary::
+    :toctree: reference
+    :nosignatures:
+
+    ~dyn_value

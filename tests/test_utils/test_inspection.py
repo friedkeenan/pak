@@ -2,6 +2,21 @@ import inspect
 import pytest
 from pak import *
 
+def test_subclasses():
+    class Root:
+        pass
+
+    class Child1(Root):
+        pass
+
+    class Child2(Root):
+        pass
+
+    class GrandChild1(Child1):
+        pass
+
+    assert util.subclasses(Root) == {Child1, Child2, GrandChild1}
+
 def test_arg_annoations():
     def test_basic(x, y, z):
         pass
