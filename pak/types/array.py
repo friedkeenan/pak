@@ -38,8 +38,8 @@ class Array(Type):
         the buffer.
     """
 
-    elem_type = None
-    array_size      = None
+    elem_type  = None
+    array_size = None
 
     @classmethod
     def is_padding(cls):

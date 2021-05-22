@@ -73,6 +73,20 @@ def test_packet_property():
     with pytest.raises(AttributeError):
         TestReadOnly(read_only=2)
 
+def test_packet_inheritance():
+    class TestParent(Packet):
+        test: Int8
+
+    class TestChildBasic(TestParent):
+        pass
+
+    class TestChildOverride(TestParent):
+        other: Int8
+
+    # Annotations will get passed down unless explicated
+    assert list(TestChildBasic.enumerate_field_types())    == [("test", Int8)]
+    assert list(TestChildOverride.enumerate_field_types()) == [("other", Int8)]
+
 test_generic = assert_packet_marshal_func(
     (GenericPacket(data=b"\xaa\xbb\xcc"), b"\xaa\xbb\xcc"),
 )
