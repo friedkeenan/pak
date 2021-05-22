@@ -122,6 +122,24 @@ def test_id():
     # Disable StringToIntDynamicValue
     StringToIntDynamicValue._type = None
 
+def test_subclass_id():
+    class Root(Packet):
+        pass
+
+    class Child1(Root):
+        id = 0
+
+    class Child2(Root):
+        id = 1
+
+    class GrandChild1(Child1):
+        id = 2
+
+    assert Root.subclass_with_id(0) is Child1
+    assert Root.subclass_with_id(1) is Child2
+    assert Root.subclass_with_id(2) is GrandChild1
+    assert Root.subclass_with_id(3) is None
+
 test_generic = assert_packet_marshal_func(
     (GenericPacket(data=b"\xaa\xbb\xcc"), b"\xaa\xbb\xcc"),
 )

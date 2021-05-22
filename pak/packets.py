@@ -5,6 +5,7 @@
 # it should be split up.
 
 import inspect
+from functools import cache
 
 from . import util
 from .dyn_value import DynamicValue
@@ -113,6 +114,11 @@ class Packet:
         value is returned from this function. Otherwise the value
         of the :attr:`id` attribute is returned.
 
+        .. note::
+
+            The ID of a :class:`Packet` is not checked for
+            equality between :class:`Packets <Packet>`.
+
         Parameters
         ----------
         ctx : :class:`PacketContext`
@@ -151,7 +157,7 @@ class Packet:
                 descriptor = real_type.descriptor()
 
                 # Set the name manually because __set_name__
-                # only gets called on typee construction, and
+                # only gets called on type construction, and
                 # furthermore before __init_subclass__ is called.
                 descriptor.__set_name__(cls, attr)
 
@@ -408,6 +414,7 @@ class Packet:
         return sum(attr_type.size() for _, attr_type in cls.enumerate_field_types())
 
     @classmethod
+    @cache
     def subclasses(cls):
         """Gets the recursive subclasses of the :class:`Packet`.
 
@@ -424,6 +431,13 @@ class Packet:
         and then use :meth:`subclasses` to automatically get all the
         serverbound :class:`Packets <Packet>`.
 
+        .. note::
+
+            This method is decorated with :func:`functools.cache`.
+            In particular this means you can't generate a new subclass
+            after calling this and have it be returned from :meth:`subclasses`
+            the next time you call it.
+
         Returns
         -------
         :class:`set`
@@ -432,7 +446,37 @@ class Packet:
 
         return util.subclasses(cls)
 
+    @classmethod
+    def subclass_with_id(cls, id, *, ctx=None):
+        """Gets the subclass with the equivalent ID.
+
+        Parameters
+        ----------
+        id
+            The ID of the :class:`Packet`.
+
+            .. seealso::
+                :meth:`Packet.id`
+        ctx : :class:`PacketContext`
+            The context for  the :class:`Packet`.
+
+        Returns
+        -------
+        subclass of :class:`Packet` or ``None``
+            If ``None``, then there is no :class:`Packet` whose
+            ID is ``id``. Otherwise returns the appropriate subclass.
+        """
+
+        for subclass in cls.subclasses():
+            subclass_id = subclass.id(ctx=ctx)
+            if subclass_id is not None and subclass_id == id:
+                return subclass
+
+        return None
+
     def __eq__(self, other):
+        # ID is not included in equality.
+
         if self._fields != other._fields:
             return False
 
