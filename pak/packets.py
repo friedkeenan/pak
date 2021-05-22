@@ -407,6 +407,31 @@ class Packet:
 
         return sum(attr_type.size() for _, attr_type in cls.enumerate_field_types())
 
+    @classmethod
+    def subclasses(cls):
+        """Gets the recursive subclasses of the :class:`Packet`.
+
+        Useful for when you have categories of :class:`Packets <Packet>`,
+        such as serverbound and clientbound, and so you can have an empty
+        class like
+
+        ::
+
+            class ServerboundPacket(Packet):
+                pass
+
+        which all serverbound :class:`Packets <Packet>` would inherit from,
+        and then use :meth:`subclasses` to automatically get all the
+        serverbound :class:`Packets <Packet>`.
+
+        Returns
+        -------
+        :class:`set`
+            The recursive subclasses of the :class:`Packet`.
+        """
+
+        return util.subclasses(cls)
+
     def __eq__(self, other):
         if self._fields != other._fields:
             return False
