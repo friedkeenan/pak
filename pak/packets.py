@@ -340,7 +340,7 @@ class Packet:
         return sum(attr_type.size() for _, attr_type in cls.enumerate_field_types())
 
     def __eq__(self, other):
-        if not isinstance(other, type(self)):
+        if self._fields != other._fields:
             return False
 
         return all(

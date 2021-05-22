@@ -87,6 +87,9 @@ def test_packet_inheritance():
     assert list(TestChildBasic.enumerate_field_types())    == [("test", Int8)]
     assert list(TestChildOverride.enumerate_field_types()) == [("other", Int8)]
 
+    assert TestChildBasic()    == TestParent()
+    assert TestChildOverride() != TestParent()
+
 test_generic = assert_packet_marshal_func(
     (GenericPacket(data=b"\xaa\xbb\xcc"), b"\xaa\xbb\xcc"),
 )
