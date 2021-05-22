@@ -71,7 +71,7 @@ class DynamicValue(abc.ABC):
 
     def __new__(cls, initial_value):
         for subclass in util.subclasses(DynamicValue):
-            if isinstance(initial_value, subclass._type):
+            if subclass._type is not None and isinstance(initial_value, subclass._type):
                 return subclass(initial_value)
 
         return initial_value

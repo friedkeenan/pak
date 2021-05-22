@@ -17,3 +17,8 @@ def test_dynamic_value():
 
     assert v.get() == 2
     assert DynamicValue(2).get() == 4
+
+    # Disable IntDynamicValue
+    IntDynamicValue._type = None
+
+    assert DynamicValue(1) == 1

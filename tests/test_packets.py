@@ -90,6 +90,38 @@ def test_packet_inheritance():
     assert TestChildBasic()    == TestParent()
     assert TestChildOverride() != TestParent()
 
+def test_id():
+    class TestEmpty(Packet):
+        pass
+
+    assert TestEmpty.id() is None
+
+    class TestStaticId(Packet):
+        id = 1
+        _id_type = Int8
+
+    assert TestStaticId.id()     == 1
+    assert TestStaticId().pack() == b"\x01"
+
+    class StringToIntDynamicValue(DynamicValue):
+        _type = str
+
+        def __init__(self, string):
+            self.string = string
+
+        def get(self, *, ctx=None):
+            return int(self.string)
+
+    class TestDynamicId(Packet):
+        id = "1"
+        _id_type = Int8
+
+    assert TestDynamicId.id()     == 1
+    assert TestDynamicId().pack() == b"\x01"
+
+    # Disable StringToIntDynamicValue
+    StringToIntDynamicValue._type = None
+
 test_generic = assert_packet_marshal_func(
     (GenericPacket(data=b"\xaa\xbb\xcc"), b"\xaa\xbb\xcc"),
 )

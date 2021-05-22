@@ -4,8 +4,11 @@
 # so few members, but in the event it gets too large,
 # it should be split up.
 
+import inspect
+
 from . import util
-from .types import Type, TypeContext, RawByte
+from .dyn_value import DynamicValue
+from .types import Type, TypeContext, RawByte, EmptyType
 
 __all__ = [
     "PacketContext",
@@ -90,6 +93,43 @@ class Packet:
     for it in the constructor.
     """
 
+    _id_type = EmptyType
+
+    @classmethod
+    def id(cls, *, ctx=None):
+        """Gets the ID of the :class:`Packet`.
+
+        Lots of packet protocols prefix packets with
+        an ID to determine what type of packet should
+        be read. Unless overridden, :class:`Packet` has
+        no meaningful ID.
+
+        How the ID is marshaled can be changed by setting
+        the :attr:`_id_type` attribute to the appropriate
+        :class:`~.Type`.
+
+        If the :attr:`id` attribute of a subclass is enrolled
+        in the :class:`DynamicValue` machinery, then its dynamic
+        value is returned from this function. Otherwise the value
+        of the :attr:`id` attribute is returned.
+
+        Parameters
+        ----------
+        ctx : :class:`PacketContext`
+            The context for the :class:`Packet`.
+
+        Returns
+        -------
+        any
+            By default returns ``None``, and if the ID is ``None``
+            then the :class:`Packet` shouldn't be considered when
+            looking up :class:`Packets <Packet>` from their ID.
+
+            Otherwise the ID of the :class:`Packet`.
+        """
+
+        return None
+
     @classmethod
     def _init_fields_from_annotations(cls):
         cls._fields = {}
@@ -123,6 +163,20 @@ class Packet:
 
         cls._init_fields_from_annotations()
 
+        if not inspect.ismethod(cls.id):
+            id = DynamicValue(inspect.getattr_static(cls, "id"))
+
+            if isinstance(id, DynamicValue):
+                @classmethod
+                def real_id(cls, *, ctx=None):
+                    return id.get(ctx=ctx)
+            else:
+                @classmethod
+                def real_id(cls, *, ctx=None):
+                    return id
+
+            cls.id = real_id
+
     def __init__(self, *, ctx=None, **kwargs):
         type_ctx = self.type_ctx(ctx)
         for attr, attr_type in self.enumerate_field_types():
@@ -146,6 +200,11 @@ class Packet:
     @classmethod
     def unpack(cls, buf, *, ctx=None):
         """Unpacks a :class:`Packet` from raw data.
+
+        .. note::
+
+            This doesn't unpack the ID, as you need to unpack the ID
+            to determine the correct :class:`Packet` in the first place.
 
         Parameters
         ----------
@@ -191,6 +250,10 @@ class Packet:
     def pack(self, *, ctx=None):
         r"""Packs a :class:`Packet` to raw data.
 
+        .. note::
+
+            This does pack the ID, unlike :meth:`unpack`.
+
         Parameters
         ----------
         ctx : :class:`PacketContext`
@@ -212,9 +275,10 @@ class Packet:
         b'\x04\x00\x01\x02\x03'
         """
 
-        type_ctx = self.type_ctx(ctx)
+        type_ctx  = self.type_ctx(ctx)
+        packed_id = self._id_type.pack(self.id(ctx=ctx), ctx=type_ctx)
 
-        return b"".join(
+        return  packed_id + b"".join(
             attr_type.pack(value, ctx=type_ctx)
             for _, attr_type, value in self.enumerate_field_types_and_values()
         )
@@ -315,6 +379,10 @@ class Packet:
     @classmethod
     def size(cls):
         """Gets the cumulative size of the fields of the :class:`Packet`.
+
+        .. note::
+
+            The ID is not included in the size.
 
         Returns
         -------

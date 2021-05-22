@@ -54,6 +54,9 @@ def test_dynamic_size():
 
     assert TestSize.size() == 1
 
+    # Disable StringToIntDynamicValue
+    StringToIntDynamicValue._type = None
+
 def test_dynamic_default():
     class StringToIntDynamicValue(DynamicValue):
         _type = str
@@ -68,3 +71,6 @@ def test_dynamic_default():
         _default = "1"
 
     assert TestDefault.default() == 1
+
+    # Disable StringToIntDynamicValue
+    StringToIntDynamicValue._type = None
