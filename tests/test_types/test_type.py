@@ -74,3 +74,11 @@ def test_dynamic_default():
 
     # Disable StringToIntDynamicValue
     StringToIntDynamicValue._type = None
+
+def test_cached_make_type():
+    class TestCall(Type):
+        @classmethod
+        def _call(cls):
+            return cls.make_type("blah")
+
+    assert TestCall() is TestCall()

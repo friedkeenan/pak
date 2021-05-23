@@ -14,6 +14,7 @@ __all__ = [
     "PacketContext",
     "Packet",
     "GenericPacket",
+    "GenericPacketWithId",
 ]
 
 class PacketContext:
@@ -520,3 +521,24 @@ class GenericPacket(Packet):
     """
 
     data: RawByte[None]
+
+@util.cache
+def GenericPacketWithId(id, *, id_type):
+    """A factory for making :class:`GenericPacket` subclasses with IDs.
+
+    This factory is cached so that a new type is only made
+    when necessary.
+
+    Parameters
+    ----------
+    id
+        The ID for the new :class:`GenericPacket` subclass.
+    id_type : subclass of :class:`~.Type`
+        The :class:`Type` of the ID for the new
+        :class:`GenericPacket` subclass.
+    """
+
+    return type(f"GenericPacket({id})", (GenericPacket,), dict(
+        id       = id,
+        _id_type = id_type,
+    ))

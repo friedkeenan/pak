@@ -412,6 +412,7 @@ class Type(abc.ABC):
         raise NotImplementedError
 
     @classmethod
+    @util.cache
     def make_type(cls, name, bases=None, **namespace):
         """Utility for generating new types.
 
@@ -420,6 +421,9 @@ class Type(abc.ABC):
         get around an issue where generated types would have
         their :attr:`__module__` attribute be ``"abc"`` because
         :class:`Type` inherits from :class:`abc.ABC`.
+
+        This method is cached so a new type is only made if it
+        hasn't been made before.
 
         Parameters
         ----------

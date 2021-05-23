@@ -149,6 +149,12 @@ def test_subclass_id():
     assert Root.subclass_with_id(2) is GrandChild1
     assert Root.subclass_with_id(3) is None
 
-test_generic = assert_packet_marshal_func(
-    (GenericPacket(data=b"\xaa\xbb\xcc"), b"\xaa\xbb\xcc"),
-)
+def test_generic():
+    assert_packet_marshal(
+        (GenericPacket(data=b"\xaa\xbb\xcc"), b"\xaa\xbb\xcc"),
+    )
+
+    generic_cls = GenericPacketWithId(1, id_type=Int8)
+    assert generic_cls(data=b"test").pack() == b"\x01test"
+
+    assert GenericPacketWithId(1, id_type=Int8) is generic_cls

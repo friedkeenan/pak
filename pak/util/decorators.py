@@ -17,7 +17,7 @@ def cache(func):
 
     Returns
     -------
-    :class:`function`
+    callable
         The new function whose results will be cached.
     """
 
