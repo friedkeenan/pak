@@ -28,6 +28,7 @@ Utilities
     :toctree: reference
     :nosignatures:
 
+    ~util.decorators
     ~util.exceptions
     ~util.inspection
     ~util.interfaces

@@ -95,6 +95,11 @@ def test_id():
         pass
 
     assert TestEmpty.id() is None
+    assert_packet_marshal(
+        (TestEmpty(), b""),
+    )
+
+    assert TestEmpty.unpack_id(b"test") is None
 
     class TestStaticId(Packet):
         id = 1
@@ -102,6 +107,8 @@ def test_id():
 
     assert TestStaticId.id()     == 1
     assert TestStaticId().pack() == b"\x01"
+
+    assert TestStaticId.unpack_id(b"\x02") == 2
 
     class StringToIntDynamicValue(DynamicValue):
         _type = str
@@ -118,6 +125,8 @@ def test_id():
 
     assert TestDynamicId.id()     == 1
     assert TestDynamicId().pack() == b"\x01"
+
+    assert TestDynamicId.unpack_id(b"\x02") == 2
 
     # Disable StringToIntDynamicValue
     StringToIntDynamicValue._type = None

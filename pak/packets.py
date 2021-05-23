@@ -5,7 +5,6 @@
 # it should be split up.
 
 import inspect
-from functools import lru_cache
 
 from . import util
 from .dyn_value import DynamicValue
@@ -414,7 +413,24 @@ class Packet:
         return sum(attr_type.size() for _, attr_type in cls.enumerate_field_types())
 
     @classmethod
-    @lru_cache(maxsize=None)
+    def unpack_id(cls, buf, *, ctx=None):
+        """Unpacks the ID of a :class:`Packet`.
+
+        Parameters
+        ----------
+        buf : file object or :class:`bytes` or :class:`bytearray`
+            The buffer containing the raw data.
+        ctx: :class:`PacketContext`
+            The context for the :class:`Packet`.
+        """
+
+        buf = util.file_object(buf)
+
+        return cls._id_type.unpack(buf, ctx=TypeContext(None, ctx=ctx))
+
+    # In 3.9+ we can just use functools.cache
+    @classmethod
+    @util.cache
     def subclasses(cls):
         """Gets the recursive subclasses of the :class:`Packet`.
 
@@ -433,10 +449,10 @@ class Packet:
 
         .. note::
 
-            This method is decorated with ``functools.lru_cache(maxsize=None)``.
-            In particular this means you can't generate a new subclass
-            after calling this and have it be returned from :meth:`subclasses`
-            the next time you call it.
+            This method is decorated with :func:`util.cache() <.decorators.cache>`. In particular
+            this means you can't generate a new subclass after calling this
+            and have it be returned from :meth:`subclasses` the next time you
+            call it.
 
         Returns
         -------
