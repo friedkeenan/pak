@@ -12,11 +12,16 @@ class Enum(Type):
     The default value of the :class:`~.Type` is the first
     member of the enum.
 
+    .. warning::
+        If a value that is not in the enum is unpacked, an
+        error will be raised.
+
     Parameters
     ----------
     elem_type : typelike
         The underlying :class:`~.Type`.
     enum_type : subclass of :class:`enum.Enum`
+        The enum to map values to.
 
     Examples
     --------

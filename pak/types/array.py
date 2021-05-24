@@ -1,4 +1,4 @@
-"""Types for contiguous data."""
+""":class:`Types <.Type>` for contiguous data."""
 
 import inspect
 
