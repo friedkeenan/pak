@@ -238,15 +238,16 @@ class Array(Type):
 
     @classmethod
     def _unpack_array(cls, buf, size, *, ctx=None):
-        specializations = {
-            Padding: cls._unpack_padding_array,
-            RawByte: cls._unpack_raw_byte_array,
-            Char:    cls._unpack_char_array,
-        }
+        if cls.is_padding():
+            return cls._unpack_padding_array(buf, size, ctx=ctx)
 
-        method = specializations.get(cls.elem_type, cls._unpack_general_array)
+        if cls.is_raw_byte():
+            return cls._unpack_raw_byte_array(buf, size, ctx=ctx)
 
-        return method(buf, size, ctx=ctx)
+        if cls.is_char():
+            return cls._unpack_char_array(buf, size, ctx=ctx)
+
+        return cls._unpack_general_array(buf, size, ctx=ctx)
 
     @classmethod
     def _unpack(cls, buf, *, ctx=None):
@@ -312,15 +313,16 @@ class Array(Type):
 
     @classmethod
     def _pack_array(cls, value, *, ctx=None):
-        specializations = {
-            Padding: cls._pack_padding_array,
-            RawByte: cls._pack_raw_byte_array,
-            Char:    cls._pack_char_array,
-        }
+        if cls.is_padding():
+            return cls._pack_padding_array(value, ctx=ctx)
 
-        method = specializations.get(cls.elem_type, cls._pack_general_array)
+        if cls.is_raw_byte():
+            return cls._pack_raw_byte_array(value, ctx=ctx)
 
-        return method(value, ctx=ctx)
+        if cls.is_char():
+            return cls._pack_char_array(value, ctx=ctx)
+
+        return cls._pack_general_array(value, ctx=ctx)
 
     @classmethod
     def _pack(cls, value, *, ctx=None):

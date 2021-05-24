@@ -119,6 +119,12 @@ def test_char_array():
     with pytest.raises(util.BufferOutOfDataError):
         TestAttr.unpack(b"\x01")
 
+    Utf8Char = Char("utf-8")
+    assert_type_marshal(
+        Utf8Char[None],
+        ("ab", b"ab"),
+    )
+
 def test_array():
     assert issubclass(Int8[2], Array)
 
