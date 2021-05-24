@@ -18,6 +18,7 @@ Types
     :nosignatures:
 
     ~types.array
+    ~types.enum
     ~types.misc
     ~types.numeric
     ~types.type
