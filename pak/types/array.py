@@ -192,80 +192,109 @@ class Array(Type):
         return data
 
     @classmethod
-    def _unpack(cls, buf, *, ctx=None):
-        if cls.should_read_until_end():
-            if cls.is_padding():
-                buf.read()
-                return None
-
-            if cls.is_raw_byte():
-                return bytearray(buf.read())
-
-            ret = []
-            while True:
-                try:
-                    ret.append(cls.elem_type.unpack(buf, ctx=ctx))
-                except:
-                    return ret
-
-        if cls.is_prefixed_by_type():
-            size = cls.array_size.unpack(buf, ctx=ctx)
-
-            if cls.is_padding():
-                cls._read_data(buf, size, name="padding")
-
-                return None
-
-            if cls.is_raw_byte():
-                return bytearray(cls._read_data(buf, size))
-
-            return [cls.elem_type.unpack(buf, ctx=ctx) for x in range(size)]
-
-        size = cls.real_size(ctx=ctx)
-
-        if cls.is_padding():
-            cls._read_data(buf, size, name="padding")
-
+    def _unpack_padding_array(cls, buf, size, *, ctx=None):
+        if size is None:
+            buf.read()
             return None
 
-        if cls.is_raw_byte():
-            return bytearray(cls._read_data(buf, size))
+        cls._read_data(buf, size, name="padding")
+        return None
+
+    @classmethod
+    def _unpack_raw_byte_array(cls, buf, size, *, ctx=None):
+        if size is None:
+            return bytearray(buf.read())
+
+        return bytearray(cls._read_data(buf, size))
+
+    @classmethod
+    def _unpack_general_array(cls, buf, size, *, ctx=None):
+        if size is None:
+            array = []
+            while True:
+                try:
+                    elem = cls.elem_type.unpack(buf, ctx=ctx)
+                except:
+                    return array
+
+                array.append(elem)
 
         return [cls.elem_type.unpack(buf, ctx=ctx) for x in range(size)]
 
     @classmethod
-    def _pack(cls, value, *, ctx=None):
+    def _unpack_array(cls, buf, size, *, ctx=None):
+        specializations = {
+            Padding: cls._unpack_padding_array,
+            RawByte: cls._unpack_raw_byte_array,
+        }
+
+        method = specializations.get(cls.elem_type, cls._unpack_general_array)
+
+        return method(buf, size, ctx=ctx)
+
+    @classmethod
+    def _unpack(cls, buf, *, ctx=None):
         if cls.should_read_until_end():
-            if cls.is_padding():
-                return b""
+            size = None
+        elif cls.is_prefixed_by_type():
+            size = cls.array_size.unpack(buf, ctx=ctx)
+        else:
+            size = cls.real_size(ctx=ctx)
 
-            if cls.is_raw_byte():
-                return bytes(value)
+        return cls._unpack_array(buf, size, ctx=ctx)
 
+    @classmethod
+    def _pack_padding_array(cls, value, *, ctx=None):
+        if cls.should_read_until_end():
+            return b""
+
+        if cls.is_prefixed_by_type():
+            return cls.array_size.pack(0, ctx=ctx)
+
+        return b"\x00" * cls.real_size(ctx=ctx)
+
+    @classmethod
+    def _pack_raw_byte_array(cls, value, *, ctx=None):
+        if cls.should_read_until_end():
+            return bytes(value)
+
+        if cls.is_prefixed_by_type():
+            prefix = cls.array_size.pack(len(value), ctx=ctx)
+
+            return prefix + bytes(value)
+
+        size = cls.real_size(ctx=ctx)
+        return bytes(value[:size]) + b"\x00" * max(0, size - len(value))
+
+    @classmethod
+    def _pack_general_array(cls, value, *, ctx=None):
+        if cls.should_read_until_end():
             return b"".join(cls.elem_type.pack(x, ctx=ctx) for x in value)
 
         if cls.is_prefixed_by_type():
-            if cls.is_padding():
-                return cls.array_size.pack(0, ctx=ctx)
-
             prefix = cls.array_size.pack(len(value), ctx=ctx)
-
-            if cls.is_raw_byte():
-                return prefix + bytes(value)
 
             return prefix + b"".join(cls.elem_type.pack(x, ctx=ctx) for x in value)
 
-        size = cls.real_size(ctx=ctx)
-
-        if cls.is_padding():
-            return b"\x00" * size
-
-        if cls.is_raw_byte():
-            return bytes(value[:size]) + bytes(max(0, size - len(value)))
-
-        value = value[:size] + [cls.elem_type.default(ctx=ctx) for x in range(size - len(value))]
+        size  = cls.real_size(ctx=ctx)
+        value = value[:size] + [cls.elem_type.default(ctx=ctx)] * (size - len(value))
 
         return b"".join(cls.elem_type.pack(x, ctx=ctx) for x in value)
+
+    @classmethod
+    def _pack_array(cls, value, *, ctx=None):
+        specializations = {
+            Padding: cls._pack_padding_array,
+            RawByte: cls._pack_raw_byte_array,
+        }
+
+        method = specializations.get(cls.elem_type, cls._pack_general_array)
+
+        return method(value, ctx=ctx)
+
+    @classmethod
+    def _pack(cls, value, *, ctx=None):
+        return cls._pack_array(value, ctx=ctx)
 
     @classmethod
     @Type.prepare_types

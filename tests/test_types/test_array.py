@@ -67,6 +67,7 @@ def test_raw_byte_array():
     )
 
     assert RawByte[2].pack(b"\xaa\xbb\xcc")          == b"\xaa\xbb"
+    assert RawByte[2].pack(b"\xaa")                  == b"\xaa\x00"
     assert RawByte[Int8].unpack(b"\x02\xaa\xbb\xcc") == b"\xaa\xbb"
 
     with pytest.raises(util.BufferOutOfDataError):
@@ -96,6 +97,8 @@ def test_array():
         Int8[None],
         ([0, 1, 2], b"\x00\x01\x02"),
     )
+
+    assert Int8[2].pack([1]) == b"\x01\x00"
 
     # Conveniently testing string sizes will also
     # test function sizes.
