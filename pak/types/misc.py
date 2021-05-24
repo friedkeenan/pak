@@ -1,5 +1,6 @@
 """Miscellaneous types."""
 
+import codecs
 import struct
 
 from .. import util
@@ -7,8 +8,9 @@ from .type import Type
 
 __all__ = [
     "EmptyType",
-    "RawByte",
     "Padding",
+    "RawByte",
+    "Char",
     "StructType",
 ]
 
@@ -114,6 +116,88 @@ class RawByte(Type):
     @classmethod
     def _pack(cls, value, *, ctx=None):
         return bytes(value[:1])
+
+class Char(Type):
+    """A single character.
+
+    Can be used with :class:`~.Array`, for which
+    this :class:`~.Type` is special-cased to produce
+    a :class:`str` value.
+
+    By default, ASCII is used as the encoding.
+
+    Parameters
+    ----------
+    encoding : :class:`str`
+        The encoding to use to encode/decode data.
+    """
+
+    _size    = 1
+    _default = "a"
+
+    encoding = "ascii"
+
+    @classmethod
+    def decode(cls, buf, *, chars=-1):
+        """Decodes a string from raw data.
+
+        Uses the class's encoding to decode the data.
+
+        Parameters
+        ----------
+        buf : file object
+            The file object containing the raw data.
+        chars : :class:`int`
+            How many characters to decode.
+
+        Returns
+        -------
+        :class:`str`
+            The decoded string.
+        """
+
+        reader = codecs.getreader(cls.encoding)(buf)
+        string = reader.read(chars=chars)
+
+        if len(string) < chars:
+            raise util.BufferOutOfDataError("Reading characters failed")
+
+        return string
+
+    @classmethod
+    def encode(cls, string):
+        """Encodes a string to raw data.
+
+        Uses the class's encoding to encode the string.
+
+        Parameters
+        ----------
+        string : :class:`str`
+            The string to encode.
+
+        Returns
+        -------
+        :class:`bytes`
+            The encoded data.
+        """
+
+        return string.encode(cls.encoding)
+
+    @classmethod
+    def _unpack(cls, buf, *, ctx=None):
+        return cls.decode(buf, chars=1)
+
+    @classmethod
+    def _pack(cls, value, *, ctx=None):
+        return cls.encode(value[:1])
+
+    @classmethod
+    def _call(cls, encoding):
+        return cls.make_type(
+            f"{cls.__name__}({repr(encoding)})",
+
+            encoding = encoding,
+        )
 
 class StructType(Type):
     """A wrapper over :func:`struct.pack` and :func:`struct.unpack`.

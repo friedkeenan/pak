@@ -13,6 +13,16 @@ def test_empty():
 
     assert EmptyType.pack("whatever value") == b""
 
+def test_padding():
+    buf = io.BytesIO(b"test")
+    assert Padding.unpack(buf) is None
+    assert buf.tell() == 1
+
+    assert Padding.pack("whatever value") == b"\x00"
+
+    with pytest.raises(util.BufferOutOfDataError):
+        Padding.unpack(b"")
+
 def test_raw_byte():
     assert_type_marshal(
         RawByte,
@@ -24,15 +34,29 @@ def test_raw_byte():
     with pytest.raises(util.BufferOutOfDataError):
         RawByte.unpack(b"")
 
-def test_padding():
-    buf = io.BytesIO(b"test")
-    assert Padding.unpack(buf) is None
-    assert buf.tell() == 1
+def test_char():
+    assert_type_marshal(
+        Char,
+        ("h", b"h"),
+    )
 
-    assert Padding.pack("whatever value") == b"\x00"
+    assert Char.pack("Hello") == b"H"
+
+    with pytest.raises(UnicodeDecodeError, match="codec can't decode byte"):
+        Char.unpack(b"\x80")
+
+    with pytest.raises(UnicodeEncodeError, match="codec can't encode character"):
+        Char.pack("\x80")
 
     with pytest.raises(util.BufferOutOfDataError):
-        Padding.unpack(b"")
+        Char.unpack(b"")
+
+    Utf8Char = Char("utf-8")
+    assert_type_marshal(
+        Utf8Char,
+        ("h",    b"h"),
+        ("\x80", b"\xc2\x80"),
+    )
 
 def test_struct():
     # StructType also gets tested further

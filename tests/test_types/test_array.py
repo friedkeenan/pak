@@ -17,7 +17,7 @@ def test_padding_array():
     assert buf.tell() == 9
 
     class TestAttr(Packet):
-        test: Int8
+        test:  Int8
         array: Padding["test"]
 
     buf = io.BytesIO(b"\x02\xaa\xbb\xcc")
@@ -75,6 +75,46 @@ def test_raw_byte_array():
 
     with pytest.raises(util.BufferOutOfDataError):
         RawByte[Int8].unpack(b"\x01")
+
+    with pytest.raises(util.BufferOutOfDataError):
+        TestAttr.unpack(b"\x01")
+
+def test_char_array():
+    assert isinstance(Char[1].unpack(b"a"), str)
+
+    assert_type_marshal(
+        Char[2],
+        ("ab", b"ab"),
+    )
+
+    assert_type_marshal(
+        Char[Int8],
+        ("ab", b"\x02ab"),
+        ("",   b"\x00"),
+    )
+
+    assert_type_marshal(
+        Char[None],
+        ("abc", b"abc"),
+    )
+
+    class TestAttr(Packet):
+        test:  Int8
+        array: Char["test"]
+
+    assert_packet_marshal(
+        (TestAttr(test=2, array="ab"), b"\x02ab"),
+    )
+
+    assert Char[2].pack("abc")           == b"ab"
+    assert Char[2].pack("b")             == b"ba"
+    assert Char[Int8].unpack(b"\x02abc") ==  "ab"
+
+    with pytest.raises(util.BufferOutOfDataError):
+        Char[2].unpack(b"a")
+
+    with pytest.raises(util.BufferOutOfDataError):
+        Char[Int8].unpack(b"\x01")
 
     with pytest.raises(util.BufferOutOfDataError):
         TestAttr.unpack(b"\x01")

@@ -4,7 +4,7 @@ import inspect
 
 from .. import util
 from .type import Type
-from .misc import RawByte, Padding
+from .misc import Padding, RawByte, Char
 
 __all__ = [
     "Array",
@@ -42,9 +42,7 @@ class Array(Type):
 
     @classmethod
     def is_padding(cls):
-        """Gets whether the :class:`Array` is for
-        :class:`~.Padding`, which is special-cased
-        for longer strings of padding.
+        """Gets whether the :class:`Array` is for :class:`~.Padding`.
 
         Returns
         -------
@@ -56,9 +54,7 @@ class Array(Type):
 
     @classmethod
     def is_raw_byte(cls):
-        """Gets whether the :class:`Array` is for
-        :class:`~.RawByte`, which is special-cased to
-        have a :class:`bytearray` value.
+        """Gets whether the :class:`Array` is for :class:`~.RawByte`.
 
         Returns
         -------
@@ -67,6 +63,18 @@ class Array(Type):
         """
 
         return cls.elem_type is RawByte
+
+    @classmethod
+    def is_char(cls):
+        """Gets whether the :class:`Array` is for :class:`~.Char`.
+
+        Returns
+        -------
+        :class:`bool`
+            Whether the :class:`Array` is for :class:`~.Char`.
+        """
+
+        return issubclass(cls.elem_type, Char)
 
     @classmethod
     def is_fixed_size(cls):
@@ -208,6 +216,13 @@ class Array(Type):
         return bytearray(cls._read_data(buf, size))
 
     @classmethod
+    def _unpack_char_array(cls, buf, size, *, ctx=None):
+        if size is None:
+            return cls.elem_type.decode(buf)
+
+        return cls.elem_type.decode(buf, chars=size)
+
+    @classmethod
     def _unpack_general_array(cls, buf, size, *, ctx=None):
         if size is None:
             array = []
@@ -226,6 +241,7 @@ class Array(Type):
         specializations = {
             Padding: cls._unpack_padding_array,
             RawByte: cls._unpack_raw_byte_array,
+            Char:    cls._unpack_char_array,
         }
 
         method = specializations.get(cls.elem_type, cls._unpack_general_array)
@@ -264,7 +280,20 @@ class Array(Type):
             return prefix + bytes(value)
 
         size = cls.real_size(ctx=ctx)
-        return bytes(value[:size]) + b"\x00" * max(0, size - len(value))
+        return bytes(value[:size]) + b"\x00" * (size - len(value))
+
+    @classmethod
+    def _pack_char_array(cls, value, *, ctx=None):
+        if cls.should_read_until_end():
+            return cls.elem_type.encode(value)
+
+        if cls.is_prefixed_by_type():
+            prefix = cls.array_size.pack(len(value), ctx=ctx)
+
+            return prefix + cls.elem_type.encode(value)
+
+        size = cls.real_size(ctx=ctx)
+        return cls.elem_type.encode(value[:size] + "a" * (size - len(value)))
 
     @classmethod
     def _pack_general_array(cls, value, *, ctx=None):
@@ -286,6 +315,7 @@ class Array(Type):
         specializations = {
             Padding: cls._pack_padding_array,
             RawByte: cls._pack_raw_byte_array,
+            Char:    cls._pack_char_array,
         }
 
         method = specializations.get(cls.elem_type, cls._pack_general_array)
