@@ -15,17 +15,16 @@ class Array(Type):
 
     Parameters
     ----------
-    elem_type : subclass of :class:`~.Type`
+    elem_type : typelike
         The :class:`~.Type` contained in the :class:`Array`.
-    size : :class:`int` or subclass of :class:`~.Type` or :class:`str` or :class:`function` or ``None``
+    size : :class:`int` or typelike or :class:`str` or :class:`function` or ``None``
         The size of the :class:`Array`.
 
         If an :class:`int`, then the :class:`Array` has a fixed size
         of ``size``.
 
-        If a subclass of :class:`~.Type`, then the :class:`Array`
-        is prefixed by ``size``, and its value determines the amount
-        of values in the array.
+        If a typelike, then the :class:`Array` is prefixed by ``size``,
+        and its value determines the amount of values in the array.
 
         If a :class:`str`, then the size is determined by getting the
         attribute of the same name from the :class:`~.Packet` instance.
@@ -280,7 +279,9 @@ class Array(Type):
             attr = size
             size = lambda x: getattr(x, attr)
 
-        return cls.make_type(f"{elem_type.__name__}[{size_name}]",
+        return cls.make_type(
+            f"{elem_type.__name__}[{size_name}]",
+
             elem_type  = elem_type,
             array_size = size,
         )

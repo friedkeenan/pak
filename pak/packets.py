@@ -8,7 +8,8 @@ import inspect
 
 from . import util
 from .dyn_value import DynamicValue
-from .types import Type, TypeContext, RawByte, EmptyType
+from .types.type import Type, TypeContext
+from .types.misc import RawByte, EmptyType
 
 __all__ = [
     "PacketContext",
@@ -533,8 +534,8 @@ def GenericPacketWithId(id, *, id_type):
     ----------
     id
         The ID for the new :class:`GenericPacket` subclass.
-    id_type : subclass of :class:`~.Type`
-        The :class:`Type` of the ID for the new
+    id_type : typelike
+        The :class:`~.Type` of the ID for the new
         :class:`GenericPacket` subclass.
     """
 
