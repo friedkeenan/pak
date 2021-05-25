@@ -1,14 +1,14 @@
 """Custom decorators."""
 
 import functools
+from collections.abc import Hashable
 
-# TODO: Remove when 3.8 support is dropped.
 def cache(func):
-    """Custom-ish decorator used to cache function results.
+    """Custom decorator used to cache function results.
 
-    Only exists because :func:`functools.cache` was only added
-    in Python 3.9. Our implementation is the same as the standard
-    library's.
+    If unhashable types are passed to the function,
+    then no caching occurs and the function runs
+    as normal.
 
     Parameters
     ----------
@@ -21,4 +21,16 @@ def cache(func):
         The new function whose results will be cached.
     """
 
-    return functools.lru_cache(maxsize=None)(func)
+    internal_wrapper = functools.lru_cache(maxsize=None)(func)
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if not (
+            all(isinstance(arg, Hashable) for arg in args) and
+            all(isinstance(arg, Hashable) for arg in kwargs.values())
+        ):
+            return internal_wrapper.__wrapped__(*args, **kwargs)
+
+        return internal_wrapper(*args, **kwargs)
+
+    return wrapper

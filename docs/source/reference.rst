@@ -18,6 +18,7 @@ Types
     :nosignatures:
 
     ~types.array
+    ~types.bit_mask
     ~types.default
     ~types.enum
     ~types.misc
@@ -30,6 +31,7 @@ Utilities
     :toctree: reference
     :nosignatures:
 
+    ~util.bits
     ~util.decorators
     ~util.exceptions
     ~util.inspection

@@ -126,6 +126,12 @@ class Char(Type):
 
     By default, ASCII is used as the encoding.
 
+    .. note::
+
+        ``Char[None]`` will read to the end of the buffer
+        as other :class:`Arrays <~.Array>` will, **not**
+        just to the next null-byte.
+
     Parameters
     ----------
     encoding : :class:`str`
