@@ -412,7 +412,7 @@ class Type(abc.ABC):
         raise NotImplementedError
 
     @classmethod
-    @util.cache
+    @util.cache(force_hashable=False)
     def make_type(cls, name, bases=None, **namespace):
         """Utility for generating new types.
 
