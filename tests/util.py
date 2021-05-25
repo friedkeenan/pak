@@ -3,8 +3,8 @@ def assert_type_marshal(type_cls, *values_and_data, ctx=None):
         data_from_value = type_cls.pack(value, ctx=ctx)
         value_from_data = type_cls.unpack(data, ctx=ctx)
 
-        assert data_from_value == data,  f"{data_from_value=}; {data=}"
-        assert value_from_data == value, f"{value_from_data=}; {value=}"
+        assert data_from_value == data,  f"data_from_value={data_from_value}; data={data}"
+        assert value_from_data == value, f"value_from_data={value_from_data}; value={value}"
 
 def assert_type_marshal_func(*args, **kwargs):
     # Use this if you only need to compare values
@@ -21,8 +21,8 @@ def assert_packet_marshal(*values_and_data, ctx=None):
         data_from_value = value.pack(ctx=ctx)
         value_from_data = value.unpack(data, ctx=ctx)
 
-        assert data_from_value == data,  f"{data_from_value=}; {data=}"
-        assert value_from_data == value, f"{value_from_data=}; {value=}"
+        assert data_from_value == data,  f"data_from_value={data_from_value}; data={data}"
+        assert value_from_data == value, f"value_from_data={value_from_data}; value={value}"
 
 def assert_packet_marshal_func(*args, **kwargs):
     # Use this if you only need to compare values
