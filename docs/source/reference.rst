@@ -24,6 +24,7 @@ Types
     ~types.enum
     ~types.misc
     ~types.numeric
+    ~types.optional
     ~types.type
 
 Utilities

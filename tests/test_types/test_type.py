@@ -19,13 +19,17 @@ def test_type_context():
         type_ctx.test
 
 def test_typelike():
+    assert Type.is_typelike(Int8)
     assert Type(Int8) is Int8
 
     Type.register_typelike(int, lambda x: Int8)
 
+    assert Type.is_typelike(1)
     assert Type(1) is Int8
 
     Type.unregister_typelike(int)
+
+    assert not Type.is_typelike(1)
     with pytest.raises(TypeError, match="is not typelike"):
         Type(1)
 

@@ -31,7 +31,7 @@ class Array(Type):
         Internally this is translated to a :class:`function` size.
 
         If a :class:`function`, then the size is determined by passing the
-        packet instance into the :class`function`.
+        :class:`~.Packet` instance to the :class`function`.
 
         If ``None``, then the :class:`Array` is read until the end of
         the buffer.
@@ -102,7 +102,8 @@ class Array(Type):
 
     @classmethod
     def has_size_function(cls):
-        """Gets whether the size of the :class:`Array` is determined by a function.
+        """Gets whether the size of the :class:`Array`
+        is determined by a :class:`function`.
 
         Returns
         -------

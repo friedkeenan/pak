@@ -120,6 +120,30 @@ class Type(abc.ABC):
 
         cls._typelikes.pop(typelike_cls)
 
+    @classmethod
+    def is_typelike(cls, obj):
+        """Gets whether an object is typelike.
+
+        Parameters
+        ----------
+        obj
+            The object to check.
+
+        Returns
+        -------
+        :class:`bool`
+            Whether ``obj`` is typelike.
+        """
+
+        if isinstance(obj, type) and issubclass(obj, Type):
+            return True
+
+        for typelike_cls in cls._typelikes:
+            if isinstance(obj, typelike_cls):
+                return True
+
+        return False
+
     @staticmethod
     def prepare_types(func):
         """A decorator that converts arguments annotated with :class:`Type` to a :class:`Type`."""

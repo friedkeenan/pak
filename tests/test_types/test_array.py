@@ -22,6 +22,8 @@ def test_padding_array():
         test:  Int8
         array: Padding["test"]
 
+    assert TestAttr(test=2).array is None
+
     buf = io.BytesIO(b"\x02\xaa\xbb\xcc")
     p   = TestAttr.unpack(buf)
     assert p.test == 2 and p.array is None
@@ -66,6 +68,8 @@ def test_raw_byte_array():
         test: Int8
         array: RawByte["test"]
 
+    assert TestAttr(test=2).array == b"\x00\x00"
+
     assert_packet_marshal(
         (TestAttr(test=2, array=b"\x00\x01"), b"\x02\x00\x01"),
     )
@@ -107,6 +111,8 @@ def test_char_array():
     class TestAttr(Packet):
         test:  Int8
         array: Char["test"]
+
+    assert TestAttr(test=2).array == "aa"
 
     assert_packet_marshal(
         (TestAttr(test=2, array="ab"), b"\x02ab"),
@@ -161,6 +167,8 @@ def test_array():
     class TestAttr(Packet):
         test:  Int8
         array: Int8["test"]
+
+    assert TestAttr(test=2).array == [0, 0]
 
     assert_packet_marshal(
         (TestAttr(test=2, array=[0, 1]), b"\x02\x00\x01"),
