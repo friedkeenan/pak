@@ -13,17 +13,21 @@ class BitMask(Type):
     """A :class:`~.Type` for bitmasks.
 
     The value type of a :class:`BitMask` is a
-    :class:`collections.namedtuple`.
+    :func:`collections.namedtuple`. Setting
+    the value to a :class:`tuple` (or other
+    iterable) will convert the value to the
+    value type of the :class:`BitMask`.
 
     Parameters
     ----------
     name : :class:`str`
-        The name of the new :class:`~.Type`.
+        The name of the new :class:`BitMask`.
     elem_type : typelike
         The underlying integer type.
     **masks
         The name of the fields and their corresponding
-        bits.
+        bits. They are ordered in the same order that
+        ``**masks`` is passed in.
 
         If the value is a single :class:`int`, then that
         field is given a :class:`bool` value, mapping to that

@@ -3,6 +3,10 @@
 import functools
 from collections.abc import Hashable
 
+__all__ = [
+    "cache",
+]
+
 def cache(func=None, force_hashable=True):
     """Custom decorator used to cache function results.
 
@@ -42,7 +46,7 @@ def cache(func=None, force_hashable=True):
             all(isinstance(arg, Hashable) for arg in args) and
             all(isinstance(arg, Hashable) for arg in kwargs.values())
         ):
-            return internal_wrapper.__wrapped__(*args, **kwargs)
+            return func(*args, **kwargs)
 
         return internal_wrapper(*args, **kwargs)
 

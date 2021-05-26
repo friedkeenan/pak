@@ -189,6 +189,9 @@ class Array(Type):
         if cls.is_raw_byte():
             return bytearray(cls.real_size(ctx=ctx))
 
+        if cls.is_char():
+            return "a" * cls.real_size(ctx=ctx)
+
         return [cls.elem_type.default(ctx=ctx) for x in range(cls.real_size(ctx=ctx))]
 
     @staticmethod

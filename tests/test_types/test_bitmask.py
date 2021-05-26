@@ -29,7 +29,7 @@ def test_bit_mask():
     with pytest.raises(ValueError, match="too wide for range"):
         TestMask.pack((False, 4, 0))
 
-    # Test attributes for good measure
+    # Test attributes for good measure.
     obj = TestMask.unpack(b"\x00")
     assert obj.first  is False
     assert obj.second == 0

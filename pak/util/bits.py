@@ -1,5 +1,9 @@
 """Utilities related to binary operations."""
 
+__all__ = [
+    "bit",
+]
+
 def bit(n):
     """Gets the number with the ``n``-th bit set.
 

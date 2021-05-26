@@ -124,7 +124,9 @@ class Char(Type):
     this :class:`~.Type` is special-cased to produce
     a :class:`str` value.
 
-    By default, ASCII is used as the encoding.
+    By default, ASCII is used as the encoding. This is
+    to ensure that by default, one :class:`Char` maps to
+    one byte of raw data.
 
     .. note::
 

@@ -5,6 +5,8 @@ from pak import *
 from ..util import assert_type_marshal, assert_packet_marshal
 
 def test_padding_array():
+    assert Padding[2].default() is None
+
     buf = io.BytesIO(b"\x00\x00\x01\x00\x00")
     assert Padding[2].unpack(buf) is None
     assert buf.tell() == 2
@@ -38,6 +40,8 @@ def test_padding_array():
         TestAttr.unpack(b"\x01")
 
 def test_raw_byte_array():
+    assert RawByte[2].default() == b"\x00\x00"
+
     assert isinstance(RawByte[1].unpack(b"\x00"), bytearray)
 
     # Values are actually bytearrays but will still
@@ -80,6 +84,8 @@ def test_raw_byte_array():
         TestAttr.unpack(b"\x01")
 
 def test_char_array():
+    assert Char[2].default() == "aa"
+
     assert isinstance(Char[1].unpack(b"a"), str)
 
     assert_type_marshal(
@@ -127,6 +133,8 @@ def test_char_array():
 
 def test_array():
     assert issubclass(Int8[2], Array)
+
+    assert Int8[2].default() == [0, 0]
 
     assert_type_marshal(
         Int8[2],
