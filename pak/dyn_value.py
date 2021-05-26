@@ -55,7 +55,7 @@ class DynamicValue(abc.ABC):
     Returns
     -------
     any
-        If the type of ``inital_value`` is someting for
+        If the type of ``inital_value`` is something for
         :class:`DynamicValue` to deal with, then an instance
         of the appropriate subclass will be returned.
 

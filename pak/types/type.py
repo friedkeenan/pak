@@ -245,7 +245,7 @@ class Type(abc.ABC):
             def _size(cls, *, ctx=None):
                 return my_size
 
-        The return value of the :class:`classmethod` wil be returned from
+        The return value of the :class:`classmethod` will be returned from
         this method.
 
         Else, if the :attr:`_size` attribute is a :class:`DynamicValue`,

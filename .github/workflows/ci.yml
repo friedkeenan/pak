@@ -3,6 +3,24 @@ on: [push, pull_request]
 
 
 jobs:
+  codespell:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: Install codespell
+        run: pip install codespell
+
+      - name: Run codespell
+        run: codespell pak tests docs setup.py
+
   test:
     runs-on: ${{ matrix.os }}
     env:

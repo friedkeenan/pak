@@ -119,7 +119,7 @@ def test_char_array():
     )
 
     assert Char[2].pack("abc")           == b"ab"
-    assert Char[2].pack("b")             == b"ba"
+    assert Char[2].pack("a")             == b"aa"
     assert Char[Int8].unpack(b"\x02abc") ==  "ab"
 
     with pytest.raises(util.BufferOutOfDataError):

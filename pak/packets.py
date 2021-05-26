@@ -70,7 +70,7 @@ class Packet:
         >>> MyPacket.unpack(b"\xff\x00\x80")
         MyPacket(attr1=-1, attr2=-32768)
 
-    Additonally your attributes can be properties::
+    Additionally your attributes can be properties::
 
         >>> class MyPacket(pak.Packet):
         ...     prop: pak.Int8
