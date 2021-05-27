@@ -1,4 +1,4 @@
-"""Miscellaneous types."""
+"""Miscellaneous :class:`Types <.Type>`."""
 
 import codecs
 import struct

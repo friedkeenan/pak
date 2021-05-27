@@ -31,7 +31,7 @@ class Array(Type):
         Internally this is translated to a :class:`function` size.
 
         If a :class:`function`, then the size is determined by passing the
-        :class:`~.Packet` instance to the :class`function`.
+        :class:`~.Packet` instance to the :class:`function`.
 
         If ``None``, then the :class:`Array` is read until the end of
         the buffer.

@@ -1,4 +1,4 @@
-"""Generic code for packets."""
+"""Generic code for :class:`Packets <Packet>`."""
 
 # This module isn't split up currently because it has
 # so few members, but in the event it gets too large,
@@ -111,7 +111,7 @@ class Packet:
         :class:`~.Type`.
 
         If the :attr:`id` attribute of a subclass is enrolled
-        in the :class:`DynamicValue` machinery, then its dynamic
+        in the :class:`~.DynamicValue` machinery, then its dynamic
         value is returned from this function. Otherwise the value
         of the :attr:`id` attribute is returned.
 
