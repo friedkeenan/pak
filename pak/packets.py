@@ -1,4 +1,4 @@
-"""Generic code for :class:`Packets <Packet>`."""
+"""Generic code for :class:`Packets <.Packet>`."""
 
 # This module isn't split up currently because it has
 # so few members, but in the event it gets too large,
