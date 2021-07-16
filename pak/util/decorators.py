@@ -10,10 +10,6 @@ __all__ = [
 def cache(func=None, force_hashable=True):
     """Custom decorator used to cache function results.
 
-    If unhashable types are passed to the function,
-    then no caching occurs and the function runs
-    as normal.
-
     Parameters
     ----------
     func : callable
