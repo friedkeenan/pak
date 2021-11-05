@@ -146,8 +146,8 @@ class Packet:
     @classmethod
     def _init_fields_from_annotations(cls):
         # In 3.10+ we can use inspect.get_annotations()
-        annotations = getattr(cls, "__annotations__", None)
-        if annotations is None:
+        annotations = getattr(cls, "__annotations__", {})
+        if len(annotations) == 0:
             # If we don't have our own annotations, fall back on the '_fields' attribute of our parent class.
             return
 
