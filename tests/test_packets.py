@@ -151,7 +151,7 @@ def test_subclass_id():
 
 def test_generic():
     assert_packet_marshal(
-        (GenericPacket(data=b"\xaa\xbb\xcc"), b"\xaa\xbb\xcc"),
+        (GenericPacket(data=b"\xAA\xBB\xCC"), b"\xAA\xBB\xCC"),
     )
 
     generic_cls = GenericPacketWithId(1, id_type=Int8)

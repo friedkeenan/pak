@@ -1,6 +1,13 @@
 name: CI
-on: [push, pull_request]
 
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
 
 jobs:
   codespell:
@@ -19,7 +26,7 @@ jobs:
         run: pip install codespell
 
       - name: Run codespell
-        run: codespell pak tests docs setup.py
+        run: codespell *
 
   test:
     runs-on: ${{ matrix.os }}

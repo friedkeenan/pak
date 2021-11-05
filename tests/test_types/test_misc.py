@@ -26,10 +26,10 @@ def test_padding():
 def test_raw_byte():
     assert_type_marshal(
         RawByte,
-        (b"\xaa", b"\xaa"),
+        (b"\xAA", b"\xAA"),
     )
 
-    assert RawByte.pack(b"\xaa\xbb") == b"\xaa"
+    assert RawByte.pack(b"\xAA\xBB") == b"\xAA"
 
     with pytest.raises(util.BufferOutOfDataError):
         RawByte.unpack(b"")
@@ -54,8 +54,9 @@ def test_char():
     Utf8Char = Char("utf-8")
     assert_type_marshal(
         Utf8Char,
+
         ("h",    b"h"),
-        ("\x80", b"\xc2\x80"),
+        ("\x80", b"\xC2\x80"),
     )
 
 def test_struct():

@@ -21,7 +21,7 @@ import pak
 project   = "pak.py"
 copyright = "2021, friedkeenan"
 author    = "friedkeenan"
-version   = pak.__version__
+release   = pak.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -35,7 +35,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
     "sphinx.ext.doctest",
-    "sphinx_copybutton"
+    "sphinx_copybutton",
 ]
 
 napoleon_include_private_with_doc = True
@@ -60,10 +60,6 @@ exclude_patterns = []
 # a list of builtin themes.
 #
 html_theme = "furo"
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
 
 def process_docstring(app, what, name, obj, options, lines):
     # If an object's docstring has :meta no-undoc-members:,

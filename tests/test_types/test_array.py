@@ -24,7 +24,7 @@ def test_padding_array():
 
     assert TestAttr(test=2).array is None
 
-    buf = io.BytesIO(b"\x02\xaa\xbb\xcc")
+    buf = io.BytesIO(b"\x02\xAA\xBB\xCC")
     p   = TestAttr.unpack(buf)
     assert p.test == 2 and p.array is None
     assert buf.tell() == 3
@@ -50,18 +50,21 @@ def test_raw_byte_array():
     # have equality with bytes objects.
     assert_type_marshal(
         RawByte[2],
-        (b"\xaa\xbb", b"\xaa\xbb"),
+
+        (b"\xAA\xBB", b"\xAA\xBB"),
     )
 
     assert_type_marshal(
         RawByte[Int8],
-        (b"\xaa\xbb", b"\x02\xaa\xbb"),
+
+        (b"\xAA\xBB", b"\x02\xAA\xBB"),
         (b"",         b"\x00"),
     )
 
     assert_type_marshal(
         RawByte[None],
-        (b"\xaa\xbb\xcc", b"\xaa\xbb\xcc"),
+
+        (b"\xAA\xBB\xCC", b"\xAA\xBB\xCC"),
     )
 
     class TestAttr(Packet):
@@ -74,9 +77,9 @@ def test_raw_byte_array():
         (TestAttr(test=2, array=b"\x00\x01"), b"\x02\x00\x01"),
     )
 
-    assert RawByte[2].pack(b"\xaa\xbb\xcc")          == b"\xaa\xbb"
-    assert RawByte[2].pack(b"\xaa")                  == b"\xaa\x00"
-    assert RawByte[Int8].unpack(b"\x02\xaa\xbb\xcc") == b"\xaa\xbb"
+    assert RawByte[2].pack(b"\xAA\xBB\xCC")          == b"\xAA\xBB"
+    assert RawByte[2].pack(b"\xAA")                  == b"\xAA\x00"
+    assert RawByte[Int8].unpack(b"\x02\xAA\xBB\xCC") == b"\xAA\xBB"
 
     with pytest.raises(util.BufferOutOfDataError):
         RawByte[2].unpack(b"\x00")
@@ -94,17 +97,20 @@ def test_char_array():
 
     assert_type_marshal(
         Char[2],
+
         ("ab", b"ab"),
     )
 
     assert_type_marshal(
         Char[Int8],
+
         ("ab", b"\x02ab"),
         ("",   b"\x00"),
     )
 
     assert_type_marshal(
         Char[None],
+
         ("abc", b"abc"),
     )
 

@@ -70,13 +70,13 @@ class UInt64(StructType):
     fmt      = "Q"
 
 class Float32(StructType):
-    """A 32-bit floating point :class:`~.Type`."""
+    """A 32-bit floating point value"""
 
     _default = 0.0
     fmt      = "f"
 
 class Float64(StructType):
-    """A 54-bit floating point :class:`~.Type`."""
+    """A 64-bit floating point value"""
 
     _default = 0.0
     fmt      = "d"
