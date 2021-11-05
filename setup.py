@@ -1,11 +1,10 @@
 import setuptools
-import pak
 
 # TODO: README.md as long_description
 
 setuptools.setup(
     name            = "pak",
-    version         = pak.__version__,
+    version         = "0.1.0",
     author          = "friedkeenan",
     description     = "A library for packet marshaling",
     url             = "https://github.com/friedkeenan/pak.py",
