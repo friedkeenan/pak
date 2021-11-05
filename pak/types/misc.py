@@ -230,16 +230,17 @@ class StructType(Type):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
-        # Compile a struct.Struct on class initialization
-        cls.struct = struct.Struct(f"{cls.endian}{cls.fmt}")
+        # Compile a struct.Struct on class initialization.
+        if cls.fmt is not None:
+            cls._struct = struct.Struct(f"{cls.endian}{cls.fmt}")
 
     @classmethod
     def _size(cls, *, ctx=None):
-        return cls.struct.size
+        return cls._struct.size
 
     @classmethod
     def _unpack(cls, buf, *, ctx=None):
-        ret = cls.struct.unpack(buf.read(cls.struct.size))
+        ret = cls._struct.unpack(buf.read(cls._struct.size))
 
         if len(ret) == 1:
             return ret[0]
@@ -249,6 +250,6 @@ class StructType(Type):
     @classmethod
     def _pack(cls, value, *, ctx=None):
         if util.is_iterable(value):
-            return cls.struct.pack(*value)
+            return cls._struct.pack(*value)
 
-        return cls.struct.pack(value)
+        return cls._struct.pack(value)
