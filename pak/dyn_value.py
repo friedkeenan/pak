@@ -131,9 +131,9 @@ class DynamicValue(abc.ABC):
         ...         return int(self.string)
         ...
         >>> with StringToIntDynamicValue.context():
-        ...     print(pak.DynamicValue("1").get())
+        ...     print(isinstance(pak.DynamicValue("1"), StringToIntDynamicValue))
         ...
-        1
+        True
         >>> pak.DynamicValue("1")
         '1'
         """
