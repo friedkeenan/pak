@@ -17,7 +17,7 @@ class DynamicValue(abc.ABC):
     machinery, make a subclass of :class:`DynamicValue`,
     setting the :attr:`_type` attribute to the type in question.
     Doing so will "enable" the subclass on class initialization.
-    This can be overriden by setting the :attr:`_enabled` attribute
+    This can be overridden by setting the :attr:`_enabled` attribute
     explicitly.
 
     Alternatively, there are also the :meth:`enable` and :meth:`disable`
