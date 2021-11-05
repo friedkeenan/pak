@@ -97,6 +97,12 @@ class Packet:
 
     _id_type = EmptyType
 
+    # The fields dictionary for 'Packet'.
+    #
+    # Since 'Packet' has no annotations, and has no parent to fall back on
+    # for its fields, we define it here.
+    _fields = {}
+
     @classmethod
     def id(cls, *, ctx=None):
         """Gets the ID of the :class:`Packet`.
@@ -139,12 +145,13 @@ class Packet:
 
     @classmethod
     def _init_fields_from_annotations(cls):
-        cls._fields = {}
-
         # In 3.10+ we can use inspect.get_annotations()
         annotations = getattr(cls, "__annotations__", None)
         if annotations is None:
+            # If we don't have our own annotations, fall back on the '_fields' attribute of our parent class.
             return
+
+        cls._fields = {}
 
         for attr, attr_type in annotations.items():
             real_type = Type(attr_type)
@@ -510,10 +517,6 @@ class Packet:
             f"{', '.join(f'{attr}={repr(value)}' for attr, value in self.enumerate_field_values())}"
             f")"
         )
-
-# Only automatically called for subclasses
-# so we need to call it manually here.
-Packet._init_fields_from_annotations()
 
 class GenericPacket(Packet):
     """A generic collection of data.
