@@ -12,6 +12,7 @@ def test_defaulted():
 
     assert_type_marshal(
         DefaultedInt8,
+
         (0, b"\x00"),
         (1, b"\x01"),
         (2, b"\x02"),

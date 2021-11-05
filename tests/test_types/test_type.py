@@ -1,6 +1,17 @@
 import pytest
 from pak import *
 
+class StringToIntDynamicValue(DynamicValue):
+    _type = str
+
+    _enabled = False
+
+    def __init__(self, string):
+        self.string = string
+
+    def get(self, *, ctx=None):
+        return int(self.string)
+
 def test_type_context():
     class MyPacketContext(PacketContext):
         def __init__(self, attr):
@@ -44,40 +55,18 @@ def test_prepare_types():
     test(1, None, None, None, test=None, other_test=None)
 
 def test_dynamic_size():
-    class StringToIntDynamicValue(DynamicValue):
-        _type = str
+    with StringToIntDynamicValue.context():
+        class TestSize(Type):
+            _size = "1"
 
-        def __init__(self, string):
-            self.string = string
-
-        def get(self, *, ctx=None):
-            return int(self.string)
-
-    class TestSize(Type):
-        _size = "1"
-
-    assert TestSize.size() == 1
-
-    # Disable StringToIntDynamicValue
-    StringToIntDynamicValue._type = None
+        assert TestSize.size() == 1
 
 def test_dynamic_default():
-    class StringToIntDynamicValue(DynamicValue):
-        _type = str
+    with StringToIntDynamicValue.context():
+        class TestDefault(Type):
+            _default = "1"
 
-        def __init__(self, string):
-            self.string = string
-
-        def get(self, *, ctx=None):
-            return int(self.string)
-
-    class TestDefault(Type):
-        _default = "1"
-
-    assert TestDefault.default() == 1
-
-    # Disable StringToIntDynamicValue
-    StringToIntDynamicValue._type = None
+        assert TestDefault.default() == 1
 
 def test_cached_make_type():
     class TestCall(Type):

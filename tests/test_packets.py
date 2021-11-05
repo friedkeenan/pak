@@ -3,6 +3,17 @@ from pak import *
 
 from .util import assert_packet_marshal, assert_packet_marshal_func
 
+class StringToIntDynamicValue(DynamicValue):
+    _type = str
+
+    _enabled = False
+
+    def __init__(self, string):
+        self.string = string
+
+    def get(self, *, ctx=None):
+        return int(self.string)
+
 def test_packet():
     class TestBasic(Packet):
         attr1: Int8
@@ -110,26 +121,15 @@ def test_id():
 
     assert TestStaticId.unpack_id(b"\x02") == 2
 
-    class StringToIntDynamicValue(DynamicValue):
-        _type = str
+    with StringToIntDynamicValue.context():
+        class TestDynamicId(Packet):
+            id = "1"
+            _id_type = Int8
 
-        def __init__(self, string):
-            self.string = string
+        assert TestDynamicId.id()     == 1
+        assert TestDynamicId().pack() == b"\x01"
 
-        def get(self, *, ctx=None):
-            return int(self.string)
-
-    class TestDynamicId(Packet):
-        id = "1"
-        _id_type = Int8
-
-    assert TestDynamicId.id()     == 1
-    assert TestDynamicId().pack() == b"\x01"
-
-    assert TestDynamicId.unpack_id(b"\x02") == 2
-
-    # Disable StringToIntDynamicValue
-    StringToIntDynamicValue._type = None
+        assert TestDynamicId.unpack_id(b"\x02") == 2
 
 def test_subclass_id():
     class Root(Packet):

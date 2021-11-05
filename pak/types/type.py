@@ -138,7 +138,7 @@ class Type(abc.ABC):
         if isinstance(obj, type) and issubclass(obj, Type):
             return True
 
-        for typelike_cls in cls._typelikes:
+        for typelike_cls in cls._typelikes.keys():
             if isinstance(obj, typelike_cls):
                 return True
 
@@ -153,18 +153,20 @@ class Type(abc.ABC):
             args_annotations, kwargs_annotations = util.arg_annotations(func, *args, **kwargs)
 
             new_args = [
-                Type(x) if y is Type
-                else x
+                Type(value) if annotation is Type
+                else value
 
-                for x, y in args_annotations
+                for value, annotation in args_annotations
             ]
 
-            new_kwargs = {}
-            for name, (value, annotation) in kwargs_annotations.items():
-                if annotation is Type:
-                    value = Type(value)
+            new_kwargs = {
+                name: (
+                    Type(value) if annotation is Type
+                    else value
+                )
 
-                new_kwargs[name] = value
+                for name, (value, annotation) in kwargs_annotations.items()
+            }
 
             return func(*new_args, **new_kwargs)
 
@@ -202,6 +204,13 @@ class Type(abc.ABC):
         # _call so that it's more clear that calling
         # a Type is separate from actually initializing
         # an instance of Type.
+        #
+        # We don't use a metaclass to override construction
+        # outright to simplify code. There is a possibility
+        # that if the '_call' method returns an instance of
+        # the type being called, it will go through to '__init__',
+        # but that will raise an error in '__init__' and
+        # shouldn't happen anyways.
         cls.__new__ = cls._call.__func__
 
     def __init__(self):
@@ -250,7 +259,7 @@ class Type(abc.ABC):
 
         Else, if the :attr:`_size` attribute is a :class:`DynamicValue`,
         which it is automatically transformed into on class construction
-        if applicable, the the dynamic value of that is returned.
+        if applicable, then the dynamic value of that is returned.
 
         Otherwise, if the :attr:`_size` attribute is any value
         other than ``None``, that value will be returned.

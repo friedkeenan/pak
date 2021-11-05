@@ -1,6 +1,7 @@
 """Code for transforming certain values into dynamic values."""
 
 import abc
+from contextlib import contextmanager
 
 from . import util
 
@@ -15,6 +16,12 @@ class DynamicValue(abc.ABC):
     To enroll a certain type into the :class:`DynamicValue`
     machinery, make a subclass of :class:`DynamicValue`,
     setting the :attr:`_type` attribute to the type in question.
+    Doing so will "enable" the subclass on class initialization.
+    This can be overriden by setting the :attr:`_enabled` attribute
+    explicitly.
+
+    Alternatively, there are also the :meth:`enable` and :meth:`disable`
+    methods, and the :meth:`context` method for context management.
 
     For instance, to enroll :class:`str` into the machinery:
 
@@ -42,10 +49,14 @@ class DynamicValue(abc.ABC):
         print(isinstance(v, StringDynamicValue))
         print(v.get())
 
+        StringDynamicValue.disable()
+        print(pak.DynamicValue("Hello"))
+
     .. testoutput::
 
         True
         olleH
+        Hello
 
     Parameters
     ----------
@@ -65,13 +76,16 @@ class DynamicValue(abc.ABC):
     ----------
     _type : :class:`type`
         The type for the :class:`DynamicValue` to deal with.
+    _enabled : :class:`bool`
+        Whether the :class:`DynamicValue` is enabled.
     """
 
-    _type = None
+    _type    = None
+    _enabled = None
 
     def __new__(cls, initial_value):
         for subclass in util.subclasses(DynamicValue):
-            if subclass._type is not None and isinstance(initial_value, subclass._type):
+            if subclass._enabled and isinstance(initial_value, subclass._type):
                 return subclass(initial_value)
 
         return initial_value
@@ -80,9 +94,56 @@ class DynamicValue(abc.ABC):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
-        # Reset __new__ to a conventional state.
+        if cls._enabled is None:
+            # TODO: Calling 'enable' sets the '_enabled' attribute, which may make
+            # this problematic with inheritance. Do we care about that use case?
+            cls.enable()
+
+        # Reset '__new__' to a conventional state.
         if cls.__new__ is DynamicValue.__new__:
             cls.__new__ = lambda cls, *args, **kwargs: object.__new__(cls)
+
+    @classmethod
+    def enable(cls):
+        """Enables the class to be used in the :class:`DynamicValue` machinery."""
+
+        cls._enabled = True
+
+    @classmethod
+    def disable(cls):
+        """Disables the class to be used in the :class:`DynamicValue` machinery."""
+
+        cls._enabled = False
+
+    @classmethod
+    @contextmanager
+    def context(cls):
+        """Temporarily enables then disables the class.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class StringToIntDynamicValue(pak.DynamicValue):
+        ...     _type = str
+        ...     def __init__(self, string):
+        ...         self.string = string
+        ...     def get(self, *, ctx=None):
+        ...         return int(self.string)
+        ...
+        >>> with StringToIntDynamicValue.context():
+        ...     print(pak.DynamicValue("1").get())
+        ...
+        1
+        >>> pak.DynamicValue("1")
+        '1'
+        """
+
+        try:
+            cls.enable()
+
+            yield
+        finally:
+            cls.disable()
 
     @abc.abstractmethod
     def get(self, *, ctx=None):

@@ -13,6 +13,7 @@ def test_enum():
 
     assert_type_marshal(
         EnumType,
+
         (EnumRaw.A, b"\x01"),
         (EnumRaw.B, b"\x02"),
     )

@@ -140,6 +140,7 @@ def test_char_array():
     Utf8Char = Char("utf-8")
     assert_type_marshal(
         Utf8Char[None],
+
         ("ab", b"ab"),
     )
 
@@ -150,17 +151,20 @@ def test_array():
 
     assert_type_marshal(
         Int8[2],
+
         ([0, 1], b"\x00\x01"),
     )
 
     assert_type_marshal(
         Int8[Int8],
+
         ([0, 1], b"\x02\x00\x01"),
         ([],     b"\x00"),
     )
 
     assert_type_marshal(
         Int8[None],
+
         ([0, 1, 2], b"\x00\x01\x02"),
     )
 

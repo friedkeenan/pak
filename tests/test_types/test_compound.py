@@ -16,11 +16,13 @@ def test_compound():
 
     assert_type_marshal(
         TestCompound,
+
         ((1, 2, "hi"), b"\x01\x02\x00hi"),
     )
 
     # Test attributes for good measure.
     obj = TestCompound.unpack(b"\x00\x00\x00aa")
+
     assert obj.first  == 0
     assert obj.second == 0
     assert obj.third  == "aa"

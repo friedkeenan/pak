@@ -70,6 +70,7 @@ def test_struct():
 
     assert_type_marshal(
         TestEndian,
+
         (1, b"\x00\x01"),
     )
 
@@ -78,5 +79,6 @@ def test_struct():
 
     assert_type_marshal(
         TestMultiple,
+
         ((1, 1), b"\x01\x01\x00"),
     )

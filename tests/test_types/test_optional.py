@@ -6,6 +6,7 @@ def test_optional():
     TestPrefix = Optional(Int8, Bool)
     assert_type_marshal(
         TestPrefix,
+
         (None, b"\x00"),
         (0,    b"\x01\x00"),
     )
@@ -13,6 +14,7 @@ def test_optional():
     TestEnd = Optional(Int8)
     assert_type_marshal(
         TestEnd,
+
         (None, b""),
         (0,    b"\x00"),
     )

@@ -18,6 +18,7 @@ def test_bit_mask():
 
     assert_type_marshal(
         TestMask,
+
         ((True,  0, 0),  b"\x01"),
         ((False, 1, 0),  b"\x02"),
         ((True,  1, 0),  b"\x03"),
