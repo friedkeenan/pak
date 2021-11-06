@@ -15,7 +15,6 @@ __all__ = [
     "PacketContext",
     "Packet",
     "GenericPacket",
-    "GenericPacketWithId",
 ]
 
 class PacketContext:
@@ -23,6 +22,10 @@ class PacketContext:
 
     To be inherited from by users of the library
     for their own contexts.
+
+    Warnings
+    --------
+    Subclasses must be hashable.
     """
 
 class Packet:
@@ -125,6 +128,11 @@ class Packet:
 
             The ID of a :class:`Packet` is not checked for
             equality between :class:`Packets <Packet>`.
+
+        Warnings
+        --------
+        The ID of a :class:`Packet` must be both hashable and equality
+        comparable for various facilities involving IDs to work correctly.
 
         Parameters
         ----------
@@ -437,7 +445,6 @@ class Packet:
 
         return cls._id_type.unpack(buf, ctx=TypeContext(None, ctx=ctx))
 
-    # In 3.9+ we can just use functools.cache
     @classmethod
     @util.cache
     def subclasses(cls):
@@ -472,6 +479,7 @@ class Packet:
         return util.subclasses(cls)
 
     @classmethod
+    @util.cache
     def subclass_with_id(cls, id, *, ctx=None):
         """Gets the subclass with the equivalent ID.
 
@@ -525,24 +533,3 @@ class GenericPacket(Packet):
     """
 
     data: RawByte[None]
-
-@util.cache
-def GenericPacketWithId(id, *, id_type):
-    """A factory for making :class:`GenericPacket` subclasses with IDs.
-
-    This factory is cached so that a new type is only made
-    when necessary.
-
-    Parameters
-    ----------
-    id
-        The ID for the new :class:`GenericPacket` subclass.
-    id_type : typelike
-        The :class:`~.Type` of the ID for the new
-        :class:`GenericPacket` subclass.
-    """
-
-    return type(f"GenericPacket({id})", (GenericPacket,), dict(
-        id       = id,
-        _id_type = id_type,
-    ))
