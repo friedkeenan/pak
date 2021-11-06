@@ -54,6 +54,20 @@ def test_prepare_types():
     # Nones will be converted to EmptyType
     test(1, None, None, None, test=None, other_test=None)
 
+def test_no_default():
+    class Test(EmptyType):
+        _default = None
+
+    with pytest.raises(TypeError, match="default value"):
+        Test.default()
+
+def test_no_size():
+    class Test(EmptyType):
+        _size = None
+
+    with pytest.raises(TypeError, match="size"):
+        Test.size()
+
 def test_dynamic_size():
     with StringToIntDynamicValue.context():
         class TestSize(Type):

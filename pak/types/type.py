@@ -324,12 +324,12 @@ class Type(abc.ABC):
 
         Raises
         ------
-        :exc:`NotImplementedError`
-            If the :attr:`_default` attribute is ``None``.
+        :exc:`TypeError`
+            If the :class:`Type` has no default value..
         """
 
         if cls._default is None:
-            raise NotImplementedError(f"No default has been set for {cls.__name}")
+            raise TypeError(f"{cls.__name__} has no default value")
 
         if inspect.ismethod(cls._default):
             return cls._default(ctx=ctx)
