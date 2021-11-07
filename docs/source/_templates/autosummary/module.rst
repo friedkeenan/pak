@@ -16,7 +16,7 @@
     :nosignatures:
 
     {% for item in modules %}
-    {{item}}
+    ~{{item}}
     {% endfor %}
 {% endif %}
 {% endblock %}

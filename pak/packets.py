@@ -191,10 +191,14 @@ class Packet:
             if isinstance(id, DynamicValue):
                 @classmethod
                 def real_id(cls, *, ctx=None):
+                    """Gets the ID of the packet."""
+
                     return id.get(ctx=ctx)
             else:
                 @classmethod
                 def real_id(cls, *, ctx=None):
+                    """Gets the ID of the packet."""
+
                     return id
 
             cls.id = real_id
