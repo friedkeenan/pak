@@ -42,6 +42,18 @@ def test_packet():
     with pytest.raises(TypeError):
         TestNoSize.size()
 
+def test_typelike_attr():
+    Type.register_typelike(int, lambda x: Int8)
+
+    class TestTypelike(Packet):
+        attr: 1
+
+    assert_packet_marshal(
+        (TestTypelike(attr=5), b"\x05"),
+    )
+
+    Type.unregister_typelike(int)
+
 def test_packet_property():
     class TestProperty(Packet):
         prop: Int8
