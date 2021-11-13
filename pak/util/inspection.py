@@ -17,16 +17,16 @@ def subclasses(*classes):
 
     Returns
     -------
-    :class:`set`
+    :class:`frozenset`
         The recursive subclasses of the arguments.
     """
 
-    recursive_subclasses = set()
+    recursive_subclasses = frozenset()
 
     for cls in classes:
         direct_subclasses = cls.__subclasses__()
 
-        recursive_subclasses |= set(direct_subclasses)
+        recursive_subclasses |= frozenset(direct_subclasses)
         recursive_subclasses |= subclasses(*direct_subclasses)
 
     return recursive_subclasses

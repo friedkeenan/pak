@@ -476,7 +476,7 @@ class Packet:
 
         Returns
         -------
-        :class:`set`
+        :class:`frozenset`
             The recursive subclasses of the :class:`Packet`.
         """
 
