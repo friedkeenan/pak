@@ -59,15 +59,15 @@ class Compound(Type):
         super().__set__(instance, value)
 
     @classmethod
-    def _default(cls, *, ctx=None):
+    def _default(cls, *, ctx):
         return cls.value_type(*(t.default(ctx=ctx) for t in cls.types()))
 
     @classmethod
-    def _unpack(cls, buf, *, ctx=None):
+    def _unpack(cls, buf, *, ctx):
         return cls.value_type(*(t.unpack(buf, ctx=ctx) for t in cls.types()))
 
     @classmethod
-    def _pack(cls, value, *, ctx=None):
+    def _pack(cls, value, *, ctx):
         return b"".join(
             t.pack(v, ctx=ctx) for v, t in zip(value, cls.types())
         )

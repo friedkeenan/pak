@@ -89,14 +89,14 @@ class Optional(Type):
         return cls.exists is None
 
     @classmethod
-    def _default(cls, *, ctx=None):
+    def _default(cls, *, ctx):
         if cls.has_function() and cls.exists(ctx.packet):
             return cls.elem_type.default(ctx=ctx)
 
         return None
 
     @classmethod
-    def _unpack(cls, buf, *, ctx=None):
+    def _unpack(cls, buf, *, ctx):
         if cls.is_prefixed_by_type():
             exists = cls.exists.unpack(buf, ctx=ctx)
             if exists:
@@ -113,7 +113,7 @@ class Optional(Type):
         return None
 
     @classmethod
-    def _pack(cls, value, *, ctx=None):
+    def _pack(cls, value, *, ctx):
         if cls.is_prefixed_by_type():
             if value is not None:
                 prefix = cls.exists.pack(True, ctx=ctx)

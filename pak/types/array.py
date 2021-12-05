@@ -126,7 +126,7 @@ class Array(Type):
         return cls.array_size is None
 
     @classmethod
-    def real_size(cls, *, ctx=None):
+    def real_size(cls, *, ctx):
         """Gets the real size of the :class:`Array` based on the :class:`~.TypeContext`.
 
         Parameters
@@ -173,7 +173,7 @@ class Array(Type):
         super().__delete__(instance)
 
     @classmethod
-    def _size(cls, *, ctx=None):
+    def _size(cls, *, ctx):
         if cls.is_fixed_size():
             return cls.array_size * cls.elem_type.size()
 
@@ -183,7 +183,7 @@ class Array(Type):
         raise TypeError(f"{cls.__name__} has no set size")
 
     @classmethod
-    def _default(cls, *, ctx=None):
+    def _default(cls, *, ctx):
         if cls.is_padding():
             return None
 
@@ -204,7 +204,7 @@ class Array(Type):
         return data
 
     @classmethod
-    def _unpack_padding_array(cls, buf, size, *, ctx=None):
+    def _unpack_padding_array(cls, buf, size, *, ctx):
         if size is None:
             buf.read()
             return None
@@ -213,21 +213,21 @@ class Array(Type):
         return None
 
     @classmethod
-    def _unpack_raw_byte_array(cls, buf, size, *, ctx=None):
+    def _unpack_raw_byte_array(cls, buf, size, *, ctx):
         if size is None:
             return bytearray(buf.read())
 
         return bytearray(cls._read_data(buf, size))
 
     @classmethod
-    def _unpack_char_array(cls, buf, size, *, ctx=None):
+    def _unpack_char_array(cls, buf, size, *, ctx):
         if size is None:
             return cls.elem_type.decode(buf)
 
         return cls.elem_type.decode(buf, chars=size)
 
     @classmethod
-    def _unpack_general_array(cls, buf, size, *, ctx=None):
+    def _unpack_general_array(cls, buf, size, *, ctx):
         if size is None:
             array = []
             while True:
@@ -241,7 +241,7 @@ class Array(Type):
         return [cls.elem_type.unpack(buf, ctx=ctx) for x in range(size)]
 
     @classmethod
-    def _unpack_array(cls, buf, size, *, ctx=None):
+    def _unpack_array(cls, buf, size, *, ctx):
         if cls.is_padding():
             return cls._unpack_padding_array(buf, size, ctx=ctx)
 
@@ -254,7 +254,7 @@ class Array(Type):
         return cls._unpack_general_array(buf, size, ctx=ctx)
 
     @classmethod
-    def _unpack(cls, buf, *, ctx=None):
+    def _unpack(cls, buf, *, ctx):
         if cls.should_read_until_end():
             size = None
         elif cls.is_prefixed_by_type():
@@ -265,7 +265,7 @@ class Array(Type):
         return cls._unpack_array(buf, size, ctx=ctx)
 
     @classmethod
-    def _pack_padding_array(cls, value, *, ctx=None):
+    def _pack_padding_array(cls, value, *, ctx):
         if cls.should_read_until_end():
             return b""
 
@@ -275,7 +275,7 @@ class Array(Type):
         return b"\x00" * cls.real_size(ctx=ctx)
 
     @classmethod
-    def _pack_raw_byte_array(cls, value, *, ctx=None):
+    def _pack_raw_byte_array(cls, value, *, ctx):
         if cls.should_read_until_end():
             return bytes(value)
 
@@ -288,7 +288,7 @@ class Array(Type):
         return bytes(value[:size]) + b"\x00" * (size - len(value))
 
     @classmethod
-    def _pack_char_array(cls, value, *, ctx=None):
+    def _pack_char_array(cls, value, *, ctx):
         if cls.should_read_until_end():
             return cls.elem_type.encode(value)
 
@@ -301,7 +301,7 @@ class Array(Type):
         return cls.elem_type.encode(value[:size] + "a" * (size - len(value)))
 
     @classmethod
-    def _pack_general_array(cls, value, *, ctx=None):
+    def _pack_general_array(cls, value, *, ctx):
         if cls.should_read_until_end():
             return b"".join(cls.elem_type.pack(x, ctx=ctx) for x in value)
 
@@ -316,7 +316,7 @@ class Array(Type):
         return b"".join(cls.elem_type.pack(x, ctx=ctx) for x in value)
 
     @classmethod
-    def _pack_array(cls, value, *, ctx=None):
+    def _pack_array(cls, value, *, ctx):
         if cls.is_padding():
             return cls._pack_padding_array(value, ctx=ctx)
 
@@ -329,7 +329,7 @@ class Array(Type):
         return cls._pack_general_array(value, ctx=ctx)
 
     @classmethod
-    def _pack(cls, value, *, ctx=None):
+    def _pack(cls, value, *, ctx):
         return cls._pack_array(value, ctx=ctx)
 
     @classmethod

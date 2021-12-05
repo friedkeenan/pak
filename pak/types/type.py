@@ -254,7 +254,7 @@ class Type(abc.ABC):
         then it should look like this::
 
             @classmethod
-            def _size(cls, *, ctx=None):
+            def _size(cls, *, ctx):
                 return my_size
 
         The return value of the :class:`classmethod` will be returned from
@@ -307,7 +307,7 @@ class Type(abc.ABC):
         then it should look like this::
 
             @classmethod
-            def _default(cls, *, ctx=None):
+            def _default(cls, *, ctx):
                 return my_default_value
 
         The return value of the :class:`classmethod` will be returned from
@@ -322,8 +322,10 @@ class Type(abc.ABC):
 
         Parameters
         ----------
-        ctx : :class:`TypeContext`
+        ctx : :class:`TypeContext` or ``None``
             The context for the type.
+
+            If ``None``, then an empty :class:`TypeContext` is used.
 
         Returns
         -------
@@ -338,6 +340,9 @@ class Type(abc.ABC):
 
         if cls._default is None:
             raise TypeError(f"{cls.__name__} has no default value")
+
+        if ctx is None:
+            ctx = TypeContext()
 
         if inspect.ismethod(cls._default):
             return cls._default(ctx=ctx)
@@ -410,7 +415,7 @@ class Type(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def _unpack(cls, buf, *, ctx=None):
+    def _unpack(cls, buf, *, ctx):
         """Unpacks raw data into its corresponding value.
 
         To be overridden by subclasses.
@@ -437,7 +442,7 @@ class Type(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def _pack(cls, value, *, ctx=None):
+    def _pack(cls, value, *, ctx):
         """Packs a value into its corresponding raw data.
 
         To be overridden by subclasses.

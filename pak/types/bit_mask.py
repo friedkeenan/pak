@@ -65,11 +65,11 @@ class BitMask(Type):
         super().__set__(instance, value)
 
     @classmethod
-    def _default(cls, *, ctx=None):
+    def _default(cls, *, ctx):
         return cls.value_type()
 
     @classmethod
-    def _unpack(cls, buf, *, ctx=None):
+    def _unpack(cls, buf, *, ctx):
         int_value = cls.elem_type.unpack(buf, ctx=ctx)
 
         elems = []
@@ -86,7 +86,7 @@ class BitMask(Type):
         return cls.value_type(*elems)
 
     @classmethod
-    def _pack(cls, value, *, ctx=None):
+    def _pack(cls, value, *, ctx):
         int_value = 0
 
         for bits, elem in zip(cls.masks.values(), value):

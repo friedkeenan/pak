@@ -46,16 +46,16 @@ class Enum(Type):
     enum_type = None
 
     @classmethod
-    def _default(cls, *, ctx=None):
+    def _default(cls, *, ctx):
         # Get the first member of the enum type.
         return next(iter(cls.enum_type.__members__.values()))
 
     @classmethod
-    def _unpack(cls, buf, *, ctx=None):
+    def _unpack(cls, buf, *, ctx):
         return cls.enum_type(cls.elem_type.unpack(buf, ctx=ctx))
 
     @classmethod
-    def _pack(cls, value, *, ctx=None):
+    def _pack(cls, value, *, ctx):
         return cls.elem_type.pack(value.value, ctx=ctx)
 
     @classmethod

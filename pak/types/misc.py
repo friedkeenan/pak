@@ -40,15 +40,15 @@ class EmptyType(Type):
         pass
 
     @classmethod
-    def _default(cls, *, ctx=None):
+    def _default(cls, *, ctx):
         return None
 
     @classmethod
-    def _unpack(cls, buf, *, ctx=None):
+    def _unpack(cls, buf, *, ctx):
         return None
 
     @classmethod
-    def _pack(cls, value, *, ctx=None):
+    def _pack(cls, value, *, ctx):
         return b""
 
 Type.register_typelike(type(None), lambda x: EmptyType)
@@ -78,18 +78,18 @@ class Padding(Type):
         pass
 
     @classmethod
-    def _default(cls, *, ctx=None):
+    def _default(cls, *, ctx):
         return None
 
     @classmethod
-    def _unpack(cls, buf, *, ctx=None):
+    def _unpack(cls, buf, *, ctx):
         if len(buf.read(1)) < 1:
             raise util.BufferOutOfDataError("Reading padding failed")
 
         return None
 
     @classmethod
-    def _pack(cls, value, *, ctx=None):
+    def _pack(cls, value, *, ctx):
         return b"\x00"
 
 class RawByte(Type):
@@ -105,7 +105,7 @@ class RawByte(Type):
     _default = b"\x00"
 
     @classmethod
-    def _unpack(cls, buf, *, ctx=None):
+    def _unpack(cls, buf, *, ctx):
         byte = buf.read(1)
 
         if len(byte) < 1:
@@ -114,7 +114,7 @@ class RawByte(Type):
         return byte
 
     @classmethod
-    def _pack(cls, value, *, ctx=None):
+    def _pack(cls, value, *, ctx):
         return bytes(value[:1])
 
 class Char(Type):
@@ -192,11 +192,11 @@ class Char(Type):
         return string.encode(cls.encoding)
 
     @classmethod
-    def _unpack(cls, buf, *, ctx=None):
+    def _unpack(cls, buf, *, ctx):
         return cls.decode(buf, chars=1)
 
     @classmethod
-    def _pack(cls, value, *, ctx=None):
+    def _pack(cls, value, *, ctx):
         return cls.encode(value[:1])
 
     @classmethod
@@ -235,11 +235,11 @@ class StructType(Type):
             cls._struct = struct.Struct(f"{cls.endian}{cls.fmt}")
 
     @classmethod
-    def _size(cls, *, ctx=None):
+    def _size(cls, *, ctx):
         return cls._struct.size
 
     @classmethod
-    def _unpack(cls, buf, *, ctx=None):
+    def _unpack(cls, buf, *, ctx):
         ret = cls._struct.unpack(buf.read(cls._struct.size))
 
         if len(ret) == 1:
@@ -248,7 +248,7 @@ class StructType(Type):
         return ret
 
     @classmethod
-    def _pack(cls, value, *, ctx=None):
+    def _pack(cls, value, *, ctx):
         if util.is_iterable(value):
             return cls._struct.pack(*value)
 
