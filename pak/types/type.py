@@ -43,6 +43,9 @@ class TypeContext:
         self.packet_ctx = ctx
 
     def __getattr__(self, attr):
+        if self.packet_ctx is None:
+            raise AttributeError(f"'{type(self).__qualname__}' object has no attribute '{attr}'")
+
         return getattr(self.packet_ctx, attr)
 
 class Type(abc.ABC):
@@ -266,8 +269,10 @@ class Type(abc.ABC):
 
         Parameters
         ----------
-        ctx : :class:`TypeContext`
+        ctx : :class:`TypeContext` or ``None``
             The context for the :class:`Type`
+
+            If ``None``, then an empty :class:`TypeContext` is used.
 
         Returns
         -------
@@ -279,6 +284,9 @@ class Type(abc.ABC):
         :exc:`TypeError`
             If the :class:`Type` has no size.
         """
+
+        if ctx is None:
+            ctx = TypeContext()
 
         if cls._size is None:
             raise TypeError(f"{cls.__name__} has no size")
@@ -353,8 +361,10 @@ class Type(abc.ABC):
         ----------
         buf : file object or :class:`bytes` or :class:`bytearray`
             The buffer containing the raw data.
-        ctx : :class:`TypeContext`
+        ctx : :class:`TypeContext` or ``None``
             The context for the type.
+
+            If ``None``, then an empty :class:`TypeContext` is used.
 
         Returns
         -------
@@ -363,6 +373,9 @@ class Type(abc.ABC):
         """
 
         buf = util.file_object(buf)
+
+        if ctx is None:
+            ctx = TypeContext()
 
         return cls._unpack(buf, ctx=ctx)
 
@@ -379,14 +392,19 @@ class Type(abc.ABC):
         ----------
         value
             The value to pack.
-        ctx : :class:`TypeContext`
+        ctx : :class:`TypeContext` or ``None``
             The context for the type.
+
+            If ``None``, then an empty :class:`TypeContext` is used.
 
         Returns
         -------
         :class:`bytes`
             The corresponding raw data.
         """
+
+        if ctx is None:
+            ctx = TypeContext()
 
         return cls._pack(value, ctx=ctx)
 

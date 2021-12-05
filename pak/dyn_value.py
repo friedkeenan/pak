@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from . import util
 
 class DynamicValue(abc.ABC):
-    """A definition of how to dynamically get a vlue from another.
+    """A definition of how to dynamically get a value from another.
 
     :class:`Types <~.Type>` and :class:`Packets <~.Packet>`
     have certain attributes whose values can be transformed
@@ -151,7 +151,7 @@ class DynamicValue(abc.ABC):
 
         Parameters
         ----------
-        ctx : :class:`PacketContext` or :class:`TypeContext`
+        ctx : :class:`~.PacketContext` or :class:`~.TypeContext`
             The context for the dynamic value.
 
         Returns
