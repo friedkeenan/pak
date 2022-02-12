@@ -106,12 +106,65 @@ def test_packet_inheritance():
     class TestChildOverride(TestParent):
         other: Int8
 
-    # Annotations will get passed down unless explicated
+    # Fields will get passed down
     assert list(TestChildBasic.enumerate_field_types())    == [("test", Int8)]
-    assert list(TestChildOverride.enumerate_field_types()) == [("other", Int8)]
+    assert list(TestChildOverride.enumerate_field_types()) == [("test", Int8), ("other", Int8)]
 
     assert TestChildBasic()    == TestParent()
     assert TestChildOverride() != TestParent()
+
+    assert_packet_marshal(
+        (
+            TestChildBasic(test=1),
+
+            b"\x01"
+        ),
+
+        (
+            TestChildOverride(test=1, other=2),
+
+            b"\x01\x02"
+        ),
+    )
+
+    with pytest.raises(DuplicateFieldError, match="test"):
+        class TestDuplicateField(TestParent):
+            test: Int8
+
+def test_packet_multiple_inheritance():
+    class FirstParent(Packet):
+        first: Int8
+
+    class SecondParent(Packet):
+        second: Int16
+
+    class Child(FirstParent, SecondParent):
+        child: Int32
+
+    assert list(Child.enumerate_field_types()) == [
+        ("first",  Int8),
+        ("second", Int16),
+        ("child",  Int32),
+    ]
+
+    assert_packet_marshal(
+        (
+            Child(first=1, second=2, child=3),
+
+            b"\x01\x02\x00\x03\x00\x00\x00"
+        ),
+    )
+
+    assert Child() != FirstParent()
+    assert Child() != SecondParent()
+
+    with pytest.raises(DuplicateFieldError, match="first"):
+        class TestDuplicateFirstField(FirstParent, SecondParent):
+            first: Int64
+
+    with pytest.raises(DuplicateFieldError, match="second"):
+        class TestDuplicateSecondFeld(FirstParent, SecondParent):
+            second: Int64
 
 def test_id():
     class TestEmpty(Packet):

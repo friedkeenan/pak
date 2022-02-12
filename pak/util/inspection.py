@@ -4,7 +4,8 @@ import inspect
 
 __all__ = [
     "subclasses",
-    "arg_annotations",
+    "annotations",
+    "bind_annotations",
 ]
 
 def subclasses(*classes):
@@ -31,7 +32,27 @@ def subclasses(*classes):
 
     return recursive_subclasses
 
-def arg_annotations(func, *args, **kwargs):
+def annotations(obj):
+    """Gets the annotations of a callable, :class:`type`, or module.
+
+    Parameters
+    ----------
+    obj : callable or :class:`type` or module
+        The object to get the annotations of.
+
+    Returns
+    -------
+    :class:`dict`
+        The annotations of ``obj``. If ``obj`` has no annotations,
+        an empty :class:`dict` is returned.
+    """
+
+    # TODO: Remove when Python 3.9 support is dropped.
+    # Replace with 'inspect.get_annotations'.
+
+    return getattr(obj, "__annotations__", {})
+
+def bind_annotations(func, *args, **kwargs):
     """Maps function arguments to their annotations.
 
     Parameters

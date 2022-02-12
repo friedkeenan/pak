@@ -17,7 +17,32 @@ def test_subclasses():
 
     assert util.subclasses(Root) == {Child1, Child2, GrandChild1}
 
-def test_arg_annoations():
+def test_annotations():
+    def test_empty_callable(x):
+        pass
+
+    def test_annotated_callable(x: 1):
+        pass
+
+    assert util.annotations(test_empty_callable)     == {}
+    assert util.annotations(test_annotated_callable) == {"x": 1}
+
+    class TestEmptyClass:
+        pass
+
+    class TestAnnotatedClass:
+        x: 1
+
+    assert util.annotations(TestEmptyClass)     == {}
+    assert util.annotations(TestAnnotatedClass) == {"x": 1}
+
+    from . import empty_module
+    from . import annotated_module
+
+    assert util.annotations(empty_module)     == {}
+    assert util.annotations(annotated_module) == {"x": 1}
+
+def test_bind_annotations():
     def test_basic(x, y, z):
         pass
 
@@ -47,18 +72,18 @@ def test_arg_annoations():
         pass
 
     with pytest.raises(TypeError, match="Invalid keyword"):
-        util.arg_annotations(test_basic, 1, 2, 3, blah=4)
+        util.bind_annotations(test_basic, 1, 2, 3, blah=4)
 
     with pytest.raises(TypeError, match="Too many positional"):
-        util.arg_annotations(test_basic, 1, 2, 3, 4)
+        util.bind_annotations(test_basic, 1, 2, 3, 4)
 
     with pytest.raises(TypeError, match="Too many positional"):
-        util.arg_annotations(test_keyword_required, 1, 2, 3)
+        util.bind_annotations(test_keyword_required, 1, 2, 3)
 
     with pytest.raises(TypeError, match="Positional only"):
-        util.arg_annotations(test_positional_only, x=1, y=2, z=3)
+        util.bind_annotations(test_positional_only, x=1, y=2, z=3)
 
-    args_annotations, kwargs_annotations = util.arg_annotations(test_var_args, 1, 2, 3, 4, z=5)
+    args_annotations, kwargs_annotations = util.bind_annotations(test_var_args, 1, 2, 3, 4, z=5)
     assert len(args_annotations)   == 4
     assert len(kwargs_annotations) == 1
 
@@ -71,7 +96,7 @@ def test_arg_annoations():
 
     assert kwargs_annotations["z"] == (5, 4)
 
-    args_annotations, kwargs_annotations = util.arg_annotations(test_var_kwargs, 1, 2, z=3, blah=4, other=5)
+    args_annotations, kwargs_annotations = util.bind_annotations(test_var_kwargs, 1, 2, z=3, blah=4, other=5)
     assert len(args_annotations)   == 2
     assert len(kwargs_annotations) == 3
 
@@ -86,7 +111,7 @@ def test_arg_annoations():
         kwargs_annotations["other"] == (5, 4)
     )
 
-    args_annotations, kwargs_annotations = util.arg_annotations(test_var_both, 1, 2, 3, 4, z=5, blah=6, other=7)
+    args_annotations, kwargs_annotations = util.bind_annotations(test_var_both, 1, 2, 3, 4, z=5, blah=6, other=7)
     assert len(args_annotations)   == 4
     assert len(kwargs_annotations) == 3
 

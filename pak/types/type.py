@@ -153,7 +153,7 @@ class Type(abc.ABC):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            args_annotations, kwargs_annotations = util.arg_annotations(func, *args, **kwargs)
+            args_annotations, kwargs_annotations = util.bind_annotations(func, *args, **kwargs)
 
             new_args = [
                 Type(value) if annotation is Type

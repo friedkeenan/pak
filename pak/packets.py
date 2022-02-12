@@ -13,6 +13,7 @@ from .types.misc import RawByte, EmptyType
 
 __all__ = [
     "PacketContext",
+    "DuplicateFieldError",
     "Packet",
     "GenericPacket",
 ]
@@ -27,6 +28,22 @@ class PacketContext:
     --------
     Subclasses must be hashable.
     """
+
+class DuplicateFieldError(Exception):
+    """An error indicating a field was defined twice.
+
+    Raised when declaring a field already declared in a parent :class:`Packet`.
+
+    Parameters
+    ----------
+    packet_cls : subclass of :class:`Packet`
+        The :class:`Packet` which duplicated a field.
+    field : :class:`str`
+        The name of the field which was duplicated.
+    """
+
+    def __init__(self, packet_cls, field):
+        super().__init__(f"Duplicate definition of '{field}' in packet {packet_cls.__qualname__}!")
 
 class Packet:
     r"""A collection of values that can be marshaled to and from
@@ -153,15 +170,23 @@ class Packet:
 
     @classmethod
     def _init_fields_from_annotations(cls):
-        # In 3.10+ we can use inspect.get_annotations()
-        annotations = getattr(cls, "__annotations__", {})
-        if len(annotations) == 0:
-            # If we don't have our own annotations, fall back on the '_fields' attribute of our parent class.
-            return
+        annotations = util.annotations(cls)
 
         cls._fields = {}
+        for base in cls.mro()[1:]:
+            if not issubclass(base, Packet):
+                continue
+
+            for attr, attr_type in base.enumerate_field_types():
+                if attr in cls._fields:
+                    raise DuplicateFieldError(cls, attr)
+
+                cls._fields[attr] = attr_type
 
         for attr, attr_type in annotations.items():
+            if attr in cls._fields:
+                raise DuplicateFieldError(cls, attr)
+
             real_type = Type(attr_type)
 
             cls._fields[attr] = real_type
@@ -172,7 +197,7 @@ class Packet:
             if not hasattr(cls, attr):
                 descriptor = real_type.descriptor()
 
-                # Set the name manually because __set_name__
+                # Set the name manually because '__set_name__'
                 # only gets called on type construction, and
                 # furthermore before __init_subclass__ is called.
                 descriptor.__set_name__(cls, attr)
