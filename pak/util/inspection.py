@@ -45,10 +45,22 @@ def annotations(obj):
     :class:`dict`
         The annotations of ``obj``. If ``obj`` has no annotations,
         an empty :class:`dict` is returned.
+
+        Inherited annotations are ignored.
     """
 
     # TODO: Remove when Python 3.9 support is dropped.
     # Replace with 'inspect.get_annotations'.
+
+    if isinstance(obj, type):
+        # Access annotations through the '__dict__' attribute
+        # so that inherited annotations are ignored.
+
+        obj_dict = getattr(obj, "__dict__", None)
+        if obj_dict is None or not hasattr(obj_dict, "get"):
+            return {}
+
+        return obj_dict.get("__annotations__", {})
 
     return getattr(obj, "__annotations__", {})
 
