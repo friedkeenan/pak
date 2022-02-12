@@ -33,8 +33,12 @@ def test_annotations():
     class TestAnnotatedClass:
         x: 1
 
-    assert util.annotations(TestEmptyClass)     == {}
-    assert util.annotations(TestAnnotatedClass) == {"x": 1}
+    class TestEmptyChildClass(TestAnnotatedClass):
+        pass
+
+    assert util.annotations(TestEmptyClass)      == {}
+    assert util.annotations(TestAnnotatedClass)  == {"x": 1}
+    assert util.annotations(TestEmptyChildClass) == {}
 
     from . import empty_module
     from . import annotated_module
