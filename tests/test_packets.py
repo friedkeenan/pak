@@ -163,8 +163,18 @@ def test_packet_multiple_inheritance():
             first: Int64
 
     with pytest.raises(DuplicateFieldError, match="second"):
-        class TestDuplicateSecondFeld(FirstParent, SecondParent):
+        class TestDuplicateSecondField(FirstParent, SecondParent):
             second: Int64
+
+    class DuplicateFirstParent(Packet):
+        test: Int8
+
+    class DuplicateSecondParent(Packet):
+        test: Int16
+
+    with pytest.raises(DuplicateFieldError, match="test"):
+        class TestDuplicateFieldFromParents(DuplicateFirstParent, DuplicateSecondParent):
+            pass
 
 def test_id():
     class TestEmpty(Packet):
