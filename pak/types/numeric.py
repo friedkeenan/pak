@@ -1,4 +1,4 @@
-""":class:`Types <.Type>` for numbers."""
+r""":class:`~.Type`\s for numbers."""
 
 from .misc import StructType
 

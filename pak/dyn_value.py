@@ -8,10 +8,9 @@ from . import util
 class DynamicValue(abc.ABC):
     """A definition of how to dynamically get a value from another.
 
-    :class:`Types <~.Type>` and :class:`Packets <~.Packet>`
-    have certain attributes whose values can be transformed
-    into something callable-*ish*. :class:`DynamicValue` is
-    the mechanism behind that transformation.
+    :class:`~.Type`s and :class:`~.Packet`s have certain attributes
+    whose values can be transformed into something callable-*ish*.
+    :class:`DynamicValue` is the mechanism behind that transformation.
 
     To enroll a certain type into the :class:`DynamicValue`
     machinery, make a subclass of :class:`DynamicValue`,

@@ -1,4 +1,4 @@
-""":class:`Types <.Type>` for contiguous data."""
+r""":class:`~.Type`\s for contiguous data."""
 
 import inspect
 

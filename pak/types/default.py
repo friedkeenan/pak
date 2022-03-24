@@ -1,4 +1,4 @@
-""":class:`Types <.Type>` for manipulating default values."""
+r""":class:`~.Type`\s for manipulating default values."""
 
 from .type import Type
 

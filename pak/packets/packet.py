@@ -1,4 +1,4 @@
-"""Generic code for :class:`Packets <.Packet>`."""
+r"""Generic code for :class:`~.Packet`\s."""
 
 # This module isn't split up currently because it has
 # so few members, but in the event it gets too large,
@@ -6,10 +6,10 @@
 
 import inspect
 
-from . import util
-from .dyn_value import DynamicValue
-from .types.type import Type, TypeContext
-from .types.misc import RawByte, EmptyType
+from .. import util
+from ..dyn_value import DynamicValue
+from ..types.type import Type, TypeContext
+from ..types.misc import RawByte, EmptyType
 
 __all__ = [
     "PacketContext",
@@ -47,12 +47,12 @@ class DuplicateFieldError(Exception):
 
 class Packet:
     r"""A collection of values that can be marshaled to and from
-    raw data using :class:`Types <.Type>`.
+    raw data using :class:`~.Type`\s.
 
     The difference between a :class:`Packet` and a :class:`~.Type`
-    is that :class:`Types <.Type>` only define how to marshal
-    values to and from raw data, while :class:`Packets <Packet>`
-    actually *contain* values themselves.
+    is that :class:`~.Type`\s only define how to marshal values
+    to and from raw data, while :class:`Packet`\s actually *contain*
+    values themselves.
 
     To unpack a :class:`Packet` from raw data, you should use
     the :meth:`unpack` method instead of the constructor.
@@ -125,7 +125,7 @@ class Packet:
 
     @classmethod
     def id(cls, *, ctx=None):
-        """Gets the ID of the :class:`Packet`.
+        r"""Gets the ID of the :class:`Packet`.
 
         Lots of packet protocols prefix packets with
         an ID to determine what type of packet should
@@ -144,7 +144,7 @@ class Packet:
         .. note::
 
             The ID of a :class:`Packet` is not checked for
-            equality between :class:`Packets <Packet>`.
+            equality between :class:`Packet`\s.
 
         Warnings
         --------
@@ -161,7 +161,7 @@ class Packet:
         any
             By default returns ``None``, and if the ID is ``None``
             then the :class:`Packet` shouldn't be considered when
-            looking up :class:`Packets <Packet>` from their ID.
+            looking up :class:`Packet`\s from their ID.
 
             Otherwise the ID of the :class:`Packet`.
         """
@@ -352,7 +352,7 @@ class Packet:
 
     @classmethod
     def enumerate_field_types(cls):
-        """Enumerates the :class:`Types <.Type>` of the fields of the :class:`Packet`.
+        r"""Enumerates the :class:`~.Type`\s of the fields of the :class:`Packet`.
 
         Returns
         -------
@@ -402,7 +402,7 @@ class Packet:
             yield attr, getattr(self, attr)
 
     def enumerate_field_types_and_values(self):
-        """Enumerates the :class:`Types <.Type>` and values of the fields of the :class:`Packet`.
+        r"""Enumerates the :class:`~.Type`\s and values of the fields of the :class:`Packet`.
 
         Returns
         -------
@@ -477,20 +477,19 @@ class Packet:
     @classmethod
     @util.cache
     def subclasses(cls):
-        """Gets the recursive subclasses of the :class:`Packet`.
+        r"""Gets the recursive subclasses of the :class:`Packet`.
 
-        Useful for when you have categories of :class:`Packets <Packet>`,
-        such as serverbound and clientbound, and so you can have an empty
-        class like
+        Useful for when you have categories of :class:`Packet`\s, such as
+        serverbound and clientbound, and so you can have an empty class like
 
         ::
 
             class ServerboundPacket(Packet):
                 pass
 
-        which all serverbound :class:`Packets <Packet>` would inherit from,
+        which all serverbound :class:`Packet`\s would inherit from,
         and then use :meth:`subclasses` to automatically get all the
-        serverbound :class:`Packets <Packet>`.
+        serverbound :class:`Packet`\s.
 
         .. note::
 

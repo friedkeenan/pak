@@ -1,4 +1,4 @@
-"""Enumeration :class:`Types <.Type>`."""
+r"""Enumeration :class:`~.Type`\s."""
 
 from .type import Type
 

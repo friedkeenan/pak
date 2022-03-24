@@ -1,4 +1,4 @@
-""":class:`Types <.Type>` for marshaling data that might exist."""
+r""":class:`~.Type`\s for marshaling data that might exist."""
 
 import inspect
 

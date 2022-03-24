@@ -9,7 +9,8 @@ Packets
     :toctree: reference
     :nosignatures:
 
-    ~packets
+    ~packets.packet
+    ~packets.packet_handler
 
 Types
 #####

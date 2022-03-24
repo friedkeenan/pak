@@ -1,4 +1,4 @@
-"""Miscellaneous :class:`Types <.Type>`."""
+r"""Miscellaneous :class:`~.Type`\s."""
 
 import codecs
 import struct
@@ -118,7 +118,7 @@ class RawByte(Type):
         return bytes(value[:1])
 
 class Char(Type):
-    """A single character.
+    r"""A single character.
 
     Can be used with :class:`~.Array`, for which
     this :class:`~.Type` is special-cased to produce
@@ -131,7 +131,7 @@ class Char(Type):
     .. note::
 
         ``Char[None]`` will read to the end of the buffer
-        as other :class:`Arrays <~.Array>` will, **not**
+        as other :class:`~.Array`\s will, **not**
         just to the next null-byte.
 
     Parameters

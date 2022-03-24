@@ -1,7 +1,7 @@
 import pytest
 from pak import *
 
-from .util import assert_packet_marshal, assert_packet_marshal_func
+from ..util import assert_packet_marshal, assert_packet_marshal_func
 
 class StringToIntDynamicValue(DynamicValue):
     _type = str

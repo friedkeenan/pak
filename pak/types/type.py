@@ -1,4 +1,4 @@
-"""Base code for :class:`Types <.Type>`."""
+r"""Base code for :class:`~.Type`\s."""
 
 import abc
 import inspect

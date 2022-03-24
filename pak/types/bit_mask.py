@@ -1,4 +1,4 @@
-""":class:`Types <.Type>` for bitmasks."""
+r""":class:`~.Type`\s for bitmasks."""
 
 from collections import namedtuple
 

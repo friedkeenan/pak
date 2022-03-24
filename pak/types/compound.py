@@ -1,4 +1,4 @@
-""":class:`Types <.Type>` for combining :class:`Types <.Type>`."""
+r""":class:`~.Type`\s for combining :class:`~.Type`\s."""
 
 from collections import namedtuple
 
@@ -9,7 +9,7 @@ __all__ = [
 ]
 
 class Compound(Type):
-    """A :class:`~.Type` comprised of other :class:`Types <.Type>`.
+    r"""A :class:`~.Type` comprised of other :class:`~.Type`\s.
 
     The value type of a :class:`Compound` is a
     :func:`collections.namedtuple`. Setting the
@@ -23,7 +23,7 @@ class Compound(Type):
         The name of the new :class:`Compound`.
     **elems : typelike
         The name of the fields and their
-        corresponding :class:`Types <.Type>`.
+        corresponding :class:`~.Type`\s.
 
         The fields of a :class:`Compound` are
         contiguous with no spacing in between,
@@ -42,12 +42,12 @@ class Compound(Type):
 
     @classmethod
     def types(cls):
-        """Gets the :class:`Types <.Type>` of the fields of the :class:`Compound`.
+        r"""Gets the :class:`~.Type`\s of the fields of the :class:`Compound`.
 
         Parameters
         ----------
         iterable
-            The :class:`Types <.Type>` of the fields of the :class:`Compound`.
+            The :class:`~.Type`\s of the fields of the :class:`Compound`.
         """
 
         return cls.elems.values()
