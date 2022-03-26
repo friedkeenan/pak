@@ -1,5 +1,6 @@
 r"""Enumeration :class:`~.Type`\s."""
 
+from .. import util
 from .type import Type
 
 __all__ = [
@@ -40,10 +41,14 @@ class Enum(Type):
     b'\x02'
     >>> EnumType.unpack(b"\x02")
     <MyEnum.B: 2>
+    >>> EnumType.unpack(b"\x03") is pak.Enum.INVALID
+    True
     """
 
     elem_type = None
     enum_type = None
+
+    INVALID = util.UniqueSentinel("INVALID")
 
     @classmethod
     def _default(cls, *, ctx):
@@ -52,10 +57,18 @@ class Enum(Type):
 
     @classmethod
     def _unpack(cls, buf, *, ctx):
-        return cls.enum_type(cls.elem_type.unpack(buf, ctx=ctx))
+            value = cls.elem_type.unpack(buf, ctx=ctx)
+
+            try:
+                return cls.enum_type(value)
+            except ValueError:
+                return cls.INVALID
 
     @classmethod
     def _pack(cls, value, *, ctx):
+        if value is cls.INVALID:
+            raise ValueError(f"Cannot pack invalid value for {cls.__qualname__}")
+
         return cls.elem_type.pack(value.value, ctx=ctx)
 
     @classmethod

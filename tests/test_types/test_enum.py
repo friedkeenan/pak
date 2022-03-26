@@ -20,5 +20,7 @@ def test_enum():
 
     assert EnumType.default() == EnumRaw.A
 
-    with pytest.raises(ValueError, match="not a valid"):
-        EnumType.unpack(b"\x03")
+    assert EnumType.unpack(b"\x03") is Enum.INVALID
+
+    with pytest.raises(ValueError, match="invalid value"):
+        EnumType.pack(Enum.INVALID)

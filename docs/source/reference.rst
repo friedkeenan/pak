@@ -39,6 +39,7 @@ Utilities
     ~util.exceptions
     ~util.inspection
     ~util.interfaces
+    ~util.misc
 
 Other Modules
 #############
