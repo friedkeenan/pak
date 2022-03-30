@@ -13,6 +13,7 @@ from ..types.misc import RawByte, EmptyType
 
 __all__ = [
     "PacketContext",
+    "ReservedFieldError",
     "DuplicateFieldError",
     "Packet",
     "GenericPacket",
@@ -29,6 +30,22 @@ class PacketContext:
     Subclasses must be hashable.
     """
 
+class ReservedFieldError(Exception):
+    """An error indicating a field was defined with a reserved name.
+
+    See :attr:`Packet.RESERVED_FIELDS` for more information.
+
+    Parameters
+    ----------
+    packet_cls : subclass of :class:`Packet`
+        The :class:`Packet` which used a reserved field name.
+    field : :class:`str`
+        The name of the offending field.
+    """
+
+    def __init__(self, packet_cls, field):
+        super().__init__(f"Definition of a field with a reserved name '{field}' in packet '{packet_cls.__qualname__}'")
+
 class DuplicateFieldError(Exception):
     """An error indicating a field was defined twice.
 
@@ -43,7 +60,7 @@ class DuplicateFieldError(Exception):
     """
 
     def __init__(self, packet_cls, field):
-        super().__init__(f"Duplicate definition of '{field}' in packet {packet_cls.__qualname__}!")
+        super().__init__(f"Duplicate definition of '{field}' in packet '{packet_cls.__qualname__}'")
 
 class Packet:
     r"""A collection of values that can be marshaled to and from
@@ -123,6 +140,10 @@ class Packet:
     # for its fields, we define it here.
     _fields = {}
 
+    RESERVED_FIELDS = [
+        "ctx",
+    ]
+
     @classmethod
     def id(cls, *, ctx=None):
         r"""Gets the ID of the :class:`Packet`.
@@ -184,6 +205,9 @@ class Packet:
                 cls._fields[attr] = attr_type
 
         for attr, attr_type in annotations.items():
+            if attr in cls.RESERVED_FIELDS:
+                raise ReservedFieldError(cls, attr)
+
             if attr in cls._fields:
                 raise DuplicateFieldError(cls, attr)
 
@@ -246,7 +270,7 @@ class Packet:
         # All the kwargs should be used up by the end of the
         # above loop because we pop them out.
         if len(kwargs) > 0:
-            raise TypeError(f"Unexpected keyword arguments for {type(self).__name__}: {kwargs}")
+            raise TypeError(f"Unexpected keyword arguments for '{type(self).__qualname__}': {kwargs}")
 
     @classmethod
     def unpack(cls, buf, *, ctx=None):
@@ -546,6 +570,8 @@ class Packet:
             for (_, value), (_, other_value) in
             zip(self.enumerate_field_values(), other.enumerate_field_values())
         )
+
+    # Do not implement '__hash__' as Packets are not immutable.
 
     def __repr__(self):
         return (

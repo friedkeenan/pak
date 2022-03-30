@@ -42,6 +42,11 @@ def test_packet():
     with pytest.raises(TypeError):
         TestNoSize.size()
 
+def test_reserved_field():
+    with pytest.raises(ReservedFieldError, match="ctx"):
+        class TestReservedField(Packet):
+            ctx: Int8
+
 def test_typelike_attr():
     Type.register_typelike(int, lambda x: Int8)
 
