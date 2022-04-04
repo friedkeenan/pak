@@ -111,7 +111,7 @@ class PacketHandler:
         ...     # Do things with 'packet' here.
         ...     pass
         ...
-        >>> handler = PacketHandler()
+        >>> handler = pak.PacketHandler()
         >>> handler.register_packet_listener(listener_example, pak.Packet)
         >>> handler.is_listener_registered(listener_example)
         True

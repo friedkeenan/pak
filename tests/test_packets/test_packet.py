@@ -192,9 +192,8 @@ def test_id():
 
     assert TestEmpty.unpack_id(b"test") is None
 
-    class TestStaticId(Packet):
+    class TestStaticId(Packet, id_type=Int8):
         id = 1
-        _id_type = Int8
 
     assert TestStaticId.id()     == 1
     assert TestStaticId().pack() == b"\x01"
@@ -202,9 +201,8 @@ def test_id():
     assert TestStaticId.unpack_id(b"\x02") == 2
 
     with StringToIntDynamicValue.context():
-        class TestDynamicId(Packet):
+        class TestDynamicId(Packet, id_type=Int8):
             id = "1"
-            _id_type = Int8
 
         assert TestDynamicId.id()     == 1
         assert TestDynamicId().pack() == b"\x01"
