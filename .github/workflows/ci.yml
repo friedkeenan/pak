@@ -48,8 +48,8 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Install pytest
-        run: pip install pytest
+      - name: Install test dependencies
+        run: pip install -r tests/requirements.txt
 
       - name: Install pak.py
         run: |

@@ -1,10 +1,13 @@
 r"""Tools for handling :class:`~.Packet`\s."""
 
+import asyncio
 import inspect
+from contextlib import asynccontextmanager
 
 __all__ = [
     "packet_listener",
     "PacketHandler",
+    "AsyncPacketHandler",
 ]
 
 def packet_listener(*packet_types, **flags):
@@ -160,8 +163,11 @@ class PacketHandler:
         Examples
         --------
         >>> import pak
+        >>> class MyPacket(pak.Packet):
+        ...     pass
+        ...
         >>> class Example(pak.PacketHandler):
-        ...     @pak.packet_listener(pak.Packet)
+        ...     @pak.packet_listener(MyPacket)
         ...     def listener_example(self, packet):
         ...         # Do things with 'packet' here.
         ...         pass
@@ -169,7 +175,7 @@ class PacketHandler:
         ...         return "Example()"
         ...
         >>> ex = Example()
-        >>> ex.listeners_for_packet(pak.Packet())
+        >>> ex.listeners_for_packet(MyPacket())
         [<bound method Example.listener_example of Example()>]
         """
 
@@ -180,3 +186,139 @@ class PacketHandler:
 
             if isinstance(packet, packet_types) and listener_flags == flags
         ]
+
+class AsyncPacketHandler(PacketHandler):
+    def __init__(self):
+        self._listener_tasks = []
+
+        super().__init__()
+
+    def register_packet_listener(self, listener, *packet_types, **flags):
+        r"""Registers an asynchronous :class:`~.Packet` listener.
+
+        See :meth:`PacketHandler.register_packet_listener` for more details.
+
+        Parameters
+        ----------
+        listener : coroutine function
+            The asynchronous :class:`~.Packet` listener.
+        *packet_types : subclass of :class:`~.Packet`
+            The :class:`~.Packet`\s to listen for.
+        **flags
+            The flags which must match for the listener to be returned by
+            :meth:`PacketHandler.listeners_for_packet`.
+
+        Raises
+        ------
+        :exc:`TypeError`
+            If ``listener`` is not a coroutine function.
+        """
+
+        if not inspect.iscoroutinefunction(listener):
+            raise TypeError(
+                f"Function {listener.__qualname__} cannot be an async packet listener because it is not a coroutine function"
+            )
+
+        super().register_packet_listener(listener, *packet_types, **flags)
+
+    def create_listener_task(self, coroutine):
+        """Creates an asynchronous task for a :class:`~.Packet` listener.
+
+        This method should be called when creating tasks for :class:`~.Packet`
+        listeners, and :meth:`end_listener_tasks` called when **all** listening
+        should end.
+
+        Tasks should only be created in a :meth:`listener_task_context` managed
+        context.
+
+        Parameters
+        ----------
+        coroutine : coroutine object
+            The coroutine to create the task for.
+
+        Returns
+        -------
+        :class:`asyncio.Task`
+            The created task.
+        """
+
+        async def coroutine_wrapper():
+            try:
+                await coroutine
+
+            finally:
+                # 'wrapper_task' is defined later, and has to be
+                # since it's the task for this coroutine function.
+                self._listener_tasks.remove(wrapper_task)
+
+        wrapper_task = asyncio.create_task(coroutine_wrapper())
+        self._listener_tasks.append(wrapper_task)
+
+        return wrapper_task
+
+    async def end_listener_tasks(self, *, timeout=1):
+        """Ends any outstanding listener tasks created with :meth:`create_listener_task`.
+
+        Parameters
+        ----------
+        timeout : :class:`int` or :class:`float` or ``None``
+            How long to wait before canceling outstanding listener tasks.
+
+            Passed to :func:`asyncio.wait_for`.
+        """
+
+        try:
+            await asyncio.wait_for(asyncio.gather(*self._listener_tasks), timeout)
+        except asyncio.TimeoutError:
+            for task in self._listener_tasks:
+                task.cancel()
+
+    @asynccontextmanager
+    async def listener_task_context(self, *, listen_sequentially):
+        """A context manager in which listener tasks should be created.
+
+        Parameters
+        ----------
+        listen_sequentially : :class:`bool`
+            Whether the listeners should be called sequentially.
+
+            If ``True``, listeners responding to the same :class:`~.Packet`
+            will still be run asynchronously, however they will all be
+            awaited before listening to another :class:`~.Packet`.
+
+            Also when ``True``, the tasks are never canceled.
+
+        Examples
+        --------
+        >>> import pak
+        >>> import asyncio
+        >>> class ExampleHandler(pak.AsyncPacketHandler):
+        ...     @pak.packet_listener(pak.Packet)
+        ...     async def slow_listener(self, packet):
+        ...         await asyncio.sleep(1)
+        ...         print("slow_listener")
+        ...     @pak.packet_listener(pak.Packet)
+        ...     async def fast_listener(self, packet):
+        ...         print("fast_listener")
+        ...
+        >>> async def main():
+        ...     handler = ExampleHandler()
+        ...     packet  = pak.Packet()
+        ...     async with handler.listener_task_context(listen_sequentially=False):
+        ...         for listener in handler.listeners_for_packet(packet):
+        ...             await listener(packet)
+        ...
+        >>> asyncio.run(main())
+        fast_listener
+        slow_listener
+        """
+
+        # NOTE: In the above docstring, the example sleeping for 1 second may
+        # become problematic if it becomes more common throughout our tests.
+
+        try:
+            yield
+        finally:
+            if listen_sequentially:
+                # Awaiting all tasks will clear '_listener_tasks'.
+                await asyncio.gather(*self._listener_tasks)
