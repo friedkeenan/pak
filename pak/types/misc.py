@@ -202,7 +202,7 @@ class Char(Type):
     @classmethod
     def _call(cls, encoding):
         return cls.make_type(
-            f"{cls.__name__}({repr(encoding)})",
+            f"{cls.__qualname__}({repr(encoding)})",
 
             encoding = encoding,
         )

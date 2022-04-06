@@ -180,7 +180,7 @@ class Array(Type):
         if cls.has_size_function():
             return cls.array_size(ctx.packet) * cls.elem_type.size()
 
-        raise TypeError(f"{cls.__name__} has no set size")
+        raise TypeError(f"{cls.__qualname__} has no set size")
 
     @classmethod
     def _default(cls, *, ctx):
@@ -336,7 +336,7 @@ class Array(Type):
     @Type.prepare_types
     def _call(cls, elem_type: Type, size=None):
         if isinstance(size, type):
-            size_name = size.__name__
+            size_name = size.__qualname__
         else:
             size_name = repr(size)
 
@@ -345,7 +345,7 @@ class Array(Type):
             size = lambda x: getattr(x, attr)
 
         return cls.make_type(
-            f"{elem_type.__name__}[{size_name}]",
+            f"{elem_type.__qualname__}[{size_name}]",
 
             elem_type  = elem_type,
             array_size = size,

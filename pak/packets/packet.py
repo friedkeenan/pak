@@ -408,7 +408,7 @@ class Packet:
         ...     attr2: pak.Int16
         ...
         >>> for attr, attr_type in MyPacket.enumerate_field_types():
-        ...     print(f"{attr}: {attr_type.__name__}")
+        ...     print(f"{attr}: {attr_type.__qualname__}")
         ...
         attr1: Int8
         attr2: Int16
@@ -459,7 +459,7 @@ class Packet:
         ...
         >>> p = MyPacket(attr1=1, attr2=2)
         >>> for attr, attr_type, value in p.enumerate_field_types_and_values():
-        ...     print(f"{attr}: {attr_type.__name__}; {value}")
+        ...     print(f"{attr}: {attr_type.__qualname__}; {value}")
         ...
         attr1: Int8; 1
         attr2: Int16; 2
@@ -592,7 +592,7 @@ class Packet:
 
     def __repr__(self):
         return (
-            f"{type(self).__name__}("
+            f"{type(self).__qualname__}("
             f"{', '.join(f'{attr}={repr(value)}' for attr, value in self.enumerate_field_values())}"
             f")"
         )

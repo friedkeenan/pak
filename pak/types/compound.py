@@ -38,7 +38,7 @@ class Compound(Type):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
-        cls.value_type = namedtuple(cls.__name__, cls.elems.keys())
+        cls.value_type = namedtuple(cls.__qualname__, cls.elems.keys())
 
     @classmethod
     def types(cls):

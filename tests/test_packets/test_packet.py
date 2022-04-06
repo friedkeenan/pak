@@ -14,27 +14,27 @@ class StringToIntDynamicValue(DynamicValue):
     def get(self, *, ctx=None):
         return int(self.string)
 
-def test_packet():
-    class TestBasic(Packet):
-        attr1: Int8
-        attr2: Int16
+class BasicPacket(Packet):
+    attr1: Int8
+    attr2: Int16
 
-    p = TestBasic()
+def test_packet():
+    p = BasicPacket()
     assert p.attr1 == 0 and p.attr2 == 0
 
     assert_packet_marshal(
-        (TestBasic(attr1=0, attr2=1), b"\x00\x01\x00"),
+        (BasicPacket(attr1=0, attr2=1), b"\x00\x01\x00"),
     )
 
-    assert TestBasic.size() == 3
+    assert BasicPacket.size() == 3
 
-    assert TestBasic(attr1=0, attr2=1) == TestBasic(attr1=0, attr2=1)
-    assert TestBasic(attr1=0, attr2=1) != TestBasic(attr1=1, attr2=0)
+    assert BasicPacket(attr1=0, attr2=1) == BasicPacket(attr1=0, attr2=1)
+    assert BasicPacket(attr1=0, attr2=1) != BasicPacket(attr1=1, attr2=0)
 
-    assert repr(TestBasic(attr1=0, attr2=1)) == "TestBasic(attr1=0, attr2=1)"
+    assert repr(BasicPacket(attr1=0, attr2=1)) == "BasicPacket(attr1=0, attr2=1)"
 
     with pytest.raises(TypeError, match="Unexpected keyword arguments"):
-        TestBasic(test=0)
+        BasicPacket(test=0)
 
     class TestNoSize(Packet):
         attr: RawByte[None]

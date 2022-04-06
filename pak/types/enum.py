@@ -75,7 +75,7 @@ class Enum(Type):
     @Type.prepare_types
     def _call(cls, elem_type: Type, enum_type):
         return cls.make_type(
-            f"{cls.__name__}({elem_type.__name__}, {enum_type.__name__})",
+            f"{cls.__qualname__}({elem_type.__qualname__}, {enum_type.__qualname__})",
 
             elem_type = elem_type,
             enum_type = enum_type,

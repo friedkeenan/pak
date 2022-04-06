@@ -31,7 +31,7 @@ class Defaulted(Type):
     @Type.prepare_types
     def _call(cls, elem_type: Type, default):
         return cls.make_type(
-            f"{cls.__name__}{elem_type.__name__}",
+            f"{cls.__qualname__}{elem_type.__qualname__}",
             (elem_type, cls),
 
             _default = default,

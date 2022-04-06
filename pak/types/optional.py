@@ -144,7 +144,7 @@ class Optional(Type):
             exists = lambda x: getattr(x, attr)
 
         return cls.make_type(
-            f"{cls.__name__}{elem_type.__name__}",
+            f"{cls.__qualname__}{elem_type.__qualname__}",
 
             elem_type = elem_type,
             exists    = exists,

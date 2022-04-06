@@ -289,7 +289,7 @@ class Type(abc.ABC):
             ctx = TypeContext()
 
         if cls._size is None:
-            raise TypeError(f"{cls.__name__} has no size")
+            raise TypeError(f"'{cls.__qualname__}' has no size")
 
         if inspect.ismethod(cls._size):
             return cls._size(ctx=ctx)
@@ -339,7 +339,7 @@ class Type(abc.ABC):
         """
 
         if cls._default is None:
-            raise TypeError(f"{cls.__name__} has no default value")
+            raise TypeError(f"'{cls.__qualname__}' has no default value")
 
         if ctx is None:
             ctx = TypeContext()

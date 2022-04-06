@@ -48,7 +48,7 @@ class BitMask(Type):
         super().__init_subclass__(**kwargs)
 
         cls.value_type = namedtuple(
-            cls.__name__,
+            cls.__qualname__,
             cls.masks.keys(),
 
             defaults = [
