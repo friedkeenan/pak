@@ -188,6 +188,12 @@ class PacketHandler:
         ]
 
 class AsyncPacketHandler(PacketHandler):
+    r"""A :class:`PacketHandler` that handles :class:`Packet`\s asynchronously.
+
+    This class doesn't really have different semantics from :class:`PacketHandler`,
+    but it has extra facilities for asynchronously handling :class:`.Packet`\s.
+    """
+
     def __init__(self):
         self._listener_tasks = []
 
