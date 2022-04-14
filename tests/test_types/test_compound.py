@@ -1,6 +1,5 @@
 from pak import *
 
-from ..util import assert_type_marshal
 
 def test_compound():
     TestCompound = Compound(
@@ -14,7 +13,7 @@ def test_compound():
     # The value type has equality with tuples.
     assert TestCompound.default() == (0, 0, "aa")
 
-    assert_type_marshal(
+    test.assert_type_marshal(
         TestCompound,
 
         ((1, 2, "hi"), b"\x01\x02\x00hi"),

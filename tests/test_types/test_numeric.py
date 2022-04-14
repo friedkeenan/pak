@@ -1,8 +1,7 @@
 import math
 from pak import *
 
-from ..util import assert_type_marshal, assert_type_marshal_func
-test_bool = assert_type_marshal_func(
+test_bool = test.assert_type_marshal_func(
 
     Bool,
 
@@ -10,7 +9,7 @@ test_bool = assert_type_marshal_func(
     (True,  b"\x01"),
 )
 
-test_int8 = assert_type_marshal_func(
+test_int8 = test.assert_type_marshal_func(
     Int8,
 
     (1,        b"\x01"),
@@ -19,14 +18,14 @@ test_int8 = assert_type_marshal_func(
     (-2**7,    b"\x80"),
 )
 
-test_uint8 = assert_type_marshal_func(
+test_uint8 = test.assert_type_marshal_func(
     UInt8,
 
     (1,        b"\x01"),
     (2**8 - 1, b"\xFF"),
 )
 
-test_int16 = assert_type_marshal_func(
+test_int16 = test.assert_type_marshal_func(
     Int16,
 
     (1,         b"\x01\x00"),
@@ -35,14 +34,14 @@ test_int16 = assert_type_marshal_func(
     (-2**15,    b"\x00\x80"),
 )
 
-test_uint16 = assert_type_marshal_func(
+test_uint16 = test.assert_type_marshal_func(
     UInt16,
 
     (1,         b"\x01\x00"),
     (2**16 - 1, b"\xFF\xFF"),
 )
 
-test_int32 = assert_type_marshal_func(
+test_int32 = test.assert_type_marshal_func(
     Int32,
 
     (1,         b"\x01\x00\x00\x00"),
@@ -51,14 +50,14 @@ test_int32 = assert_type_marshal_func(
     (-2**31,    b"\x00\x00\x00\x80"),
 )
 
-test_uint32 = assert_type_marshal_func(
+test_uint32 = test.assert_type_marshal_func(
     UInt32,
 
     (1,         b"\x01\x00\x00\x00"),
     (2**32 - 1, b"\xFF\xFF\xFF\xFF"),
 )
 
-test_int64 = assert_type_marshal_func(
+test_int64 = test.assert_type_marshal_func(
     Int64,
 
     (1,         b"\x01\x00\x00\x00\x00\x00\x00\x00"),
@@ -67,7 +66,7 @@ test_int64 = assert_type_marshal_func(
     (-2**63,    b"\x00\x00\x00\x00\x00\x00\x00\x80"),
 )
 
-test_uint64 = assert_type_marshal_func(
+test_uint64 = test.assert_type_marshal_func(
     UInt64,
 
     (1,         b"\x01\x00\x00\x00\x00\x00\x00\x00"),
@@ -75,7 +74,7 @@ test_uint64 = assert_type_marshal_func(
 )
 
 def test_float32():
-    assert_type_marshal(
+    test.assert_type_marshal(
         Float32,
 
         # Normal numbers
@@ -105,7 +104,7 @@ def test_float32():
     assert math.isnan(Float32.unpack(b"\x01\x00\x80\x7F"))
 
 def test_float64():
-    assert_type_marshal(
+    test.assert_type_marshal(
         Float64,
 
         # Normal numbers

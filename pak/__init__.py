@@ -25,3 +25,4 @@ from .types.misc     import *
 from .packets import *
 
 from . import util
+from . import test

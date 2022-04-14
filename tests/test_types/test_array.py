@@ -2,8 +2,6 @@ import io
 import pytest
 from pak import *
 
-from ..util import assert_type_marshal, assert_packet_marshal
-
 def test_padding_array():
     assert Padding[2].default() is None
 
@@ -48,20 +46,20 @@ def test_raw_byte_array():
 
     # Values are actually bytearrays but will still
     # have equality with bytes objects.
-    assert_type_marshal(
+    test.assert_type_marshal(
         RawByte[2],
 
         (b"\xAA\xBB", b"\xAA\xBB"),
     )
 
-    assert_type_marshal(
+    test.assert_type_marshal(
         RawByte[Int8],
 
         (b"\xAA\xBB", b"\x02\xAA\xBB"),
         (b"",         b"\x00"),
     )
 
-    assert_type_marshal(
+    test.assert_type_marshal(
         RawByte[None],
 
         (b"\xAA\xBB\xCC", b"\xAA\xBB\xCC"),
@@ -73,7 +71,7 @@ def test_raw_byte_array():
 
     assert TestAttr(test=2).array == b"\x00\x00"
 
-    assert_packet_marshal(
+    test.assert_packet_marshal(
         (TestAttr(test=2, array=b"\x00\x01"), b"\x02\x00\x01"),
     )
 
@@ -95,20 +93,20 @@ def test_char_array():
 
     assert isinstance(Char[1].unpack(b"a"), str)
 
-    assert_type_marshal(
+    test.assert_type_marshal(
         Char[2],
 
         ("ab", b"ab"),
     )
 
-    assert_type_marshal(
+    test.assert_type_marshal(
         Char[Int8],
 
         ("ab", b"\x02ab"),
         ("",   b"\x00"),
     )
 
-    assert_type_marshal(
+    test.assert_type_marshal(
         Char[None],
 
         ("abc", b"abc"),
@@ -120,7 +118,7 @@ def test_char_array():
 
     assert TestAttr(test=2).array == "aa"
 
-    assert_packet_marshal(
+    test.assert_packet_marshal(
         (TestAttr(test=2, array="ab"), b"\x02ab"),
     )
 
@@ -138,7 +136,7 @@ def test_char_array():
         TestAttr.unpack(b"\x01")
 
     Utf8Char = Char("utf-8")
-    assert_type_marshal(
+    test.assert_type_marshal(
         Utf8Char[None],
 
         ("ab", b"ab"),
@@ -149,20 +147,20 @@ def test_array():
 
     assert Int8[2].default() == [0, 0]
 
-    assert_type_marshal(
+    test.assert_type_marshal(
         Int8[2],
 
         ([0, 1], b"\x00\x01"),
     )
 
-    assert_type_marshal(
+    test.assert_type_marshal(
         Int8[Int8],
 
         ([0, 1], b"\x02\x00\x01"),
         ([],     b"\x00"),
     )
 
-    assert_type_marshal(
+    test.assert_type_marshal(
         Int8[None],
 
         ([0, 1, 2], b"\x00\x01\x02"),
@@ -180,7 +178,7 @@ def test_array():
 
     assert TestAttr(test=2).array == [0, 0]
 
-    assert_packet_marshal(
+    test.assert_packet_marshal(
         (TestAttr(test=2, array=[0, 1]), b"\x02\x00\x01"),
     )
 

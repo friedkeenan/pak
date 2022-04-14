@@ -1,8 +1,6 @@
 import pytest
 from pak import *
 
-from ..util import assert_packet_marshal, assert_packet_marshal_func
-
 class StringToIntDynamicValue(DynamicValue):
     _type = str
 
@@ -22,7 +20,7 @@ def test_packet():
     p = BasicPacket()
     assert p.attr1 == 0 and p.attr2 == 0
 
-    assert_packet_marshal(
+    test.assert_packet_marshal(
         (BasicPacket(attr1=0, attr2=1), b"\x00\x01\x00"),
     )
 
@@ -53,7 +51,7 @@ def test_typelike_attr():
     class TestTypelike(Packet):
         attr: 1
 
-    assert_packet_marshal(
+    test.assert_packet_marshal(
         (TestTypelike(attr=5), b"\x05"),
     )
 
@@ -74,7 +72,7 @@ def test_packet_property():
     p = TestProperty()
     assert p.prop == 0
 
-    assert_packet_marshal(
+    test.assert_packet_marshal(
         (TestProperty(prop=1), b"\x01"),
     )
 
@@ -91,7 +89,7 @@ def test_packet_property():
     p = TestReadOnly()
     assert p.read_only == 1
 
-    assert_packet_marshal(
+    test.assert_packet_marshal(
         (TestReadOnly(), b"\x01"),
     )
 
@@ -118,7 +116,7 @@ def test_packet_inheritance():
     assert TestChildBasic()    == TestParent()
     assert TestChildOverride() != TestParent()
 
-    assert_packet_marshal(
+    test.assert_packet_marshal(
         (
             TestChildBasic(test=1),
 
@@ -152,7 +150,7 @@ def test_packet_multiple_inheritance():
         ("child",  Int32),
     ]
 
-    assert_packet_marshal(
+    test.assert_packet_marshal(
         (
             Child(first=1, second=2, child=3),
 
@@ -186,7 +184,7 @@ def test_id():
         pass
 
     assert TestEmpty.id() is None
-    assert_packet_marshal(
+    test.assert_packet_marshal(
         (TestEmpty(), b""),
     )
 
@@ -227,6 +225,6 @@ def test_subclass_id():
     assert Root.subclass_with_id(2) is GrandChild1
     assert Root.subclass_with_id(3) is None
 
-test_generic = assert_packet_marshal_func(
+test_generic = test.assert_packet_marshal_func(
     (GenericPacket(data=b"\xAA\xBB\xCC"), b"\xAA\xBB\xCC"),
 )

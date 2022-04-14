@@ -1,8 +1,6 @@
 import pytest
 from pak import *
 
-from ..util import assert_type_marshal
-
 def test_bit_mask():
     TestMask = BitMask(
         "TestMask",
@@ -16,7 +14,7 @@ def test_bit_mask():
     # The value type has equality with tuples.
     assert TestMask.default() == (False, 0, 0)
 
-    assert_type_marshal(
+    test.assert_type_marshal(
         TestMask,
 
         ((True,  0, 0),  b"\x01"),

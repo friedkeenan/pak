@@ -1,10 +1,8 @@
 from pak import *
 
-from ..util import assert_type_marshal, assert_packet_marshal
-
 def test_optional():
     TestPrefix = Optional(Int8, Bool)
-    assert_type_marshal(
+    test.assert_type_marshal(
         TestPrefix,
 
         (None, b"\x00"),
@@ -12,7 +10,7 @@ def test_optional():
     )
 
     TestEnd = Optional(Int8)
-    assert_type_marshal(
+    test.assert_type_marshal(
         TestEnd,
 
         (None, b""),
@@ -30,7 +28,7 @@ def test_optional():
     assert TestAttr(test=False).optional is None
     assert TestAttr(test=True).optional  == 0
 
-    assert_packet_marshal(
+    test.assert_packet_marshal(
         (TestAttr(test=False), b"\x00"),
         (TestAttr(test=True),  b"\x01\x00"),
     )

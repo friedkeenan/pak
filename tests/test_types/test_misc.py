@@ -2,8 +2,6 @@ import io
 import pytest
 from pak import *
 
-from ..util import assert_type_marshal
-
 def test_empty():
     assert Type(None) is EmptyType
 
@@ -24,7 +22,7 @@ def test_padding():
         Padding.unpack(b"")
 
 def test_raw_byte():
-    assert_type_marshal(
+    test.assert_type_marshal(
         RawByte,
         (b"\xAA", b"\xAA"),
     )
@@ -35,7 +33,7 @@ def test_raw_byte():
         RawByte.unpack(b"")
 
 def test_char():
-    assert_type_marshal(
+    test.assert_type_marshal(
         Char,
         ("h", b"h"),
     )
@@ -52,7 +50,7 @@ def test_char():
         Char.unpack(b"")
 
     Utf8Char = Char("utf-8")
-    assert_type_marshal(
+    test.assert_type_marshal(
         Utf8Char,
 
         ("h",    b"h"),
@@ -68,7 +66,7 @@ def test_struct():
         fmt = "H"
         endian = ">"
 
-    assert_type_marshal(
+    test.assert_type_marshal(
         TestEndian,
 
         (1, b"\x00\x01"),
@@ -77,7 +75,7 @@ def test_struct():
     class TestMultiple(StructType):
         fmt = "BH"
 
-    assert_type_marshal(
+    test.assert_type_marshal(
         TestMultiple,
 
         ((1, 1), b"\x01\x01\x00"),

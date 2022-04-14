@@ -1,7 +1,6 @@
 import abc
 from pak import *
 
-from ..util import assert_type_marshal
 
 def test_defaulted():
     DefaultedInt8 = Defaulted(Int8, 1)
@@ -10,7 +9,7 @@ def test_defaulted():
 
     assert DefaultedInt8.default() == 1
 
-    assert_type_marshal(
+    test.assert_type_marshal(
         DefaultedInt8,
 
         (0, b"\x00"),

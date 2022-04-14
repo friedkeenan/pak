@@ -48,3 +48,4 @@ Other Modules
     :nosignatures:
 
     ~dyn_value
+    ~test

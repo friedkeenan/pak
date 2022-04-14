@@ -2,8 +2,6 @@ import enum
 import pytest
 from pak import *
 
-from ..util import assert_type_marshal
-
 def test_enum():
     class EnumRaw(enum.Enum):
         A = 1
@@ -11,7 +9,7 @@ def test_enum():
 
     EnumType = Enum(Int8, EnumRaw)
 
-    assert_type_marshal(
+    test.assert_type_marshal(
         EnumType,
 
         (EnumRaw.A, b"\x01"),
