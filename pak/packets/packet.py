@@ -290,6 +290,37 @@ class Packet:
             raise TypeError(f"Unexpected keyword arguments for '{type(self).__qualname__}': {kwargs}")
 
     @classmethod
+    def unpack_id(cls, buf, *, ctx=None):
+        r"""Unpacks the ID of a :class:`Packet`.
+
+        Parameters
+        ----------
+        buf : file object or :class:`bytes` or :class:`bytearray`
+            The buffer containing the raw data.
+        ctx: :class:`PacketContext`
+            The context for the :class:`Packet`.
+
+        Returns
+        -------
+        any
+            The unpacked ID.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
+        ...     id = 0xFF
+        ...     array: pak.UInt8[pak.UInt8]
+        ...
+        >>> MyPacket.unpack_id(b"\xFF\x04\x00\x01\x02\x03")
+        255
+        """
+
+        buf = util.file_object(buf)
+
+        return cls._id_type.unpack(buf, ctx=TypeContext(None, ctx=ctx))
+
+    @classmethod
     def unpack(cls, buf, *, ctx=None):
         """Unpacks a :class:`Packet` from raw data.
 
@@ -339,6 +370,65 @@ class Packet:
 
         return self
 
+    @classmethod
+    def pack_id(cls, *, ctx=None):
+        r"""Packs the ID of a :class:`Packet`.
+
+        Parameters
+        ----------
+        ctx : :class:`PacketContext`
+            The context for the :class:`Packet`.
+
+        Returns
+        -------
+        :class:`bytes`
+            The packed ID.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
+        ...     id = 0xFF
+        ...     array: pak.UInt8[pak.UInt8]
+        ...
+        >>> MyPacket.pack_id()
+        b'\xff'
+        """
+
+        return cls._id_type.pack(cls.id(ctx=ctx), ctx=TypeContext(None, ctx=ctx))
+
+    def pack_without_id(self, *, ctx=None):
+        r"""Packs a :class:`Packet` to raw data, excluding the ID.
+
+        Parameters
+        ----------
+        ctx : :class:`PacketContext`
+            The context for the :class:`Packet`.
+
+        Returns
+        -------
+        :class:`bytes`
+            The raw data marshaled from the :class:`Packet`, excluding the ID.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
+        ...     id = 0xFF
+        ...     array: pak.UInt8[pak.UInt8]
+        ...
+        >>> p = MyPacket(array=[0, 1, 2, 3])
+        >>> p.pack_without_id()
+        b'\x04\x00\x01\x02\x03'
+        """
+
+        type_ctx = self.type_ctx(ctx)
+
+        return b"".join(
+            attr_type.pack(value, ctx=type_ctx)
+            for _, attr_type, value in self.enumerate_field_types_and_values()
+        )
+
     def pack(self, *, ctx=None):
         r"""Packs a :class:`Packet` to raw data.
 
@@ -359,21 +449,19 @@ class Packet:
         Examples
         --------
         >>> import pak
-        >>> class MyPacket(pak.Packet):
+        >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
+        ...     id = 0xFF
         ...     array: pak.UInt8[pak.UInt8]
         ...
         >>> p = MyPacket(array=[0, 1, 2, 3])
         >>> p.pack()
-        b'\x04\x00\x01\x02\x03'
+        b'\xff\x04\x00\x01\x02\x03'
         """
 
         type_ctx  = self.type_ctx(ctx)
         packed_id = self._id_type.pack(self.id(ctx=ctx), ctx=type_ctx)
 
-        return  packed_id + b"".join(
-            attr_type.pack(value, ctx=type_ctx)
-            for _, attr_type, value in self.enumerate_field_types_and_values()
-        )
+        return packed_id + self.pack_without_id(ctx=ctx)
 
     def type_ctx(self, ctx):
         """Converts a :class:`PacketContext` to a :class:`~.TypeContext`.
@@ -498,22 +586,6 @@ class Packet:
         """
 
         return sum(attr_type.size() for _, attr_type in cls.enumerate_field_types())
-
-    @classmethod
-    def unpack_id(cls, buf, *, ctx=None):
-        """Unpacks the ID of a :class:`Packet`.
-
-        Parameters
-        ----------
-        buf : file object or :class:`bytes` or :class:`bytearray`
-            The buffer containing the raw data.
-        ctx: :class:`PacketContext`
-            The context for the :class:`Packet`.
-        """
-
-        buf = util.file_object(buf)
-
-        return cls._id_type.unpack(buf, ctx=TypeContext(None, ctx=ctx))
 
     @classmethod
     @util.cache
