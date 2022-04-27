@@ -190,9 +190,7 @@ def test_id():
 
     assert TestEmpty.unpack_id(b"test") is None
 
-    class TestStaticId(Packet):
-        id_type = Int8
-
+    class TestStaticId(Packet, id_type=Int8):
         id = 1
 
     assert TestStaticId.id()     == 1
@@ -201,24 +199,13 @@ def test_id():
     assert TestStaticId.unpack_id(b"\x02") == 2
 
     with StringToIntDynamicValue.context():
-        class TestDynamicId(Packet):
-            id_type = Int8
-
+        class TestDynamicId(Packet, id_type=Int8):
             id = "1"
 
         assert TestDynamicId.id()     == 1
         assert TestDynamicId().pack() == b"\x01"
 
         assert TestDynamicId.unpack_id(b"\x02") == 2
-
-    Type.register_typelike(int, lambda x: Int8)
-
-    class TestTypelikeIdType(Packet):
-        id_type = 1
-
-    assert TestTypelikeIdType.id_type is Int8
-
-    Type.unregister_typelike(int)
 
 def test_subclass_id():
     class Root(Packet):

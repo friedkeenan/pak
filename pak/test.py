@@ -79,8 +79,7 @@ def assert_packet_marshal(*packets_and_data, ctx=None):
     Examples
     --------
     >>> import pak
-    >>> class MyPacket(pak.Packet):
-    ...     id_type = pak.UInt8
+    >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
     ...     id = 1
     ...     field: pak.UInt8
     ...
@@ -120,8 +119,7 @@ def assert_packet_marshal_func(*args, **kwargs):
     Examples
     --------
     >>> import pak
-    >>> class MyPacket(pak.Packet):
-    ...     id_type = pak.UInt8
+    >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
     ...     id = 1
     ...     field: pak.UInt8
     ...

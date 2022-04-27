@@ -20,19 +20,10 @@ __all__ = [
 ]
 
 class PacketContext:
-    r"""The context for a :class:`Packet`.
+    """The context for a :class:`Packet`.
 
     To be inherited from by users of the library
     for their own contexts.
-
-    Contexts are used to pass arbitrary information to
-    primarily :class:`~.Type`\s, such as the version of
-    the protocol you're implementing, or any other various
-    information needed to marshal your data.
-
-    See Also
-    --------
-    :class:`~.TypeContext`
 
     Warnings
     --------
@@ -141,6 +132,9 @@ class Packet:
     for it in the constructor.
     """
 
+    # Default to having no ID.
+    _id_type = EmptyType
+
     # The fields dictionary for 'Packet'.
     #
     # Since 'Packet' has no annotations, and has no parent to fall back on
@@ -151,9 +145,6 @@ class Packet:
         "ctx",
     ]
 
-    # Default to having no ID.
-    id_type = EmptyType
-
     @classmethod
     def id(cls, *, ctx=None):
         r"""Gets the ID of the :class:`Packet`.
@@ -163,13 +154,13 @@ class Packet:
         be read. Unless overridden, :class:`Packet` has
         no meaningful ID.
 
-        How the ID is marshaled can be changed by setting
-        :attr:`id_type` when defining a subclass, like so::
+        How the ID is marshaled can be changed by passing
+        ``id_type`` when defining a subclass, like so::
 
-            class MyPacket(pak.Packet):
-                id_type = pak.Int8
+            class MyPacket(pak.Packet, id_type=pak.Int8):
+                pass
 
-        The value of :attr:`id_type` must be typelike.
+        The value of ``id_type`` must be typelike.
 
         If the :attr:`id` attribute of a subclass is enrolled
         in the :class:`~.DynamicValue` machinery, then its dynamic
@@ -203,9 +194,13 @@ class Packet:
 
         return None
 
+    _UNSPECIFIED = util.UniqueSentinel()
+
     @classmethod
-    def _init_id(cls):
-        cls.id_type = Type(cls.id_type)
+    def _init_id(cls, id_type):
+        # If the ID type is unspecified, do not set it.
+        if id_type is not cls._UNSPECIFIED:
+            cls._id_type = Type(id_type)
 
         # Don't do anything with the ID if it's already a classmethod.
         if not inspect.ismethod(cls.id):
@@ -268,10 +263,10 @@ class Packet:
                 setattr(cls, attr, descriptor)
 
     @classmethod
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, id_type=_UNSPECIFIED, **kwargs):
         super().__init_subclass__(**kwargs)
 
-        cls._init_id()
+        cls._init_id(id_type)
         cls._init_fields_from_annotations()
 
     def __init__(self, *, ctx=None, **kwargs):
@@ -313,8 +308,7 @@ class Packet:
         Examples
         --------
         >>> import pak
-        >>> class MyPacket(pak.Packet):
-        ...     id_type = pak.UInt8
+        >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
         ...     id = 0xFF
         ...     array: pak.UInt8[pak.UInt8]
         ...
@@ -324,7 +318,7 @@ class Packet:
 
         buf = util.file_object(buf)
 
-        return cls.id_type.unpack(buf, ctx=TypeContext(None, ctx=ctx))
+        return cls._id_type.unpack(buf, ctx=TypeContext(None, ctx=ctx))
 
     @classmethod
     def unpack(cls, buf, *, ctx=None):
@@ -393,8 +387,7 @@ class Packet:
         Examples
         --------
         >>> import pak
-        >>> class MyPacket(pak.Packet):
-        ...     id_type = pak.UInt8
+        >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
         ...     id = 0xFF
         ...     array: pak.UInt8[pak.UInt8]
         ...
@@ -402,7 +395,7 @@ class Packet:
         b'\xff'
         """
 
-        return cls.id_type.pack(cls.id(ctx=ctx), ctx=TypeContext(None, ctx=ctx))
+        return cls._id_type.pack(cls.id(ctx=ctx), ctx=TypeContext(None, ctx=ctx))
 
     def pack_without_id(self, *, ctx=None):
         r"""Packs a :class:`Packet` to raw data, excluding the ID.
@@ -420,8 +413,7 @@ class Packet:
         Examples
         --------
         >>> import pak
-        >>> class MyPacket(pak.Packet):
-        ...     id_type = pak.UInt8
+        >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
         ...     id = 0xFF
         ...     array: pak.UInt8[pak.UInt8]
         ...
@@ -457,8 +449,7 @@ class Packet:
         Examples
         --------
         >>> import pak
-        >>> class MyPacket(pak.Packet):
-        ...     id_type = pak.UInt8
+        >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
         ...     id = 0xFF
         ...     array: pak.UInt8[pak.UInt8]
         ...
@@ -468,7 +459,7 @@ class Packet:
         """
 
         type_ctx  = self.type_ctx(ctx)
-        packed_id = self.id_type.pack(self.id(ctx=ctx), ctx=type_ctx)
+        packed_id = self._id_type.pack(self.id(ctx=ctx), ctx=type_ctx)
 
         return packed_id + self.pack_without_id(ctx=ctx)
 
