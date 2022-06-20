@@ -1,5 +1,7 @@
 r""":class:`~.Type`\s for numbers."""
 
+from .. import util
+from .type import Type
 from .misc import StructType
 
 __all__ = [
@@ -14,6 +16,8 @@ __all__ = [
     "UInt64",
     "Float32",
     "Float64",
+    "LEB128",
+    "ULEB128",
 ]
 
 class Bool(StructType):
@@ -80,3 +84,94 @@ class Float64(StructType):
 
     _default = 0.0
     fmt      = "d"
+
+class LEB128(Type):
+    """A variable length signed integer following the ``LEB128`` format."""
+
+    _default = 0
+
+    @classmethod
+    def _unpack(cls, buf, *, ctx):
+        num = 0
+
+        bits = 0
+        while True:
+            byte = UInt8.unpack(buf, ctx=ctx)
+
+            # Get the bottom 7 bits.
+            value = byte & 0b01111111
+
+            num  |= value << bits
+            bits += 7
+
+            # If the top bit is not set, return.
+            if byte & 0b10000000 == 0:
+                return util.to_signed(num, bits=bits)
+
+    @classmethod
+    def _pack(cls, value, *, ctx):
+        data = b""
+
+        while True:
+            # Get the bottom 7 bits.
+            to_write = value & 0b01111111
+
+            value >>= 7
+
+            last_byte = (
+                # Value was positive and doesn't need to write the sign bit.
+                (value == 0 and (to_write & 0b01000000) == 0) or
+
+                # Value was negative and doesn't need need to write the sign bit.
+                (value == -1 and (to_write * 0b01000000) != 0)
+            )
+
+            if not last_byte:
+                # Set the top bit.
+                to_write |= 0b10000000
+
+            data += UInt8.pack(to_write, ctx=ctx)
+
+            if last_byte:
+                return data
+
+class ULEB128(Type):
+    """A variable length unsigned integer following the ``LEB128`` format."""
+
+    _default = 0
+
+    @classmethod
+    def _unpack(cls, buf, *, ctx):
+        num = 0
+
+        bits = 0
+        while True:
+            byte = UInt8.unpack(buf, ctx=ctx)
+
+            # Get the bottom 7 bits.
+            value = byte & 0b01111111
+
+            num  |= value << bits
+            bits += 7
+
+            # If the top bit is not set, return.
+            if byte & 0b10000000 == 0:
+                return num
+
+    @classmethod
+    def _pack(cls, value, *, ctx):
+        data = b""
+
+        while True:
+            # Get the bottom 7 bits.
+            to_write = value & 0b01111111
+
+            value >>= 7
+            if value != 0:
+                # Set the top bit.
+                to_write |= 0b10000000
+
+            data += UInt8.pack(to_write, ctx=ctx)
+
+            if value == 0:
+                return data

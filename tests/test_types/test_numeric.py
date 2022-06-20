@@ -132,3 +132,37 @@ def test_float64():
 
     # NaN (cannot be checked with equality)
     assert math.isnan(Float64.unpack(b"\x01\x00\x00\x00\x00\x00\xF0\x7F"))
+
+test_leb128 = test.assert_type_marshal_func(
+    LEB128,
+
+    (0,         b"\x00"),
+    (1,         b"\x01"),
+    (2**6 - 1,  b"\x3F"),
+    (2**6,      b"\xC0\x00"),
+    (2**7 - 1,  b"\xFF\x00"),
+    (2**7,      b"\x80\x01"),
+    (2**8 - 1,  b"\xFF\x01"),
+    (2**13 - 1, b"\xFF\x3F"),
+    (2**13,     b"\x80\xC0\x00"),
+    (2**31 - 1, b"\xFF\xFF\xFF\xFF\x07"),
+    (2**69 - 1, b"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x3F"),
+
+    (-1,     b"\x7F"),
+    (-2**6,  b"\x40"),
+    (-2**7,  b"\x80\x7F"),
+    (-2**13, b"\x80\x40"),
+    (-2**69, b"\x80\x80\x80\x80\x80\x80\x80\x80\x80\x40"),
+)
+
+test_uleb128 = test.assert_type_marshal_func(
+    ULEB128,
+
+    (0,         b"\x00"),
+    (1,         b"\x01"),
+    (2**7 - 1,  b"\x7F"),
+    (2**7,      b"\x80\x01"),
+    (2**8 - 1,  b"\xFF\x01"),
+    (2**31 - 1, b"\xFF\xFF\xFF\xFF\x07"),
+    (2**69 - 1, b"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x3F"),
+)
