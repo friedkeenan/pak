@@ -59,6 +59,15 @@ class Compound(Type):
         super().__set__(instance, value)
 
     @classmethod
+    def _size(cls, value, *, ctx):
+        if value is cls.STATIC_SIZE:
+            return sum(t.size(ctx=ctx) for t in cls.types())
+
+        return sum(
+            t.size(v, ctx=ctx) for v, t in zip(value, cls.types())
+        )
+
+    @classmethod
     def _default(cls, *, ctx):
         return cls.value_type(*(t.default(ctx=ctx) for t in cls.types()))
 

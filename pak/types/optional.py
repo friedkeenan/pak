@@ -89,6 +89,29 @@ class Optional(Type):
         return cls.exists is None
 
     @classmethod
+    def _size(cls, value, *, ctx):
+        if value is cls.STATIC_SIZE:
+            return None
+
+        if cls.is_prefixed_by_type():
+            if value is None:
+                return cls.exists.size(False, ctx=ctx)
+
+            return cls.exists.size(True, ctx=ctx) + cls.elem_type.size(value, ctx=ctx)
+
+        if cls.has_function():
+            if cls.exists(ctx.packet):
+                return cls.elem_type.size(value, ctx=ctx)
+
+            return 0
+
+        if cls.is_at_end():
+            if value is None:
+                return 0
+
+            return cls.elem_type.size(value, ctx=ctx)
+
+    @classmethod
     def _default(cls, *, ctx):
         if cls.has_function() and cls.exists(ctx.packet):
             return cls.elem_type.default(ctx=ctx)

@@ -90,6 +90,8 @@ class LEB128(Type):
 
     _default = 0
 
+    # TODO: See if there's a way to calculate the size of a packed LEB128.
+
     @classmethod
     def _unpack(cls, buf, *, ctx):
         num = 0

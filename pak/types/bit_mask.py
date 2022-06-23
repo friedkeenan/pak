@@ -65,6 +65,10 @@ class BitMask(Type):
         super().__set__(instance, value)
 
     @classmethod
+    def _size(cls, value, *, ctx):
+        return cls.elem_type.size(ctx=ctx)
+
+    @classmethod
     def _default(cls, *, ctx):
         return cls.value_type()
 

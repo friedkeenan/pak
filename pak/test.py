@@ -1,6 +1,7 @@
 """Utilities for testing, exposed for users to use as well."""
 
 from . import util
+from .types.type import NoStaticSizeError
 
 __all__ = [
     "assert_type_marshal",
@@ -9,8 +10,11 @@ __all__ = [
     "assert_packet_marshal_func",
 ]
 
-def assert_type_marshal(type_cls, *values_and_data, ctx=None):
+def assert_type_marshal(type_cls, *values_and_data, static_size, ctx=None):
     r"""Asserts values marshal to and from expected data using a :class:`~.Type`.
+
+    Whether the reported size from :meth:`.Type.size` for each value equals
+    the size of the packed data is also asserted.
 
     Parameters
     ----------
@@ -18,6 +22,10 @@ def assert_type_marshal(type_cls, *values_and_data, ctx=None):
         The :class:`~.Type` to test.
     *values_and_data : pair of any and :class:`bytes`
         The values and data to test.
+    static_size : :class:`int` or ``None``
+        The size of ``type_cls`` irrespective of any value.
+
+        If ``None``, then ``type_cls`` should have no static size.
     ctx : :class:`~.TypeContext` or ``None``
         The context for the :class:`~.Type`.
 
@@ -29,6 +37,8 @@ def assert_type_marshal(type_cls, *values_and_data, ctx=None):
     ...
     ...     (1, b"\x01"),
     ...     (2, b"\x02"),
+    ...
+    ...     static_size = 1,
     ... )
     """
 
@@ -38,6 +48,17 @@ def assert_type_marshal(type_cls, *values_and_data, ctx=None):
 
         assert data_from_value == data,  f"data_from_value={data_from_value}; data={data}; value={value}"
         assert value_from_data == value, f"value_from_data={value_from_data}; value={value}; data={data}"
+
+        size_from_value = type_cls.size(value, ctx=ctx)
+        assert size_from_value == len(data), f"size_from_value={size_from_value}; data={data}; value={value}"
+
+    if static_size is None:
+        import pytest
+
+        with pytest.raises(NoStaticSizeError):
+            type_cls.size(ctx=ctx)
+    else:
+        assert type_cls.size(type_cls.STATIC_SIZE, ctx=ctx) == static_size
 
 def assert_type_marshal_func(*args, **kwargs):
     r"""Generates a function that calls :func:`assert_type_marshal`.
@@ -60,6 +81,8 @@ def assert_type_marshal_func(*args, **kwargs):
     ...
     ...     (1, b"\x01"),
     ...     (2, b"\x02"),
+    ...
+    ...     static_size = 1,
     ... )
     >>> test_uint8()
     """
@@ -79,9 +102,11 @@ def assert_packet_marshal(*packets_and_data, ctx=None):
     Examples
     --------
     >>> import pak
-    >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
+    >>> class MyPacket(pak.Packet):
     ...     id = 1
     ...     field: pak.UInt8
+    ...     class Header(pak.Packet.Header):
+    ...         id: pak.UInt8
     ...
     >>> pak.test.assert_packet_marshal(
     ...     (MyPacket(field=2), b"\x01\x02"),
@@ -92,10 +117,10 @@ def assert_packet_marshal(*packets_and_data, ctx=None):
     for packet, data in packets_and_data:
         data_file = util.file_object(data)
 
-        id_from_packet = packet.id(ctx=ctx)
-        id_from_data   = packet.unpack_id(data_file, ctx=ctx)
+        header_from_packet = packet.header(ctx=ctx)
+        header_from_data   = packet.Header.unpack(data_file, ctx=ctx)
 
-        assert id_from_packet == id_from_data, f"data={data}, packet={packet}"
+        assert header_from_packet == header_from_data, f"data={data}, packet={packet}"
 
         data_from_packet = packet.pack(ctx=ctx)
         packet_from_data = packet.unpack(data_file, ctx=ctx)
@@ -119,9 +144,11 @@ def assert_packet_marshal_func(*args, **kwargs):
     Examples
     --------
     >>> import pak
-    >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
+    >>> class MyPacket(pak.Packet):
     ...     id = 1
     ...     field: pak.UInt8
+    ...     class Header(pak.Packet.Header):
+    ...         id: pak.UInt8
     ...
     >>> test_my_packet = pak.test.assert_packet_marshal_func(
     ...     (MyPacket(field=2), b"\x01\x02"),

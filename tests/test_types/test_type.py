@@ -29,6 +29,9 @@ def test_type_context():
     with pytest.raises(AttributeError):
         type_ctx.test
 
+    with pytest.raises(AttributeError):
+        TypeContext().test
+
 def test_typelike():
     assert Type.is_typelike(Int8)
     assert Type(Int8) is Int8
@@ -61,26 +64,46 @@ def test_no_default():
     with pytest.raises(TypeError, match="default value"):
         Test.default()
 
-def test_no_size():
-    class Test(EmptyType):
-        _size = None
+def test_dynamic_value_default():
+    with StringToIntDynamicValue.context():
+        class TestDefault(Type):
+            _default = "1"
 
-    with pytest.raises(TypeError, match="size"):
-        Test.size()
+        assert TestDefault.default() == 1
 
-def test_dynamic_size():
+def test_static_size():
+    class TestStaticSize(Type):
+        _size = 4
+
+    assert TestStaticSize.size() == 4
+
+def test_classmethod_size():
+    class TestClassmethodSize(Type):
+        @classmethod
+        def _size(cls, value, *, ctx):
+            if value is Type.STATIC_SIZE:
+                return None
+
+            return value * 2;
+
+    assert TestClassmethodSize.size(5) == 10
+
+    with pytest.raises(NoStaticSizeError, match="static size"):
+        TestClassmethodSize.size()
+
+def test_dynamic_value_size():
     with StringToIntDynamicValue.context():
         class TestSize(Type):
             _size = "1"
 
         assert TestSize.size() == 1
 
-def test_dynamic_default():
-    with StringToIntDynamicValue.context():
-        class TestDefault(Type):
-            _default = "1"
+def test_no_size():
+    class Test(EmptyType):
+        _size = None
 
-        assert TestDefault.default() == 1
+    with pytest.raises(NoStaticSizeError, match="static size"):
+        Test.size()
 
 def test_cached_make_type():
     class TestCall(Type):

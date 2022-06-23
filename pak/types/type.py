@@ -10,6 +10,7 @@ from ..dyn_value import DynamicValue
 
 __all__ = [
     "TypeContext",
+    "NoStaticSizeError",
     "Type",
 ]
 
@@ -47,6 +48,21 @@ class TypeContext:
             raise AttributeError(f"'{type(self).__qualname__}' object has no attribute '{attr}'")
 
         return getattr(self.packet_ctx, attr)
+
+    # Disable hashing since 'Packet' is unhashable.
+    __hash__ = None
+
+class NoStaticSizeError(Exception):
+    """An error indicating a :class:`Type` has no static size.
+
+    Parameters
+    ----------
+    type_cls : subclass of :class:`Type`
+        The :class:`Type` which has no static size.
+    """
+
+    def __init__(self, type_cls):
+        super().__init__(f"'{type_cls.__qualname__}' has no static size")
 
 class Type(abc.ABC):
     r"""A definition of how to marshal raw data to and from values.
@@ -246,29 +262,45 @@ class Type(abc.ABC):
     def __delete__(self, instance):
         delattr(instance, self.attr_name)
 
-    @classmethod
-    def size(cls, *, ctx=None):
-        """Gets the size of the :class:`Type` when packed.
+    STATIC_SIZE = util.UniqueSentinel("STATIC_SIZE")
 
-        If the :attr:`_size` attribute is a :class:`classmethod`,
+    @classmethod
+    def size(cls, value=STATIC_SIZE, *, ctx=None):
+        r"""Gets the size of the :class:`Type` when packed.
+
+        Worst case this will perform as badly as packing the value
+        and getting the length of the raw data performs. However,
+        :class:`Type`\s may often be able to optimize finding their
+        packed sizes.
+
+        If the :attr:`_size` attribute is any value other than ``None``,
+        then that value will be returned.
+
+        Else, If the :attr:`_size` attribute is a :class:`classmethod`,
         then it should look like this::
 
             @classmethod
-            def _size(cls, *, ctx):
+            def _size(cls, value, *, ctx):
                 return my_size
 
         The return value of the :class:`classmethod` will be returned from
         this method.
 
-        Else, if the :attr:`_size` attribute is a :class:`DynamicValue`,
+        Otherwise, if the :attr:`_size` attribute is a :class:`DynamicValue`,
         which it is automatically transformed into on class construction
         if applicable, then the dynamic value of that is returned.
 
-        Otherwise, if the :attr:`_size` attribute is any value
-        other than ``None``, that value will be returned.
+        If any of these give a size of ``None`` or raise :exc:`NoStaticSizeError`,
+        then if ``value`` is not :attr:`STATIC_SIZE`, then the value will be
+        packed in order to get the size.
 
         Parameters
         ----------
+        value : any
+            If :attr:`STATIC_SIZE`, then a size irrespective of
+            any value is returned, if possible.
+
+            Otherwise,
         ctx : :class:`TypeContext` or ``None``
             The context for the :class:`Type`
 
@@ -281,23 +313,33 @@ class Type(abc.ABC):
 
         Raises
         ------
-        :exc:`TypeError`
-            If the :class:`Type` has no size.
+        :exc:`NoStaticSizeError`
+            If the :class:`Type` has no static size but is asked for one.
         """
 
         if ctx is None:
             ctx = TypeContext()
 
-        if cls._size is None:
-            raise TypeError(f"'{cls.__qualname__}' has no size")
+        size = cls._size
 
-        if inspect.ismethod(cls._size):
-            return cls._size(ctx=ctx)
+        try:
+            if inspect.ismethod(size):
+                size = size(value, ctx=ctx)
+            elif isinstance(size, DynamicValue):
+                size = size.get(ctx=ctx)
 
-        if isinstance(cls._size, DynamicValue):
-            return cls._size.get(ctx=ctx)
+        except NoStaticSizeError:
+            size = None
 
-        return cls._size
+        # If no (hopefully) performant calculation of a value's
+        # packed size is available, then fallback to packing the value.
+        if size is None:
+            if value is cls.STATIC_SIZE:
+                raise NoStaticSizeError(cls)
+
+            size = len(cls.pack(value, ctx=ctx))
+
+        return size
 
     @classmethod
     def default(cls, *, ctx=None):
@@ -501,7 +543,7 @@ class Type(abc.ABC):
         if bases is None:
             bases = (cls,)
 
-        namespace["__module__"] = cls.__module__
+        namespace.setdefault("__module__", cls.__module__)
 
         return type(name, bases, namespace)
 

@@ -1,9 +1,10 @@
+import pytest
 from pak import *
 
 
-def test_compound():
-    TestCompound = Compound(
-        "TestCompound",
+def test_static_compound():
+    TestStaticCompound = Compound(
+        "TestStaticCompound",
 
         first  = Int8,
         second = Int16,
@@ -11,22 +12,42 @@ def test_compound():
     )
 
     # The value type has equality with tuples.
-    assert TestCompound.default() == (0, 0, "aa")
+    assert TestStaticCompound.default() == (0, 0, "aa")
 
     test.assert_type_marshal(
-        TestCompound,
+        TestStaticCompound,
 
         ((1, 2, "hi"), b"\x01\x02\x00hi"),
+
+        static_size = 5,
     )
 
     # Test attributes for good measure.
-    obj = TestCompound.unpack(b"\x00\x00\x00aa")
+    obj = TestStaticCompound.unpack(b"\x00\x00\x00aa")
 
     assert obj.first  == 0
     assert obj.second == 0
     assert obj.third  == "aa"
 
     class TestAttrSet(Packet):
-        compound: TestCompound
+        compound: TestStaticCompound
 
-    assert isinstance(TestAttrSet(compound=(0, 0, "aa")).compound, TestCompound.value_type)
+    assert isinstance(TestAttrSet(compound=(0, 0, "aa")).compound, TestStaticCompound.value_type)
+
+def test_dynamic_compound():
+    TestDynamicCompound = Compound(
+        "TestDynamicCompound",
+
+        first  = Int8,
+        second = ULEB128,
+        third  = Char[2],
+    )
+
+    test.assert_type_marshal(
+        TestDynamicCompound,
+
+        ((1, 2,   "hi"), b"\x01\x02hi"),
+        ((1, 128, "hi"), b"\x01\x80\x01hi"),
+
+        static_size = None,
+    )

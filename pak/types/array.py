@@ -3,7 +3,7 @@ r""":class:`~.Type`\s for contiguous data."""
 import inspect
 
 from .. import util
-from .type import Type
+from .type import Type, NoStaticSizeError
 from .misc import Padding, RawByte, Char
 
 __all__ = [
@@ -173,14 +173,26 @@ class Array(Type):
         super().__delete__(instance)
 
     @classmethod
-    def _size(cls, *, ctx):
+    def _size(cls, value, *, ctx):
+        # If we can't get a static size of the element type, then
+        # don't bother with any calculations.
+        elem_size = cls.elem_type.size(ctx=ctx)
+
         if cls.is_fixed_size():
-            return cls.array_size * cls.elem_type.size()
+            return cls.array_size * elem_size
 
         if cls.has_size_function():
-            return cls.array_size(ctx.packet) * cls.elem_type.size()
+            return cls.array_size(ctx.packet) * elem_size
 
-        raise TypeError(f"{cls.__qualname__} has no set size")
+        if cls.is_prefixed_by_type():
+            if value is cls.STATIC_SIZE:
+                return None
+
+            value_len = len(value)
+
+            return cls.array_size.size(value_len) + value_len * elem_size
+
+        return None
 
     @classmethod
     def _default(cls, *, ctx):

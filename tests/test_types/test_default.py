@@ -15,4 +15,6 @@ def test_defaulted():
         (0, b"\x00"),
         (1, b"\x01"),
         (2, b"\x02"),
+
+        static_size = 1,
     )

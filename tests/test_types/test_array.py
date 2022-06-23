@@ -9,12 +9,20 @@ def test_padding_array():
     assert Padding[2].unpack(buf) is None
     assert buf.tell() == 2
 
+    assert Padding[2].size() == 2
+
     assert Padding[Int8].unpack(buf) is None
     assert buf.tell() == 4
+
+    with pytest.raises(NoStaticSizeError):
+        Padding[Int8].size()
 
     buf = io.BytesIO(b"test data")
     assert Padding[None].unpack(buf) is None
     assert buf.tell() == 9
+
+    with pytest.raises(NoStaticSizeError):
+        Padding[None].size()
 
     class TestAttr(Packet):
         test:  Int8
@@ -26,6 +34,9 @@ def test_padding_array():
     p   = TestAttr.unpack(buf)
     assert p.test == 2 and p.array is None
     assert buf.tell() == 3
+
+    ctx_len_2 = TestAttr(test=2).type_ctx(None)
+    Padding["test"].size(ctx=ctx_len_2) == 2
 
     assert Padding[2].pack("whatever value")    == b"\x00\x00"
     assert Padding[Int8].pack("whatever value") == b"\x00"
@@ -50,6 +61,8 @@ def test_raw_byte_array():
         RawByte[2],
 
         (b"\xAA\xBB", b"\xAA\xBB"),
+
+        static_size = 2,
     )
 
     test.assert_type_marshal(
@@ -57,12 +70,16 @@ def test_raw_byte_array():
 
         (b"\xAA\xBB", b"\x02\xAA\xBB"),
         (b"",         b"\x00"),
+
+        static_size = None,
     )
 
     test.assert_type_marshal(
         RawByte[None],
 
         (b"\xAA\xBB\xCC", b"\xAA\xBB\xCC"),
+
+        static_size = None,
     )
 
     class TestAttr(Packet):
@@ -73,6 +90,16 @@ def test_raw_byte_array():
 
     test.assert_packet_marshal(
         (TestAttr(test=2, array=b"\x00\x01"), b"\x02\x00\x01"),
+    )
+
+    ctx_len_2 = TestAttr(test=2, array=b"\x00\x01").type_ctx(None)
+    test.assert_type_marshal(
+        RawByte["test"],
+
+        (b"\x00\x01", b"\x00\x01"),
+
+        static_size = 2,
+        ctx         = ctx_len_2,
     )
 
     assert RawByte[2].pack(b"\xAA\xBB\xCC")          == b"\xAA\xBB"
@@ -97,6 +124,8 @@ def test_char_array():
         Char[2],
 
         ("ab", b"ab"),
+
+        static_size = 2,
     )
 
     test.assert_type_marshal(
@@ -104,12 +133,16 @@ def test_char_array():
 
         ("ab", b"\x02ab"),
         ("",   b"\x00"),
+
+        static_size = None,
     )
 
     test.assert_type_marshal(
         Char[None],
 
         ("abc", b"abc"),
+
+        static_size = None,
     )
 
     class TestAttr(Packet):
@@ -120,6 +153,16 @@ def test_char_array():
 
     test.assert_packet_marshal(
         (TestAttr(test=2, array="ab"), b"\x02ab"),
+    )
+
+    ctx_len_2 = TestAttr(test=2, array="ab").type_ctx(None)
+    test.assert_type_marshal(
+        Char["test"],
+
+        ("ab", b"ab"),
+
+        static_size = 2,
+        ctx         = ctx_len_2,
     )
 
     assert Char[2].pack("abc")           == b"ab"
@@ -140,6 +183,8 @@ def test_char_array():
         Utf8Char[None],
 
         ("ab", b"ab"),
+
+        static_size = None,
     )
 
 def test_array():
@@ -151,6 +196,8 @@ def test_array():
         Int8[2],
 
         ([0, 1], b"\x00\x01"),
+
+        static_size = 2,
     )
 
     test.assert_type_marshal(
@@ -158,12 +205,16 @@ def test_array():
 
         ([0, 1], b"\x02\x00\x01"),
         ([],     b"\x00"),
+
+        static_size = None,
     )
 
     test.assert_type_marshal(
         Int8[None],
 
         ([0, 1, 2], b"\x00\x01\x02"),
+
+        static_size = None,
     )
 
     assert Int8[2].pack([1]) == b"\x01\x00"
@@ -180,6 +231,16 @@ def test_array():
 
     test.assert_packet_marshal(
         (TestAttr(test=2, array=[0, 1]), b"\x02\x00\x01"),
+    )
+
+    ctx_len_2 = TestAttr(test=2, array=[0, 1]).type_ctx(None)
+    test.assert_type_marshal(
+        Int8["test"],
+
+        ([0, 1], b"\x00\x01"),
+
+        static_size = 2,
+        ctx         = ctx_len_2,
     )
 
     with pytest.raises(Exception):

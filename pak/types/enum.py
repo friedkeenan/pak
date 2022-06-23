@@ -48,7 +48,44 @@ class Enum(Type):
     elem_type = None
     enum_type = None
 
+    # TODO: Figure out whether this is really the best API.
+    # I am leaning towards that this is the best we can do
+    # to handle invalid enum values, but there are potential
+    # issues:
+    #
+    # - By collapsing every invalid enum value down to a single
+    #   object, you lose the information of what the offending
+    #   value was. "Good" code should not be using invalid enum
+    #   values, however this may be a subpar situation for
+    #   debugging/research. Perhaps we could expose more information
+    #   in a sort of "debug" mode of the library, where we could
+    #   e.g. log the offending value. That may be part of a larger
+    #   todo of logging generally though.
+    #
+    # - Also by collpasing every invalid enum value down to a
+    #   single object, we rob the ability to pack invalid enum
+    #   values. Users should not be trying to pack invalid enum
+    #   values, and this matches with other Types which cannot
+    #   pack values they were not meant to (e.g. Int8 can't pack
+    #   strings). This however does create an awkward situation
+    #   where an Enum can return a value from unpacking which then
+    #   can't be packed again. I lean towards this being fine,
+    #   but there is to consider that for something like a proxy,
+    #   which does not control either end of its protocol and may
+    #   just simply be forwarding on packets, a change in its
+    #   proxied protocol to add a new valid enum value could then
+    #   break the proxy, requiring the addition of the new valid
+    #   enum value. I do not presently feel very sympathetic to
+    #   this issue, and lean towards that if a protocol changes,
+    #   then your pak specification should simply be updated accordingly.
     INVALID = util.UniqueSentinel("INVALID")
+
+    @classmethod
+    def _size(cls, value, *, ctx):
+        if value is cls.STATIC_SIZE or value is cls.INVALID:
+            return cls.elem_type.size(ctx=ctx)
+
+        return cls.elem_type.size(value.value, ctx=ctx)
 
     @classmethod
     def _default(cls, *, ctx):

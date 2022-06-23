@@ -78,9 +78,9 @@ class Packet:
     ----------
     ctx : :class:`PacketContext`
         The context for the :class:`Packet`.
-    **kwargs
-        The attributes and corresponding values of the
-        :class:`Packet`.
+    **fields
+        The names and corresponding values of the fields
+        of the :class:`Packet`.
 
     Raises
     ------
@@ -132,14 +132,15 @@ class Packet:
     for it in the constructor.
     """
 
-    # Default to having no ID.
-    _id_type = EmptyType
-
     # The fields dictionary for 'Packet'.
     #
     # Since 'Packet' has no annotations, and has no parent to fall back on
     # for its fields, we define it here.
     _fields = {}
+
+    # Will be replaced after 'Packet' is defined.
+    class Header:
+        pass
 
     RESERVED_FIELDS = [
         "ctx",
@@ -149,18 +150,10 @@ class Packet:
     def id(cls, *, ctx=None):
         r"""Gets the ID of the :class:`Packet`.
 
-        Lots of packet protocols prefix packets with
-        an ID to determine what type of packet should
-        be read. Unless overridden, :class:`Packet` has
-        no meaningful ID.
-
-        How the ID is marshaled can be changed by passing
-        ``id_type`` when defining a subclass, like so::
-
-            class MyPacket(pak.Packet, id_type=pak.Int8):
-                pass
-
-        The value of ``id_type`` must be typelike.
+        Lots of packet protocols specify :class:`Packet`\s with
+        an ID to determine what type of :class:`Packet` should
+        be read. Unless overridden, :class:`Packet` has no
+        meaningful ID.
 
         If the :attr:`id` attribute of a subclass is enrolled
         in the :class:`~.DynamicValue` machinery, then its dynamic
@@ -176,6 +169,20 @@ class Packet:
         --------
         The ID of a :class:`Packet` must be both hashable and equality
         comparable for various facilities involving IDs to work correctly.
+
+        Many protocols have a :class:`Packet.Header` prefixing each
+        :class:`Packet` with just an ID. To model this common protocol,
+        one can do something like this::
+
+            >>> import pak
+            >>> class MyPacket(pak.Packet):
+            ...     id = 3
+            ...     array: pak.Int16[2]
+            ...     class Header(pak.Packet.Header):
+            ...         id: pak.Int8
+            ...
+            >>> MyPacket(array=[1, 2]).pack()
+            b'\x03\x01\x00\x02\x00'
 
         Parameters
         ----------
@@ -194,34 +201,29 @@ class Packet:
 
         return None
 
-    _UNSPECIFIED = util.UniqueSentinel()
-
     @classmethod
-    def _init_id(cls, id_type):
-        # If the ID type is unspecified, do not set it.
-        if id_type is not cls._UNSPECIFIED:
-            cls._id_type = Type(id_type)
-
+    def _init_id(cls):
         # Don't do anything with the ID if it's already a classmethod.
-        if not inspect.ismethod(cls.id):
-            # Transform normal values and dynamic values into a classmethod.
+        if inspect.ismethod(cls.id):
+            return
 
-            id = DynamicValue(inspect.getattr_static(cls, "id"))
+        # Transform normal values and dynamic values into a classmethod.
+        id = DynamicValue(inspect.getattr_static(cls, "id"))
 
-            if isinstance(id, DynamicValue):
-                @classmethod
-                def real_id(cls, *, ctx=None):
-                    """Gets the ID of the packet."""
+        if isinstance(id, DynamicValue):
+            @classmethod
+            def real_id(cls, *, ctx=None):
+                """Gets the ID of the packet."""
 
-                    return id.get(ctx=ctx)
-            else:
-                @classmethod
-                def real_id(cls, *, ctx=None):
-                    """Gets the ID of the packet."""
+                return id.get(ctx=ctx)
+        else:
+            @classmethod
+            def real_id(cls, *, ctx=None):
+                """Gets the ID of the packet."""
 
-                    return id
+                return id
 
-            cls.id = real_id
+        cls.id = real_id
 
     @classmethod
     def _init_fields_from_annotations(cls):
@@ -263,17 +265,17 @@ class Packet:
                 setattr(cls, attr, descriptor)
 
     @classmethod
-    def __init_subclass__(cls, id_type=_UNSPECIFIED, **kwargs):
+    def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
-        cls._init_id(id_type)
+        cls._init_id()
         cls._init_fields_from_annotations()
 
-    def __init__(self, *, ctx=None, **kwargs):
+    def __init__(self, *, ctx=None, **fields):
         type_ctx = self.type_ctx(ctx)
         for attr, attr_type in self.enumerate_field_types():
-            if attr in kwargs:
-                setattr(self, attr, kwargs.pop(attr))
+            if attr in fields:
+                setattr(self, attr, fields.pop(attr))
             else:
                 default = attr_type.default(ctx=type_ctx)
                 try:
@@ -284,41 +286,37 @@ class Packet:
                     # then just move on.
                     pass
 
-        # All the kwargs should be used up by the end of the
+        # All the fields should be used up by the end of the
         # above loop because we pop them out.
-        if len(kwargs) > 0:
-            raise TypeError(f"Unexpected keyword arguments for '{type(self).__qualname__}': {kwargs}")
+        if len(fields) > 0:
+            raise TypeError(f"Unexpected keyword arguments for '{type(self).__qualname__}': {fields}")
 
-    @classmethod
-    def unpack_id(cls, buf, *, ctx=None):
-        r"""Unpacks the ID of a :class:`Packet`.
+    def header(self, *, ctx=None):
+        """Gets the :class:`Packet.Header` for the :class:`Packet`.
 
         Parameters
         ----------
-        buf : file object or :class:`bytes` or :class:`bytearray`
-            The buffer containing the raw data.
-        ctx: :class:`PacketContext`
+        ctx : :class:`PacketContext`
             The context for the :class:`Packet`.
 
         Returns
         -------
-        any
-            The unpacked ID.
+        :class:`Packet.Header`
+            The header for the :class:`Packet`.
 
         Examples
         --------
         >>> import pak
-        >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
-        ...     id = 0xFF
-        ...     array: pak.UInt8[pak.UInt8]
+        >>> class MyPacket(pak.Packet):
+        ...     id = 1
+        ...     class Header(pak.Packet.Header):
+        ...         id: pak.UInt8
         ...
-        >>> MyPacket.unpack_id(b"\xFF\x04\x00\x01\x02\x03")
-        255
+        >>> MyPacket().header()
+        MyPacket.Header(id=1)
         """
 
-        buf = util.file_object(buf)
-
-        return cls._id_type.unpack(buf, ctx=TypeContext(None, ctx=ctx))
+        return self.Header(self, ctx=ctx)
 
     @classmethod
     def unpack(cls, buf, *, ctx=None):
@@ -326,8 +324,9 @@ class Packet:
 
         .. note::
 
-            This doesn't unpack the ID, as you need to unpack the ID
-            to determine the correct :class:`Packet` in the first place.
+            This doesn't unpack the header, as you need to unpack
+            the :class:`Packet.Header` to determine the correct
+            :class:`Packet` to unpack in the first place.
 
         Parameters
         ----------
@@ -370,9 +369,8 @@ class Packet:
 
         return self
 
-    @classmethod
-    def pack_id(cls, *, ctx=None):
-        r"""Packs the ID of a :class:`Packet`.
+    def pack_without_header(self, *, ctx=None):
+        r"""Packs a :class:`Packet` to raw data, excluding the :class:`Packet.Header`.
 
         Parameters
         ----------
@@ -382,43 +380,19 @@ class Packet:
         Returns
         -------
         :class:`bytes`
-            The packed ID.
+            The raw data marshaled from the :class:`Packet`, excluding the header.
 
         Examples
         --------
         >>> import pak
-        >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
+        >>> class MyPacket(pak.Packet):
         ...     id = 0xFF
         ...     array: pak.UInt8[pak.UInt8]
-        ...
-        >>> MyPacket.pack_id()
-        b'\xff'
-        """
-
-        return cls._id_type.pack(cls.id(ctx=ctx), ctx=TypeContext(None, ctx=ctx))
-
-    def pack_without_id(self, *, ctx=None):
-        r"""Packs a :class:`Packet` to raw data, excluding the ID.
-
-        Parameters
-        ----------
-        ctx : :class:`PacketContext`
-            The context for the :class:`Packet`.
-
-        Returns
-        -------
-        :class:`bytes`
-            The raw data marshaled from the :class:`Packet`, excluding the ID.
-
-        Examples
-        --------
-        >>> import pak
-        >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
-        ...     id = 0xFF
-        ...     array: pak.UInt8[pak.UInt8]
+        ...     class Header(pak.Packet.Header):
+        ...         id: pak.UInt8
         ...
         >>> p = MyPacket(array=[0, 1, 2, 3])
-        >>> p.pack_without_id()
+        >>> p.pack_without_header()
         b'\x04\x00\x01\x02\x03'
         """
 
@@ -434,7 +408,7 @@ class Packet:
 
         .. note::
 
-            This does pack the ID, unlike :meth:`unpack`.
+            This does pack the :class:`Packet.Header`, unlike :meth:`unpack`.
 
         Parameters
         ----------
@@ -449,19 +423,20 @@ class Packet:
         Examples
         --------
         >>> import pak
-        >>> class MyPacket(pak.Packet, id_type=pak.UInt8):
+        >>> class MyPacket(pak.Packet):
         ...     id = 0xFF
         ...     array: pak.UInt8[pak.UInt8]
+        ...     class Header(pak.Packet.Header):
+        ...         id: pak.UInt8
         ...
         >>> p = MyPacket(array=[0, 1, 2, 3])
         >>> p.pack()
         b'\xff\x04\x00\x01\x02\x03'
         """
 
-        type_ctx  = self.type_ctx(ctx)
-        packed_id = self._id_type.pack(self.id(ctx=ctx), ctx=type_ctx)
+        packed_header = self.header(ctx=ctx).pack(ctx=ctx)
 
-        return packed_id + self.pack_without_id(ctx=ctx)
+        return packed_header + self.pack_without_header(ctx=ctx)
 
     def type_ctx(self, ctx):
         """Converts a :class:`PacketContext` to a :class:`~.TypeContext`.
@@ -478,6 +453,31 @@ class Packet:
         """
 
         return TypeContext(self, ctx=ctx)
+
+    @classmethod
+    def field_names(cls):
+        """Gets the names of the fields of the :class:`Packet`.
+
+        Returns
+        -------
+        iterable
+            Each element is the name of a field.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class MyPacket(pak.Packet):
+        ...     attr1: pak.Int8
+        ...     attr2: pak.Int16
+        ...
+        >>> for name in MyPacket.field_names():
+        ...     print(name)
+        ...
+        attr1
+        attr2
+        """
+
+        return cls._fields.keys()
 
     @classmethod
     def enumerate_field_types(cls):
@@ -556,23 +556,17 @@ class Packet:
         for attr, attr_type in self.enumerate_field_types():
             yield attr, attr_type, getattr(self, attr)
 
-    @classmethod
-    def size(cls):
+    def size(self, *, ctx=None):
         """Gets the cumulative size of the fields of the :class:`Packet`.
 
         .. note::
 
-            The ID is not included in the size.
+            The header is not included in the size.
 
         Returns
         -------
         :class:`int`
             The cumulative size of the fields of the :class:`Packet`.
-
-        Raises
-        ------
-        :exc:`TypeError`
-            If the size of the :class:`Packet` can't be determined.
 
         Examples
         --------
@@ -581,11 +575,17 @@ class Packet:
         ...     array:   pak.Int16[2]
         ...     float64: pak.Float64
         ...
-        >>> MyPacket.size()
+        >>> MyPacket().size()
         12
         """
 
-        return sum(attr_type.size() for _, attr_type in cls.enumerate_field_types())
+        type_ctx = self.type_ctx(ctx)
+
+        return sum(
+            attr_type.size(attr_value, ctx=type_ctx)
+
+            for _, attr_type, attr_value in self.enumerate_field_types_and_values()
+        )
 
     @classmethod
     @util.cache
@@ -649,7 +649,7 @@ class Packet:
         return None
 
     def __eq__(self, other):
-        # ID is not included in equality.
+        # ID and header are not included in equality.
 
         if self._fields != other._fields:
             return False
@@ -668,6 +668,114 @@ class Packet:
             f"{', '.join(f'{attr}={repr(value)}' for attr, value in self.enumerate_field_values())}"
             f")"
         )
+
+# Will be set to 'Packet.Header'.
+class _Header(Packet):
+    """The header for a :class:`Packet`.
+
+    Must be accessible from the ``Header`` attribute
+    of your :class:`Packet` class, such as ``MyPacket.Header``.
+
+    For example::
+
+        >>> import pak
+        >>> class MyPacket(pak.Packet):
+        ...     byte: pak.Int8
+        ...     short: pak.Int16
+        ...     class Header(pak.Packet.Header):
+        ...         size: pak.UInt8
+        ...         byte: pak.Int8
+        ...
+        >>> MyPacket.Header(MyPacket(byte=1))
+        MyPacket.Header(size=3, byte=1)
+        >>> # Alternatively, you may use the 'Packet.header' method
+        >>> MyPacket(byte=1).header()
+        MyPacket.Header(size=3, byte=1)
+
+    To unpack the header, simply call :meth:`Packet.unpack`
+    on the header class, like so::
+
+        >>> import pak
+        >>> class MyPacket(pak.Packet):
+        ...     byte: pak.Int8
+        ...     short: pak.Int16
+        ...     class Header(pak.Packet.Header):
+        ...         size: pak.UInt8
+        ...         byte: pak.Int8
+        ...
+        >>> MyPacket.Header.unpack(b"\x03\x01")
+        MyPacket.Header(size=3, byte=1)
+
+    .. note::
+
+        Subclasses of :class:`Packet.Header` (i.e. all :class:`Packet` headers)
+        may not have headers of their own.
+
+    Parameters
+    ----------
+    packet : :class:`Packet` or ``None``
+        The :class:`Packet` for which the header is for.
+
+        Each field of the header will be acquired from ``packet``.
+        If the corresponding attribute in ``packet`` is a method,
+        then it will be called with the ``ctx`` keyword argument.
+
+        If not ``None``, then no ``**fields`` must be passed.
+    ctx : :class:`PacketContext`
+        The context for the :class:`Packet`.
+    **fields
+        The names and corresponding values of the fields
+        of the :class:`Packet`.
+
+        If ``packet`` is not ``None``, then no fields
+        may be passed.
+
+    Raises
+    ------
+    :exc:`TypeError`
+        If ``packet`` is not ``None`` and any ``**fields`` are passed.
+    """
+
+    @staticmethod
+    def _get_field(packet, name, *, ctx):
+        field = getattr(packet, name)
+        if inspect.ismethod(field):
+            field = field(ctx=ctx)
+
+        return field
+
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+
+        if cls.Header is not Packet.Header:
+            raise TypeError(f"'{cls.__qualname__}' may have no header of its own")
+
+    # TODO: When Python 3.7 support is dropped, make 'packet' positional-only.
+    def __init__(self, packet=None, *, ctx=None, **fields):
+        if packet is not None:
+            if len(fields) != 0:
+                raise TypeError("'Packet.Header' cannot be passed both a 'Packet' and normal fields")
+
+            fields = {
+                name: self._get_field(packet, name, ctx=ctx)
+
+                for name in self.field_names()
+            }
+
+        super().__init__(ctx=ctx, **fields)
+
+    def pack(self, *, ctx=None):
+        """Overrides :meth:`Packet.pack` to call :meth:`Packet.pack_without_header`
+        to avoid infinite recursion when packing.
+        """
+
+        return self.pack_without_header(ctx=ctx)
+
+# Set appropriate naming for 'Packet.Header'.
+_Header.__name__     = "Header"
+_Header.__qualname__ = "Packet.Header"
+Packet.Header        = _Header
 
 class GenericPacket(Packet):
     """A generic collection of data.

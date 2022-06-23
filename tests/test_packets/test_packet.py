@@ -24,7 +24,7 @@ def test_packet():
         (BasicPacket(attr1=0, attr2=1), b"\x00\x01\x00"),
     )
 
-    assert BasicPacket.size() == 3
+    assert BasicPacket().size() == 3
 
     assert BasicPacket(attr1=0, attr2=1) == BasicPacket(attr1=0, attr2=1)
     assert BasicPacket(attr1=0, attr2=1) != BasicPacket(attr1=1, attr2=0)
@@ -33,12 +33,6 @@ def test_packet():
 
     with pytest.raises(TypeError, match="Unexpected keyword arguments"):
         BasicPacket(test=0)
-
-    class TestNoSize(Packet):
-        attr: RawByte[None]
-
-    with pytest.raises(TypeError):
-        TestNoSize.size()
 
 def test_reserved_field():
     with pytest.raises(ReservedFieldError, match="ctx"):
@@ -179,6 +173,31 @@ def test_packet_multiple_inheritance():
         class TestDuplicateFieldFromParents(DuplicateFirstParent, DuplicateSecondParent):
             pass
 
+def test_header():
+    class Test(Packet):
+        class Header(Packet.Header):
+            size: UInt8
+
+        byte: Int8
+        short: Int16
+
+    test.assert_packet_marshal(
+        (Test.Header(size=3), b"\x03"),
+    )
+
+    assert Test().header() == Test.Header(size=3)
+
+    assert Test(byte=1, short=2).pack() == b"\x03\x01\x02\x00"
+
+    with pytest.raises(TypeError, match="fields"):
+        Test.Header(Test(), size=2)
+
+    with pytest.raises(TypeError, match="header"):
+        class TestHeaderWithHeader(Packet):
+            class Header(Packet.Header):
+                class Header(Packet.Header):
+                    pass
+
 def test_id():
     class TestEmpty(Packet):
         pass
@@ -188,24 +207,30 @@ def test_id():
         (TestEmpty(), b""),
     )
 
-    assert TestEmpty.unpack_id(b"test") is None
+    assert TestEmpty.Header.unpack(b"test") == Packet.Header()
 
-    class TestStaticId(Packet, id_type=Int8):
+    class TestStaticId(Packet):
+        class Header(Packet.Header):
+            id: Int8
+
         id = 1
 
     assert TestStaticId.id()     == 1
     assert TestStaticId().pack() == b"\x01"
 
-    assert TestStaticId.unpack_id(b"\x02") == 2
+    assert TestStaticId.Header.unpack(b"\x02") == TestStaticId.Header(id=2)
 
     with StringToIntDynamicValue.context():
-        class TestDynamicId(Packet, id_type=Int8):
+        class TestDynamicId(Packet):
+            class Header(Packet.Header):
+                id: Int8
+
             id = "1"
 
         assert TestDynamicId.id()     == 1
         assert TestDynamicId().pack() == b"\x01"
 
-        assert TestDynamicId.unpack_id(b"\x02") == 2
+        assert TestDynamicId.Header.unpack(b"\x02") == TestDynamicId.Header(id=2)
 
 def test_subclass_id():
     class Root(Packet):

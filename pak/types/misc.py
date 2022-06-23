@@ -140,7 +140,6 @@ class Char(Type):
         The encoding to use to encode/decode data.
     """
 
-    _size    = 1
     _default = "a"
 
     encoding = "ascii"
@@ -192,6 +191,15 @@ class Char(Type):
         return string.encode(cls.encoding)
 
     @classmethod
+    def _size(cls, value, *, ctx):
+        # TODO: See if there's a more generic way to do this.
+
+        if cls.encoding == "ascii":
+            return 1
+
+        return None
+
+    @classmethod
     def _unpack(cls, buf, *, ctx):
         return cls.decode(buf, chars=1)
 
@@ -233,10 +241,7 @@ class StructType(Type):
         # Compile a struct.Struct on class initialization.
         if cls.fmt is not None:
             cls._struct = struct.Struct(f"{cls.endian}{cls.fmt}")
-
-    @classmethod
-    def _size(cls, *, ctx):
-        return cls._struct.size
+            cls._size   = cls._struct.size
 
     @classmethod
     def _unpack(cls, buf, *, ctx):
