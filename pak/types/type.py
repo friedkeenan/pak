@@ -15,7 +15,17 @@ __all__ = [
 ]
 
 class TypeContext:
-    """The context for a :class:`Type`.
+    r"""The context for a :class:`Type`.
+
+    :class:`TypeContext`\s are used to pass arbitrary data
+    to :class:`Type`\s. All of that arbitrary data comes from
+    the attributes of the :class:`~.PacketContext` if supplied,
+    and you may access those attributes on the created :class:`TypeContext`
+    as if it were the :class:`~.PacketContext` itself.
+
+    However, a :class:`TypeContext` also contains a :attr:`packet`
+    attribute which denotes the :class:`~.Packet` instance for which
+    a :class:`Type` utility is being used for, if any is applicable.
 
     Parameters
     ----------

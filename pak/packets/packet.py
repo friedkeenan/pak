@@ -20,10 +20,15 @@ __all__ = [
 ]
 
 class PacketContext:
-    """The context for a :class:`Packet`.
+    r"""The context for a :class:`Packet`.
 
     To be inherited from by users of the library
     for their own contexts.
+
+    :class:`PacketContext`\s are used to pass arbitrary data
+    to :class:`Packet` operations, typically just being wrapped
+    in a :class:`~.TypeContext` and sent off to :class:`~.Type`
+    operations, such as unpacking and packing.
 
     Warnings
     --------
