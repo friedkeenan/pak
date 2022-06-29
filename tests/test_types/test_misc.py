@@ -30,12 +30,13 @@ def test_padding():
     assert Padding.size() == 1
 
 def test_raw_byte():
-    test.assert_type_marshal(
+    test.type_behavior(
         RawByte,
 
         (b"\xAA", b"\xAA"),
 
         static_size = 1,
+        default     = b"\x00",
     )
 
     assert RawByte.pack(b"\xAA\xBB") == b"\xAA"
@@ -44,12 +45,14 @@ def test_raw_byte():
         RawByte.unpack(b"")
 
 def test_char():
-    test.assert_type_marshal(
+    test.type_behavior(
         Char,
 
         ("h", b"h"),
 
         static_size = 1,
+        alignment   = 1,
+        default     = "a"
     )
 
     assert Char.pack("Hello") == b"H"
@@ -64,13 +67,14 @@ def test_char():
         Char.unpack(b"")
 
     Utf8Char = Char("utf-8")
-    test.assert_type_marshal(
+    test.type_behavior(
         Utf8Char,
 
         ("h",    b"h"),
         ("\x80", b"\xC2\x80"),
 
         static_size = None,
+        default     = "a",
     )
 
 def test_struct():
@@ -82,21 +86,23 @@ def test_struct():
         fmt = "H"
         endian = ">"
 
-    test.assert_type_marshal(
+    test.type_behavior(
         TestEndian,
 
         (1, b"\x00\x01"),
 
         static_size = 2,
+        default     = test.NO_DEFAULT,
     )
 
     class TestMultiple(StructType):
         fmt = "BH"
 
-    test.assert_type_marshal(
+    test.type_behavior(
         TestMultiple,
 
         ((1, 1), b"\x01\x01\x00"),
 
         static_size = 3,
+        default     = test.NO_DEFAULT,
     )

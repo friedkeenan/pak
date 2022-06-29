@@ -4,13 +4,17 @@ from . import util
 from .types.type import NoStaticSizeError
 
 __all__ = [
-    "assert_type_marshal",
-    "assert_type_marshal_func",
-    "assert_packet_marshal",
-    "assert_packet_marshal_func",
+    "NO_DEFAULT",
+    "type_behavior",
+    "type_behavior_func",
+    "packet_behavior",
+    "packet_behavior_func",
 ]
 
-def assert_type_marshal(type_cls, *values_and_data, static_size, ctx=None):
+#: Am object passed to :func:`type_behavior` to indicate a :class:`~.Type` has no default value.
+NO_DEFAULT = util.UniqueSentinel("NO_DEFAULT")
+
+def type_behavior(type_cls, *values_and_data, static_size, alignment=None, default, ctx=None):
     r"""Asserts values marshal to and from expected data using a :class:`~.Type`.
 
     Whether the reported size from :meth:`.Type.size` for each value equals
@@ -26,19 +30,32 @@ def assert_type_marshal(type_cls, *values_and_data, static_size, ctx=None):
         The size of ``type_cls`` irrespective of any value.
 
         If ``None``, then ``type_cls`` should have no static size.
+    alignment : :class:`int` or ``None``
+        The alignment of ``type_cls``.
+
+        If ``None``, then ``type_cls`` should have no alignment.
+
+        If an ``alignment`` is provided, then a ``static_size``
+        should be as well.
+    default
+        The default value of ``type_cls``.
+
+        If :data:`NO_DEFAULT`, then ``type_cls`` should have no default value.
     ctx : :class:`~.TypeContext` or ``None``
         The context for the :class:`~.Type`.
 
     Examples
     --------
     >>> import pak
-    >>> pak.test.assert_type_marshal(
+    >>> pak.test.type_behavior(
     ...     pak.UInt8,
     ...
     ...     (1, b"\x01"),
     ...     (2, b"\x02"),
     ...
     ...     static_size = 1,
+    ...     alignment   = 1,
+    ...     default     = 0,
     ... )
     """
 
@@ -60,36 +77,59 @@ def assert_type_marshal(type_cls, *values_and_data, static_size, ctx=None):
     else:
         assert type_cls.size(type_cls.STATIC_SIZE, ctx=ctx) == static_size
 
-def assert_type_marshal_func(*args, **kwargs):
-    r"""Generates a function that calls :func:`assert_type_marshal`.
+    if alignment is None:
+        import pytest
+
+        with pytest.raises(TypeError):
+            type_cls.alignment(ctx=ctx)
+    else:
+        assert static_size is not None
+        assert type_cls.alignment(ctx=ctx) == alignment
+
+        # Check that 'alignment' is a power of two.
+        assert alignment != 0
+        assert (alignment & (alignment - 1)) == 0
+
+    if default is NO_DEFAULT:
+        import pytest
+
+        with pytest.raises(TypeError):
+            type_cls.default(ctx=ctx)
+    else:
+        assert type_cls.default(ctx=ctx) == default
+
+def type_behavior_func(*args, **kwargs):
+    r"""Generates a function that calls :func:`type_behavior`.
 
     This should be used only if you just need to compare values
     and raw data, and the values should be compared using equality.
     For anything else, you should create your own function, potentially
-    one which uses :func:`assert_type_marshal`.
+    one which uses :func:`type_behavior`.
 
     Parameters
     ----------
     *args, **kwargs
-        Forwarded to :func:`assert_type_marshal`.
+        Forwarded to :func:`type_behavior`.
 
     Examples
     --------
     >>> import pak
-    >>> test_uint8 = pak.test.assert_type_marshal_func(
+    >>> test_uint8 = pak.test.type_behavior_func(
     ...     pak.UInt8,
     ...
     ...     (1, b"\x01"),
     ...     (2, b"\x02"),
     ...
     ...     static_size = 1,
+    ...     alignment   = 1,
+    ...     default     = 0,
     ... )
     >>> test_uint8()
     """
 
-    return lambda: assert_type_marshal(*args, **kwargs)
+    return lambda: type_behavior(*args, **kwargs)
 
-def assert_packet_marshal(*packets_and_data, ctx=None):
+def packet_behavior(*packets_and_data, ctx=None):
     r"""Asserts :class:`~.Packet`\s marshal to and from expected data.
 
     Parameters
@@ -108,7 +148,7 @@ def assert_packet_marshal(*packets_and_data, ctx=None):
     ...     class Header(pak.Packet.Header):
     ...         id: pak.UInt8
     ...
-    >>> pak.test.assert_packet_marshal(
+    >>> pak.test.packet_behavior(
     ...     (MyPacket(field=2), b"\x01\x02"),
     ...     (MyPacket(field=3), b"\x01\x03"),
     ... )
@@ -128,18 +168,18 @@ def assert_packet_marshal(*packets_and_data, ctx=None):
         assert data_from_packet == data,   f"data_from_packet={data_from_packet}; data={data}; packet={packet}"
         assert packet_from_data == packet, f"packet_from_data={packet_from_data}; packet={packet}; data={data}"
 
-def assert_packet_marshal_func(*args, **kwargs):
-    r"""Generates a function that calls :func:`assert_packet_marshal`.
+def packet_behavior_func(*args, **kwargs):
+    r"""Generates a function that calls :func:`packet_behavior`.
 
     This should be used only if you just need to compare :class:`~.Packet`\s
     and raw data, and the :class:`~.Packet`\s should be compared using equality.
     For anything else, you should create your own function, potentially one which
-    uses :func:`assert_packet_marshal`.
+    uses :func:`packet_behavior`.
 
     Parameters
     ----------
     *args, **kwargs
-        Forwarded to :func:`assert_packet_marshal`.
+        Forwarded to :func:`packet_behavior`.
 
     Examples
     --------
@@ -150,11 +190,11 @@ def assert_packet_marshal_func(*args, **kwargs):
     ...     class Header(pak.Packet.Header):
     ...         id: pak.UInt8
     ...
-    >>> test_my_packet = pak.test.assert_packet_marshal_func(
+    >>> test_my_packet = pak.test.packet_behavior_func(
     ...     (MyPacket(field=2), b"\x01\x02"),
     ...     (MyPacket(field=3), b"\x01\x03"),
     ... )
     >>> test_my_packet()
     """
 
-    return lambda: assert_packet_marshal(*args, **kwargs)
+    return lambda: packet_behavior(*args, **kwargs)

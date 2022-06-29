@@ -7,9 +7,7 @@ def test_defaulted():
 
     assert DefaultedInt8.mro() == [DefaultedInt8, Int8, StructType, Defaulted, Type, abc.ABC, object]
 
-    assert DefaultedInt8.default() == 1
-
-    test.assert_type_marshal(
+    test.type_behavior(
         DefaultedInt8,
 
         (0, b"\x00"),
@@ -17,4 +15,6 @@ def test_defaulted():
         (2, b"\x02"),
 
         static_size = 1,
+        alignment   = 1,
+        default     = 1,
     )

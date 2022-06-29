@@ -11,10 +11,7 @@ def test_static_bit_mask():
         third  = (3, 5),
     )
 
-    # The value type has equality with tuples.
-    assert TestStaticMask.default() == (False, 0, 0)
-
-    test.assert_type_marshal(
+    test.type_behavior(
         TestStaticMask,
 
         ((False, 0, 0),  b"\x00"),
@@ -26,13 +23,18 @@ def test_static_bit_mask():
         ((False, 0, 1),  b"\x08"),
 
         static_size = 1,
+        default     = (False, 0, 0),
     )
 
     with pytest.raises(ValueError, match="too wide for range"):
         TestStaticMask.pack((False, 4, 0))
 
-    # Test attributes for good measure.
     obj = TestStaticMask.unpack(b"\x00")
+
+    # Value type has equality with tuples.
+    assert obj == (False, 0, 0)
+
+    # The value type also has attributes.
     assert obj.first  is False
     assert obj.second == 0
     assert obj.third  == 0
@@ -52,9 +54,7 @@ def test_dynamic_bit_mask():
         third  = (7, 9),
     )
 
-    assert TestDynamicMask.default() == (False, 0, 0)
-
-    test.assert_type_marshal(
+    test.type_behavior(
         TestDynamicMask,
 
         ((False, 0, 0), b"\x00"),
@@ -66,4 +66,5 @@ def test_dynamic_bit_mask():
         ((False, 0, 1), b"\x80\x01"),
 
         static_size = None,
+        default     = (False, 0, 0),
     )

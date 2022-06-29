@@ -9,6 +9,7 @@ Packets
     :toctree: reference
     :nosignatures:
 
+    ~packets.aligned_packet
     ~packets.packet
     ~packets.packet_handler
 

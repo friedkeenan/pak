@@ -54,13 +54,26 @@ class TypeContext:
         self.packet_ctx = ctx
 
     def __getattr__(self, attr):
+        if attr in ("packet", "packet_ctx"):
+            return super().__getattr__(attr)
+
         if self.packet_ctx is None:
             raise AttributeError(f"'{type(self).__qualname__}' object has no attribute '{attr}'")
 
         return getattr(self.packet_ctx, attr)
 
-    # Disable hashing since 'Packet' is unhashable.
-    __hash__ = None
+    def __setattr__(self, attr, value):
+        if hasattr(self, "packet_ctx"):
+            raise TypeError(f"'{type(self).__qualname__}' is immutable")
+
+        super().__setattr__(attr, value)
+
+    def __hash__(self):
+        # Since Packets are not hashable, hash the identity of it.
+        # This should be perfectly safe since as long as the type
+        # context holds a reference to the packet, it should not be
+        # garbage collected.
+        return hash((id(self.packet), self.packet_ctx))
 
 class NoStaticSizeError(Exception):
     """An error indicating a :class:`Type` has no static size.
@@ -110,8 +123,9 @@ class Type(abc.ABC):
 
     _typelikes = {}
 
-    _size    = None
-    _default = None
+    _size      = None
+    _alignment = None
+    _default   = None
 
     def __new__(cls, typelike):
         if isinstance(typelike, type) and issubclass(typelike, Type):
@@ -225,8 +239,9 @@ class Type(abc.ABC):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
-        cls._size    = DynamicValue(inspect.getattr_static(cls, "_size"))
-        cls._default = DynamicValue(inspect.getattr_static(cls, "_default"))
+        cls._size      = DynamicValue(inspect.getattr_static(cls, "_size"))
+        cls._alignment = DynamicValue(inspect.getattr_static(cls, "_alignment"))
+        cls._default   = DynamicValue(inspect.getattr_static(cls, "_default"))
 
         # Set __new__ to _call's underlying function.
         # We don't just override __new__ instead of
@@ -275,6 +290,7 @@ class Type(abc.ABC):
     STATIC_SIZE = util.UniqueSentinel("STATIC_SIZE")
 
     @classmethod
+    @util.cache(force_hashable=False)
     def size(cls, value=STATIC_SIZE, *, ctx=None):
         r"""Gets the size of the :class:`Type` when packed.
 
@@ -312,7 +328,7 @@ class Type(abc.ABC):
 
             Otherwise,
         ctx : :class:`TypeContext` or ``None``
-            The context for the :class:`Type`
+            The context for the :class:`Type`.
 
             If ``None``, then an empty :class:`TypeContext` is used.
 
@@ -352,6 +368,114 @@ class Type(abc.ABC):
         return size
 
     @classmethod
+    @util.cache
+    def alignment(cls, *, ctx=None):
+        r"""Gets the alignment of the :class:`Type`.
+
+        The alignment of a :class:`Type` must be a power of two.
+
+        The alignment of a :class:`Type` is typically ignored, unless
+        using something that explicitly utilizes alignment, such as
+        :class:`~.AlignedPacket` or :class:`~.AlignedCompound`.
+
+        Furthermore, alignment only makes sense for :class:`Type`\s
+        with static sizes.
+
+        If the :attr:`_alignment` attribute is any value other
+        than ``None``, then that value will be returned.
+
+        Else, if the :attr:`_alignment` attribute is a :class:`classmethod`,
+        then it should look like this::
+
+            @classmethod
+            def _alignment(cls, *, ctx):
+                return my_alignment
+
+        The return value of the :class:`classmethod` will be returned from
+        this method.
+
+        Otherwise, if the :class:`_alignment` attribute is a :class:`DynamicValue`,
+        which it is automatically transformed into on class construction if
+        applicable, then the dynamic value of that is returned.
+
+        If any of these give a value of ``None``, then the :class:`Type`
+        has no alignment and a :exc:`TypeError` will be raised.
+
+        Parameters
+        ----------
+        ctx : :class:`TypeContext` or ``None``
+            The context for the :class:`Type`.
+
+            If ``None``, then an empty :class:`TypeContext` is used.
+
+        Returns
+        -------
+        :class:`int`
+            The alignment of the :class:`Type`.
+
+        Raises
+        ------
+        :exc:`TypeError`
+            If the :class:`Type` has no alignment.
+        """
+
+        if ctx is None:
+            ctx = TypeContext()
+
+        alignment = cls._alignment
+        if inspect.ismethod(alignment):
+            alignment = alignment(ctx=ctx)
+        elif isinstance(alignment, DynamicValue):
+            alignment = alignment.get(ctx=ctx)
+
+        if alignment is None:
+            raise TypeError(f"'{cls.__qualname__}' has no alignment")
+
+        return alignment
+
+    @staticmethod
+    @util.cache
+    def alignment_padding_lengths(*types, total_alignment, ctx=None):
+        r"""Gets the length of padding after each :class:`Type` for alignment purposes.
+
+        Should rarely be used by users. In most cases
+        :class:`~.AlignedCompound` or :class:`~.AlignedPacket`
+        should be used.
+
+        Parameters
+        ----------
+        *types : subclass of :class:`Type`
+            The :class:`Type`\s for which to find the padding for.
+        total_alignment : :class:`int`
+            The total alignment that `*types` should be aligned to,
+            used for the padding at the end.
+        ctx : :class:`TypeContext` or ``None``
+            The context for ``*types``.
+
+            If ``None``, then an empty :class:`TypeContext` is used.
+        """
+
+        # See https://en.wikipedia.org/wiki/Data_structure_alignment#Computing_padding
+        # for more details.
+
+        if ctx is None:
+            ctx = TypeContext()
+
+        padding_lengths = []
+
+        offset = types[0].size(ctx=ctx)
+        for t in types[1:]:
+            padding_amount = -offset & (t.alignment(ctx=ctx) - 1)
+
+            offset += t.size(ctx=ctx) + padding_amount
+            padding_lengths.append(padding_amount)
+
+        # Pad out the end with the total alignment,
+        padding_lengths.append(-offset & (total_alignment - 1))
+
+        return padding_lengths
+
+    @classmethod
     def default(cls, *, ctx=None):
         """Gets the default value of the :class:`Type`.
 
@@ -375,7 +499,7 @@ class Type(abc.ABC):
         Parameters
         ----------
         ctx : :class:`TypeContext` or ``None``
-            The context for the type.
+            The context for the :class:`Type`.
 
             If ``None``, then an empty :class:`TypeContext` is used.
 
@@ -387,7 +511,7 @@ class Type(abc.ABC):
         Raises
         ------
         :exc:`TypeError`
-            If the :class:`Type` has no default value..
+            If the :class:`Type` has no default value.
         """
 
         if cls._default is None:
@@ -519,6 +643,7 @@ class Type(abc.ABC):
 
         raise NotImplementedError
 
+    # TODO: When Python 3.7 support is dropped, make 'name' and 'bases' positional-only.
     @classmethod
     @util.cache(force_hashable=False)
     def make_type(cls, name, bases=None, **namespace):

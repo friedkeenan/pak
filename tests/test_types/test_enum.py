@@ -9,16 +9,15 @@ class EnumRaw(enum.Enum):
 def test_static_enum():
     EnumStatic = Enum(Int8, EnumRaw)
 
-    test.assert_type_marshal(
+    test.type_behavior(
         EnumStatic,
 
         (EnumRaw.A, b"\x01"),
         (EnumRaw.B, b"\x02"),
 
         static_size = 1,
+        default     = EnumRaw.A,
     )
-
-    assert EnumStatic.default() == EnumRaw.A
 
     assert EnumStatic.unpack(b"\x03") is Enum.INVALID
 
@@ -30,13 +29,14 @@ def test_static_enum():
 def test_dynamic_enum():
     EnumDynamic = Enum(LEB128, EnumRaw)
 
-    test.assert_type_marshal(
+    test.type_behavior(
         EnumDynamic,
 
         (EnumRaw.A, b"\x01"),
         (EnumRaw.B, b"\x02"),
 
         static_size = None,
+        default     = EnumRaw.A,
     )
 
     with pytest.raises(ValueError, match="invalid value"):

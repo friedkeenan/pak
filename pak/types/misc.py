@@ -200,6 +200,15 @@ class Char(Type):
         return None
 
     @classmethod
+    def _alignment(cls, *, ctx):
+        # TODO: See if there's a more generic way to do this.
+
+        if cls.encoding == "ascii":
+            return 1
+
+        return None
+
+    @classmethod
     def _unpack(cls, buf, *, ctx):
         return cls.decode(buf, chars=1)
 

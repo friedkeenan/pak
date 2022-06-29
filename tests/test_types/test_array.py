@@ -57,29 +57,32 @@ def test_raw_byte_array():
 
     # Values are actually bytearrays but will still
     # have equality with bytes objects.
-    test.assert_type_marshal(
+    test.type_behavior(
         RawByte[2],
 
         (b"\xAA\xBB", b"\xAA\xBB"),
 
         static_size = 2,
+        default     = b"\x00\x00",
     )
 
-    test.assert_type_marshal(
+    test.type_behavior(
         RawByte[Int8],
 
         (b"\xAA\xBB", b"\x02\xAA\xBB"),
         (b"",         b"\x00"),
 
         static_size = None,
+        default     = b"",
     )
 
-    test.assert_type_marshal(
+    test.type_behavior(
         RawByte[None],
 
         (b"\xAA\xBB\xCC", b"\xAA\xBB\xCC"),
 
         static_size = None,
+        default     = b"",
     )
 
     class TestAttr(Packet):
@@ -88,17 +91,18 @@ def test_raw_byte_array():
 
     assert TestAttr(test=2).array == b"\x00\x00"
 
-    test.assert_packet_marshal(
+    test.packet_behavior(
         (TestAttr(test=2, array=b"\x00\x01"), b"\x02\x00\x01"),
     )
 
     ctx_len_2 = TestAttr(test=2, array=b"\x00\x01").type_ctx(None)
-    test.assert_type_marshal(
+    test.type_behavior(
         RawByte["test"],
 
         (b"\x00\x01", b"\x00\x01"),
 
         static_size = 2,
+        default     = b"\x00\x00",
         ctx         = ctx_len_2,
     )
 
@@ -116,33 +120,35 @@ def test_raw_byte_array():
         TestAttr.unpack(b"\x01")
 
 def test_char_array():
-    assert Char[2].default() == "aa"
-
     assert isinstance(Char[1].unpack(b"a"), str)
 
-    test.assert_type_marshal(
+    test.type_behavior(
         Char[2],
 
         ("ab", b"ab"),
 
         static_size = 2,
+        alignment   = 1,
+        default     = "aa",
     )
 
-    test.assert_type_marshal(
+    test.type_behavior(
         Char[Int8],
 
         ("ab", b"\x02ab"),
         ("",   b"\x00"),
 
         static_size = None,
+        default     = "",
     )
 
-    test.assert_type_marshal(
+    test.type_behavior(
         Char[None],
 
         ("abc", b"abc"),
 
         static_size = None,
+        default     = "",
     )
 
     class TestAttr(Packet):
@@ -151,17 +157,19 @@ def test_char_array():
 
     assert TestAttr(test=2).array == "aa"
 
-    test.assert_packet_marshal(
+    test.packet_behavior(
         (TestAttr(test=2, array="ab"), b"\x02ab"),
     )
 
     ctx_len_2 = TestAttr(test=2, array="ab").type_ctx(None)
-    test.assert_type_marshal(
+    test.type_behavior(
         Char["test"],
 
         ("ab", b"ab"),
 
         static_size = 2,
+        alignment   = 1,
+        default     = "aa",
         ctx         = ctx_len_2,
     )
 
@@ -179,42 +187,45 @@ def test_char_array():
         TestAttr.unpack(b"\x01")
 
     Utf8Char = Char("utf-8")
-    test.assert_type_marshal(
+    test.type_behavior(
         Utf8Char[None],
 
         ("ab", b"ab"),
 
         static_size = None,
+        default     = "",
     )
 
 def test_array():
     assert issubclass(Int8[2], Array)
 
-    assert Int8[2].default() == [0, 0]
-
-    test.assert_type_marshal(
+    test.type_behavior(
         Int8[2],
 
         ([0, 1], b"\x00\x01"),
 
         static_size = 2,
+        alignment   = 1,
+        default     = [0, 0],
     )
 
-    test.assert_type_marshal(
+    test.type_behavior(
         Int8[Int8],
 
         ([0, 1], b"\x02\x00\x01"),
         ([],     b"\x00"),
 
         static_size = None,
+        default     = [],
     )
 
-    test.assert_type_marshal(
+    test.type_behavior(
         Int8[None],
 
         ([0, 1, 2], b"\x00\x01\x02"),
 
         static_size = None,
+        default     = [],
     )
 
     assert Int8[2].pack([1]) == b"\x01\x00"
@@ -229,17 +240,19 @@ def test_array():
 
     assert TestAttr(test=2).array == [0, 0]
 
-    test.assert_packet_marshal(
+    test.packet_behavior(
         (TestAttr(test=2, array=[0, 1]), b"\x02\x00\x01"),
     )
 
     ctx_len_2 = TestAttr(test=2, array=[0, 1]).type_ctx(None)
-    test.assert_type_marshal(
+    test.type_behavior(
         Int8["test"],
 
         ([0, 1], b"\x00\x01"),
 
         static_size = 2,
+        alignment   = 1,
+        default     = [0, 0],
         ctx         = ctx_len_2,
     )
 

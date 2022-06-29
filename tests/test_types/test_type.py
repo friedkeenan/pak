@@ -57,20 +57,6 @@ def test_prepare_types():
     # Nones will be converted to EmptyType
     test(1, None, None, None, test=None, other_test=None)
 
-def test_no_default():
-    class Test(EmptyType):
-        _default = None
-
-    with pytest.raises(TypeError, match="default value"):
-        Test.default()
-
-def test_dynamic_value_default():
-    with StringToIntDynamicValue.context():
-        class TestDefault(Type):
-            _default = "1"
-
-        assert TestDefault.default() == 1
-
 def test_static_size():
     class TestStaticSize(Type):
         _size = 4
@@ -104,6 +90,78 @@ def test_no_size():
 
     with pytest.raises(NoStaticSizeError, match="static size"):
         Test.size()
+
+def test_static_alignment():
+    class Test(Type):
+        _alignment = 64
+
+    assert Test.alignment() == 64
+
+def test_no_alignment():
+    class Test(Type):
+        _alignment = None
+
+    with pytest.raises(TypeError, match="alignment"):
+        Test.alignment()
+
+def test_classmethod_alignment():
+    class Test(Type):
+        @classmethod
+        def _alignment(cls, *, ctx):
+            return 64
+
+    assert Test.alignment() == 64
+
+def test_dynamic_value_alignment():
+    with StringToIntDynamicValue.context():
+        class Test(Type):
+            _alignment = "64"
+
+        assert Test.alignment() == 64
+
+def test_alignment_padding():
+    assert Type.alignment_padding_lengths(
+        Int16,
+        Int32,
+        Int8,
+
+        total_alignment = 4,
+    ) == [
+        2,
+        0,
+        3,
+    ]
+
+def test_static_default():
+    class Test(Type):
+        _default = [1, 2, 3]
+
+    assert Test.default() == [1, 2, 3]
+    assert Test.default() is not Test._default
+
+def test_no_default():
+    class Test(EmptyType):
+        _default = None
+
+    with pytest.raises(TypeError, match="default value"):
+        Test.default()
+
+def test_classmethod_default():
+    SENTINEL = util.UniqueSentinel()
+
+    class Test(Type):
+        @classmethod
+        def _default(cls, *, ctx):
+            return SENTINEL
+
+    assert Test.default() is SENTINEL
+
+def test_dynamic_value_default():
+    with StringToIntDynamicValue.context():
+        class TestDefault(Type):
+            _default = "1"
+
+        assert TestDefault.default() == 1
 
 def test_cached_make_type():
     class TestCall(Type):

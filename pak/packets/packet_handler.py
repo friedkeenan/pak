@@ -276,8 +276,9 @@ class AsyncPacketHandler(PacketHandler):
         try:
             await asyncio.wait_for(asyncio.gather(*self._listener_tasks), timeout)
         except asyncio.TimeoutError:
-            for task in self._listener_tasks:
-                task.cancel()
+            # If the timeout is reached, then the gathered
+            # tasks are also canceled.
+            pass
 
     @asynccontextmanager
     async def listener_task_context(self, *, listen_sequentially):

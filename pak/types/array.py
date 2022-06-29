@@ -195,6 +195,13 @@ class Array(Type):
         return None
 
     @classmethod
+    def _alignment(cls, *, ctx):
+        if cls.is_prefixed_by_type() or cls.should_read_until_end():
+            return None
+
+        return cls.elem_type.alignment(ctx=ctx)
+
+    @classmethod
     def _default(cls, *, ctx):
         if cls.is_padding():
             return None

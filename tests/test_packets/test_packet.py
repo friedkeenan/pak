@@ -20,7 +20,7 @@ def test_packet():
     p = BasicPacket()
     assert p.attr1 == 0 and p.attr2 == 0
 
-    test.assert_packet_marshal(
+    test.packet_behavior(
         (BasicPacket(attr1=0, attr2=1), b"\x00\x01\x00"),
     )
 
@@ -45,7 +45,7 @@ def test_typelike_attr():
     class TestTypelike(Packet):
         attr: 1
 
-    test.assert_packet_marshal(
+    test.packet_behavior(
         (TestTypelike(attr=5), b"\x05"),
     )
 
@@ -66,7 +66,7 @@ def test_packet_property():
     p = TestProperty()
     assert p.prop == 0
 
-    test.assert_packet_marshal(
+    test.packet_behavior(
         (TestProperty(prop=1), b"\x01"),
     )
 
@@ -83,7 +83,7 @@ def test_packet_property():
     p = TestReadOnly()
     assert p.read_only == 1
 
-    test.assert_packet_marshal(
+    test.packet_behavior(
         (TestReadOnly(), b"\x01"),
     )
 
@@ -110,7 +110,7 @@ def test_packet_inheritance():
     assert TestChildBasic()    == TestParent()
     assert TestChildOverride() != TestParent()
 
-    test.assert_packet_marshal(
+    test.packet_behavior(
         (
             TestChildBasic(test=1),
 
@@ -144,7 +144,7 @@ def test_packet_multiple_inheritance():
         ("child",  Int32),
     ]
 
-    test.assert_packet_marshal(
+    test.packet_behavior(
         (
             Child(first=1, second=2, child=3),
 
@@ -181,7 +181,7 @@ def test_header():
         byte: Int8
         short: Int16
 
-    test.assert_packet_marshal(
+    test.packet_behavior(
         (Test.Header(size=3), b"\x03"),
     )
 
@@ -203,7 +203,7 @@ def test_id():
         pass
 
     assert TestEmpty.id() is None
-    test.assert_packet_marshal(
+    test.packet_behavior(
         (TestEmpty(), b""),
     )
 
@@ -250,6 +250,6 @@ def test_subclass_id():
     assert Root.subclass_with_id(2) is GrandChild1
     assert Root.subclass_with_id(3) is None
 
-test_generic = test.assert_packet_marshal_func(
+test_generic = test.packet_behavior_func(
     (GenericPacket(data=b"\xAA\xBB\xCC"), b"\xAA\xBB\xCC"),
 )

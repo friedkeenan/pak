@@ -19,6 +19,7 @@ __all__ = [
     "GenericPacket",
 ]
 
+# TODO: Move this under 'Packet', like with the header packet?
 class PacketContext:
     r"""The context for a :class:`Packet`.
 
@@ -232,6 +233,9 @@ class Packet:
 
     @classmethod
     def _init_fields_from_annotations(cls):
+        # TODO: Figure out a good way to have generic
+        # anonymous field names.
+
         annotations = util.annotations(cls)
 
         cls._fields = {}
@@ -366,6 +370,7 @@ class Packet:
 
             try:
                 setattr(self, attr, value)
+
             except AttributeError:
                 # If trying to set an unpacked value fails
                 # (like if the attribute is read-only)
@@ -405,7 +410,7 @@ class Packet:
 
         return b"".join(
             attr_type.pack(value, ctx=type_ctx)
-            for _, attr_type, value in self.enumerate_field_types_and_values()
+            for attr_type, value in self.field_types_and_values()
         )
 
     def pack(self, *, ctx=None):
@@ -414,6 +419,9 @@ class Packet:
         .. note::
 
             This does pack the :class:`Packet.Header`, unlike :meth:`unpack`.
+
+            First the :class:`Packet.Header` is gotten from :meth:`header`,
+            then it is packed, and then :meth:`pack_without_header` is called.
 
         Parameters
         ----------
@@ -485,13 +493,90 @@ class Packet:
         return cls._fields.keys()
 
     @classmethod
+    def field_types(cls):
+        r"""Gets the :class:`~.Type`\s of each field of the :class:`Packet`.
+
+        Returns
+        -------
+        iterable
+            Each element is the :class:`~.Type` of a field.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class MyPacket(pak.Packet):
+        ...     attr1: pak.Int8
+        ...     attr2: pak.Int16
+        ...
+        >>> for type in MyPacket.field_types():
+        ...     print(type.__qualname__)
+        ...
+        Int8
+        Int16
+        """
+
+        return cls._fields.values()
+
+    def field_values(self):
+        """Gets the values of each field of the :class:`Packet`.
+
+        Returns
+        -------
+        iterable
+            Each element is the value of a field.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class MyPacket(pak.Packet):
+        ...     attr1: pak.Int8
+        ...     attr2: pak.Int16
+        ...
+        >>> p = MyPacket(attr1=1, attr2=2)
+        >>> for value in p.field_values():
+        ...     print(value)
+        ...
+        1
+        2
+        """
+
+        for field in self.field_names():
+            yield getattr(self, field)
+
+    def field_types_and_values(self):
+        r"""Gets the :class:`~.Type`\s and values of each field of the :class:`Packet`.
+
+        Returns
+        -------
+        iterable
+            Each element is a (``field_type``, ``field_value``) pair.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class MyPacket(pak.Packet):
+        ...     attr1: pak.Int8
+        ...     attr2: pak.Int16
+        ...
+        >>> p = MyPacket(attr1=1, attr2=2)
+        >>> for type, value in p.field_types_and_values():
+        ...     print(f"{type.__qualname__}; {value}")
+        ...
+        Int8; 1
+        Int16; 2
+        """
+
+        for field, type in self.enumerate_field_types():
+            yield type, getattr(self, field)
+
+    @classmethod
     def enumerate_field_types(cls):
         r"""Enumerates the :class:`~.Type`\s of the fields of the :class:`Packet`.
 
         Returns
         -------
         iterable
-            Each element of the iterable is a (``attr_name``, ``attr_type``) pair.
+            Each element of the iterable is a (``field_name``, ``field_type``) pair.
 
         Examples
         --------
@@ -515,7 +600,7 @@ class Packet:
         Returns
         -------
         iterable
-            Each element of the iterable is a (``attr_name``, ``attr_value``) pair.
+            Each element of the iterable is a (``field_name``, ``field_value``) pair.
 
         Examples
         --------
@@ -541,7 +626,7 @@ class Packet:
         Returns
         -------
         iterable
-            Each element of the iterable is a (``attr_name``, ``attr_type``, ``attr_value``) triplet.
+            Each element of the iterable is a (``field_name``, ``field_type``, ``field_value``) triplet.
 
         Examples
         --------
@@ -589,7 +674,7 @@ class Packet:
         return sum(
             attr_type.size(attr_value, ctx=type_ctx)
 
-            for _, attr_type, attr_value in self.enumerate_field_types_and_values()
+            for attr_type, attr_value in self.field_types_and_values()
         )
 
     @classmethod
@@ -661,17 +746,27 @@ class Packet:
 
         return all(
             value == other_value
-            for (_, value), (_, other_value) in
-            zip(self.enumerate_field_values(), other.enumerate_field_values())
+            for value, other_value in
+            zip(self.field_values(), other.field_values())
         )
 
-    # Do not implement '__hash__' as Packets are not immutable.
+    # TODO: Should we implement '__hash__' even though Packets are not immutable?
+    # Technically mutability is contextual and not a fact of a type.
 
     def __repr__(self):
         return (
             f"{type(self).__qualname__}("
-            f"{', '.join(f'{attr}={repr(value)}' for attr, value in self.enumerate_field_values())}"
-            f")"
+
+            +
+
+            ", ".join(
+                f'{attr}={repr(value)}'
+                for attr, value in self.enumerate_field_values()
+            )
+
+            +
+
+            ")"
         )
 
 # Will be set to 'Packet.Header'.

@@ -2,10 +2,12 @@ r""":class:`~.Type`\s for combining :class:`~.Type`\s."""
 
 from collections import namedtuple
 
+from .. import util
 from .type import Type
 
 __all__ = [
     "Compound",
+    "AlignedCompound",
 ]
 
 class Compound(Type):
@@ -38,7 +40,8 @@ class Compound(Type):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
-        cls.value_type = namedtuple(cls.__qualname__, cls.elems.keys())
+        if cls.elems is not None:
+            cls.value_type = namedtuple(cls.__qualname__, cls.elems.keys())
 
     @classmethod
     def types(cls):
@@ -85,3 +88,69 @@ class Compound(Type):
     @Type.prepare_types
     def _call(cls, name, **elems: Type):
         return cls.make_type(name, elems=elems)
+
+class AlignedCompound(Compound):
+    r"""A :class:`Compound` which adds padding to keep its fields properly aligned.
+
+    .. seealso::
+
+        :class:`~.AlignedPacket`
+
+    The padding is the same as what you would get if you created a struct in C or C++,
+    including the ending padding.
+
+    .. warning::
+
+        An :class:`AlignedCompound` must have at least one field to be used in full.
+    """
+
+    # TODO: Should we add an 'alignas' feature?
+    # We could but I think there's too much to think about
+    # to justify adding it presently. Maybe if there is
+    # demand for it in the future it can be added.
+    #
+    # Things to consider:
+    # - Should an 'align_as' attribute be typelike, getting
+    #   the alignment from the type?
+    # - Should an 'align_as' attribute act like a DynamicValue?
+    #   - If so, then should typelike alignment take priority?
+    # - Should an 'align_as' attribute be able to be a list of
+    #   typelikes and ints and DynamicValues?
+    # - For 'AlignedPacket', should other AlignedPackets be able to
+    #   be set to its 'align_as' attribute?
+
+    @classmethod
+    def _padding_lengths(cls, *, ctx):
+        return Type.alignment_padding_lengths(
+            *cls.types(),
+
+            total_alignment = cls.alignment(ctx=ctx),
+            ctx             = ctx,
+        )
+
+    @classmethod
+    def _size(cls, value, *, ctx):
+        # Add the padding lengths and the static sizes of each type.
+        return sum(cls._padding_lengths(ctx=ctx)) + sum(t.size(ctx=ctx) for t in cls.types())
+
+    @classmethod
+    def _alignment(cls, *, ctx):
+        # Return the strictest alignment.
+        return max(t.alignment(ctx=ctx) for t in cls.types())
+
+    @classmethod
+    def _unpack(cls, buf, *, ctx):
+        values = []
+        for t, padding_amount in zip(cls.types(), cls._padding_lengths(ctx=ctx)):
+            values.append(t.unpack(buf, ctx=ctx))
+            buf.read(padding_amount)
+
+        return cls.value_type(*values)
+
+    @classmethod
+    def _pack(cls, value, *, ctx):
+        return b"".join(
+            t.pack(v, ctx=ctx) + b"\x00" * padding_amount
+
+            for v, t, padding_amount in zip(value, cls.types(), cls._padding_lengths(ctx=ctx))
+        )
