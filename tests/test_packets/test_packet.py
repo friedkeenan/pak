@@ -41,6 +41,12 @@ def test_packet_context():
         class MyContext(Packet.Context):
             pass
 
+    with pytest.raises(TypeError, match="__hash__"):
+        class MyContext(Packet.Context):
+            # This class says it can't be hashed (in the standard way)
+            # but still provides its own __hash__ member.
+            __hash__ = None
+
     ctx = Packet.Context()
     with pytest.raises(TypeError, match="immutable"):
         ctx.attr = "test"
