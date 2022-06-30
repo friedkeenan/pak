@@ -1,7 +1,7 @@
 r""":class:`~.Packet`\s which align their fields."""
 
 from .. import util
-from ..types.type import Type, TypeContext
+from ..types.type import Type
 from .packet import Packet
 
 __all__ = [
@@ -35,7 +35,7 @@ class AlignedPacket(Packet):
 
         Parameters
         ----------
-        ctx : :class:`~.PacketContext` or ``None``
+        ctx : :class:`.Packet.Context` or ``None``
             The context for the :class:`AlignedPacket`.
 
         Returns
@@ -55,18 +55,19 @@ class AlignedPacket(Packet):
         4
         """
 
-        type_ctx = TypeContext(ctx=ctx)
+        if ctx is None:
+            ctx = cls.Context()
+
+        type_ctx = Type.Context(ctx=ctx)
 
         return max(t.alignment(ctx=type_ctx) for t in cls.field_types())
 
     @classmethod
-    def _padding_lengths(cls, *, ctx):
-        type_ctx = TypeContext(ctx=ctx)
-
+    def _padding_lengths(cls, *, type_ctx):
         return Type.alignment_padding_lengths(
             *cls.field_types(),
 
-            total_alignment = cls.alignment(ctx=ctx),
+            total_alignment = cls.alignment(ctx=type_ctx.packet_ctx),
             ctx             = type_ctx,
         )
 
@@ -79,7 +80,7 @@ class AlignedPacket(Packet):
         buf = util.file_object(buf)
 
         type_ctx = self.type_ctx(ctx)
-        for (field, field_type), padding_amount in zip(cls.enumerate_field_types(), cls._padding_lengths(ctx=ctx)):
+        for (field, field_type), padding_amount in zip(cls.enumerate_field_types(), cls._padding_lengths(type_ctx=type_ctx)):
             value = field_type.unpack(buf, ctx=type_ctx)
             buf.read(padding_amount)
 
@@ -102,13 +103,15 @@ class AlignedPacket(Packet):
         return b"".join(
             field_type.pack(value, ctx=type_ctx) + b"\x00" * padding_amount
 
-            for (field_type, value), padding_amount in zip(self.field_types_and_values(), self._padding_lengths(ctx=ctx))
+            for (field_type, value), padding_amount in zip(self.field_types_and_values(), self._padding_lengths(type_ctx=type_ctx))
         )
 
     def size(self, *, ctx=None):
         """Overrides :meth:`.Packet.size` to handle alignment padding."""
 
-        return super().size(ctx=ctx) + sum(self._padding_lengths(ctx=ctx))
+        type_ctx = self.type_ctx(ctx)
+
+        return super().size(ctx=ctx) + sum(self._padding_lengths(type_ctx=type_ctx))
 
 class AlignedHeader(Packet.Header, AlignedPacket):
     r"""A :class:`.Packet.Header` which aligns its fields.

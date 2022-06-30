@@ -41,7 +41,7 @@ def type_behavior(type_cls, *values_and_data, static_size, alignment=None, defau
         The default value of ``type_cls``.
 
         If :data:`NO_DEFAULT`, then ``type_cls`` should have no default value.
-    ctx : :class:`~.TypeContext` or ``None``
+    ctx : :class:`.Type.Context` or ``None``
         The context for the :class:`~.Type`.
 
     Examples
@@ -140,7 +140,7 @@ def packet_behavior(*packets_and_data, ctx=None):
     ----------
     *packets_and_data : pair of :class:`~.Packet` and :class:`bytes`
         The :class:`~.Packet`\s and data to test.
-    ctx : :class:`~.PacketContext`
+    ctx : :class:`.Packet.Context`
         The context for the :class:`Packet`\s.
 
     Examples

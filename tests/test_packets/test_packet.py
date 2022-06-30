@@ -34,6 +34,29 @@ def test_packet():
     with pytest.raises(TypeError, match="Unexpected keyword arguments"):
         BasicPacket(test=0)
 
+def test_packet_context():
+    assert hash(Packet.Context()) == hash(Packet.Context())
+
+    with pytest.raises(TypeError, match="__hash__"):
+        class MyContext(Packet.Context):
+            pass
+
+    ctx = Packet.Context()
+    with pytest.raises(TypeError, match="immutable"):
+        ctx.attr = "test"
+
+    class MyContext(Packet.Context):
+        def __init__(self, attr):
+            self.attr = attr
+
+            super().__init__()
+
+        __hash__ = Packet.Context.__hash__
+
+    ctx = MyContext("test")
+    with pytest.raises(TypeError, match="immutable"):
+        ctx.attr = "new"
+
 def test_reserved_field():
     with pytest.raises(ReservedFieldError, match="ctx"):
         class TestReservedField(Packet):

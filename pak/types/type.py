@@ -9,71 +9,9 @@ from .. import util
 from ..dyn_value import DynamicValue
 
 __all__ = [
-    "TypeContext",
     "NoStaticSizeError",
     "Type",
 ]
-
-class TypeContext:
-    r"""The context for a :class:`Type`.
-
-    :class:`TypeContext`\s are used to pass arbitrary data
-    to :class:`Type`\s. All of that arbitrary data comes from
-    the attributes of the :class:`~.PacketContext` if supplied,
-    and you may access those attributes on the created :class:`TypeContext`
-    as if it were the :class:`~.PacketContext` itself.
-
-    However, a :class:`TypeContext` also contains a :attr:`packet`
-    attribute which denotes the :class:`~.Packet` instance for which
-    a :class:`Type` utility is being used for, if any is applicable.
-
-    Parameters
-    ----------
-    packet : :class:`~.Packet`
-        The packet instance that's being marshaled.
-    ctx : :class:`~.PacketContext`
-        The context for the packet that's being marshaled.
-
-        Getting attributes that are not directly in the
-        :class:`TypeContext` will be gotten from the
-        packet context.
-
-    Attributes
-    ----------
-    packet : :class:`~.Packet` or ``None``
-        The packet instance that's being marshaled.
-    packet_ctx : :class:`~.PacketContext` or ``None``
-        The context for the packet that's being marshaled.
-
-        Getting attributes that are not directly in the
-        :class:`~TypeContext` will be gotten from this.
-    """
-
-    def __init__(self, packet=None, *, ctx=None):
-        self.packet     = packet
-        self.packet_ctx = ctx
-
-    def __getattr__(self, attr):
-        if attr in ("packet", "packet_ctx"):
-            return super().__getattr__(attr)
-
-        if self.packet_ctx is None:
-            raise AttributeError(f"'{type(self).__qualname__}' object has no attribute '{attr}'")
-
-        return getattr(self.packet_ctx, attr)
-
-    def __setattr__(self, attr, value):
-        if hasattr(self, "packet_ctx"):
-            raise TypeError(f"'{type(self).__qualname__}' is immutable")
-
-        super().__setattr__(attr, value)
-
-    def __hash__(self):
-        # Since Packets are not hashable, hash the identity of it.
-        # This should be perfectly safe since as long as the type
-        # context holds a reference to the packet, it should not be
-        # garbage collected.
-        return hash((id(self.packet), self.packet_ctx))
 
 class NoStaticSizeError(Exception):
     """An error indicating a :class:`Type` has no static size.
@@ -120,6 +58,72 @@ class Type(abc.ABC):
     :exc:`TypeError`
         If ``typelike`` can't be converted to a :class:`Type`.
     """
+
+    class Context:
+        r"""The context for a :class:`Type`.
+
+        :class:`Type.Context`\s are used to pass arbitrary data
+        to :class:`Type`\s. All of that arbitrary data comes from
+        the attributes of the :class:`.Packet.Context` if supplied,
+        and you may access those attributes on the created :class:`Type.Context`
+        as if it were the :class:`.Packet.Context` itself.
+
+        However, a :class:`Type.Context` also contains a :attr:`packet`
+        attribute which denotes the :class:`~.Packet` instance for which
+        a :class:`Type` utility is being used for, if any is applicable.
+
+        .. note::
+
+            Unlike :class:`.Packet.Context`, this should not
+            be customized.
+
+        Parameters
+        ----------
+        packet : :class:`~.Packet`
+            The packet instance that's being marshaled.
+        ctx : :class:`.Packet.Context`
+            The context for the packet that's being marshaled.
+
+            Getting attributes that are not directly in the
+            :class:`Type.Context` will be gotten from the
+            packet context.
+
+        Attributes
+        ----------
+        packet : :class:`~.Packet` or ``None``
+            The packet instance that's being marshaled.
+        packet_ctx : :class:`.Packet.Context` or ``None``
+            The context for the packet that's being marshaled.
+
+            Getting attributes that are not directly in the
+            :class:`Type.Context` will be gotten from this.
+        """
+
+        def __init__(self, packet=None, *, ctx=None):
+            self.packet     = packet
+            self.packet_ctx = ctx
+
+        def __getattr__(self, attr):
+            if attr in ("packet", "packet_ctx"):
+                return super().__getattr__(attr)
+
+            if self.packet_ctx is None:
+                raise AttributeError(f"'{type(self).__qualname__}' object has no attribute '{attr}'")
+
+            return getattr(self.packet_ctx, attr)
+
+        def __setattr__(self, attr, value):
+            if hasattr(self, "packet_ctx"):
+                raise TypeError(f"'{type(self).__qualname__}' is immutable")
+
+            super().__setattr__(attr, value)
+
+        def __hash__(self):
+            # Since Packets are not hashable, hash the identity of it.
+            # This should be perfectly safe since as long as the type
+            # context holds a reference to the packet, it should not be
+            # garbage collected.
+            return hash((id(self.packet), self.packet_ctx))
 
     _typelikes = {}
 
@@ -327,10 +331,10 @@ class Type(abc.ABC):
             any value is returned, if possible.
 
             Otherwise,
-        ctx : :class:`TypeContext` or ``None``
+        ctx : :class:`Type.Context` or ``None``
             The context for the :class:`Type`.
 
-            If ``None``, then an empty :class:`TypeContext` is used.
+            If ``None``, then an empty :class:`Type.Context` is used.
 
         Returns
         -------
@@ -344,7 +348,7 @@ class Type(abc.ABC):
         """
 
         if ctx is None:
-            ctx = TypeContext()
+            ctx = cls.Context()
 
         size = cls._size
 
@@ -403,10 +407,10 @@ class Type(abc.ABC):
 
         Parameters
         ----------
-        ctx : :class:`TypeContext` or ``None``
+        ctx : :class:`Type.Context` or ``None``
             The context for the :class:`Type`.
 
-            If ``None``, then an empty :class:`TypeContext` is used.
+            If ``None``, then an empty :class:`Type.Context` is used.
 
         Returns
         -------
@@ -420,7 +424,7 @@ class Type(abc.ABC):
         """
 
         if ctx is None:
-            ctx = TypeContext()
+            ctx = cls.Context()
 
         alignment = cls._alignment
         if inspect.ismethod(alignment):
@@ -449,17 +453,17 @@ class Type(abc.ABC):
         total_alignment : :class:`int`
             The total alignment that `*types` should be aligned to,
             used for the padding at the end.
-        ctx : :class:`TypeContext` or ``None``
+        ctx : :class:`Type.Context` or ``None``
             The context for ``*types``.
 
-            If ``None``, then an empty :class:`TypeContext` is used.
+            If ``None``, then an empty :class:`Type.Context` is used.
         """
 
         # See https://en.wikipedia.org/wiki/Data_structure_alignment#Computing_padding
         # for more details.
 
         if ctx is None:
-            ctx = TypeContext()
+            ctx = Type.Context()
 
         padding_lengths = []
 
@@ -498,10 +502,10 @@ class Type(abc.ABC):
 
         Parameters
         ----------
-        ctx : :class:`TypeContext` or ``None``
+        ctx : :class:`Type.Context` or ``None``
             The context for the :class:`Type`.
 
-            If ``None``, then an empty :class:`TypeContext` is used.
+            If ``None``, then an empty :class:`Type.Context` is used.
 
         Returns
         -------
@@ -518,7 +522,7 @@ class Type(abc.ABC):
             raise TypeError(f"'{cls.__qualname__}' has no default value")
 
         if ctx is None:
-            ctx = TypeContext()
+            ctx = cls.Context()
 
         if inspect.ismethod(cls._default):
             return cls._default(ctx=ctx)
@@ -542,10 +546,10 @@ class Type(abc.ABC):
         ----------
         buf : file object or :class:`bytes` or :class:`bytearray`
             The buffer containing the raw data.
-        ctx : :class:`TypeContext` or ``None``
+        ctx : :class:`Type.Context` or ``None``
             The context for the type.
 
-            If ``None``, then an empty :class:`TypeContext` is used.
+            If ``None``, then an empty :class:`Type.Context` is used.
 
         Returns
         -------
@@ -556,7 +560,7 @@ class Type(abc.ABC):
         buf = util.file_object(buf)
 
         if ctx is None:
-            ctx = TypeContext()
+            ctx = cls.Context()
 
         return cls._unpack(buf, ctx=ctx)
 
@@ -573,10 +577,10 @@ class Type(abc.ABC):
         ----------
         value
             The value to pack.
-        ctx : :class:`TypeContext` or ``None``
+        ctx : :class:`Type.Context` or ``None``
             The context for the type.
 
-            If ``None``, then an empty :class:`TypeContext` is used.
+            If ``None``, then an empty :class:`Type.Context` is used.
 
         Returns
         -------
@@ -585,7 +589,7 @@ class Type(abc.ABC):
         """
 
         if ctx is None:
-            ctx = TypeContext()
+            ctx = cls.Context()
 
         return cls._pack(value, ctx=ctx)
 
@@ -605,7 +609,7 @@ class Type(abc.ABC):
         ----------
         buf : file object
             The buffer containing the raw data.
-        ctx : :class:`TypeContext`
+        ctx : :class:`Type.Context`
             The context for the type.
 
         Returns
@@ -632,7 +636,7 @@ class Type(abc.ABC):
         ----------
         value
             The value to pack.
-        ctx : :class:`TypeContext`
+        ctx : :class:`Type.Context`
             The context for the type.
 
         Returns

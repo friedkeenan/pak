@@ -13,9 +13,14 @@ class StringToIntDynamicValue(DynamicValue):
         return int(self.string)
 
 def test_type_context():
-    class MyPacketContext(PacketContext):
+    class MyPacketContext(Packet.Context):
         def __init__(self, attr):
             self.attr = attr
+
+            super().__init__()
+
+        def __hash__(self):
+            return hash(self.attr)
 
     p          = Packet()
     packet_ctx = MyPacketContext("test")
@@ -30,7 +35,10 @@ def test_type_context():
         type_ctx.test
 
     with pytest.raises(AttributeError):
-        TypeContext().test
+        Type.Context().test
+
+    with pytest.raises(TypeError, match="immutable"):
+        type_ctx.packet = None
 
 def test_typelike():
     assert Type.is_typelike(Int8)

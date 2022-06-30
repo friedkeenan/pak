@@ -8,33 +8,15 @@ import inspect
 
 from .. import util
 from ..dyn_value import DynamicValue
-from ..types.type import Type, TypeContext
+from ..types.type import Type
 from ..types.misc import RawByte, EmptyType
 
 __all__ = [
-    "PacketContext",
     "ReservedFieldError",
     "DuplicateFieldError",
     "Packet",
     "GenericPacket",
 ]
-
-# TODO: Move this under 'Packet', like with the header packet?
-class PacketContext:
-    r"""The context for a :class:`Packet`.
-
-    To be inherited from by users of the library
-    for their own contexts.
-
-    :class:`PacketContext`\s are used to pass arbitrary data
-    to :class:`Packet` operations, typically just being wrapped
-    in a :class:`~.TypeContext` and sent off to :class:`~.Type`
-    operations, such as unpacking and packing.
-
-    Warnings
-    --------
-    Subclasses must be hashable.
-    """
 
 class ReservedFieldError(Exception):
     """An error indicating a field was defined with a reserved name.
@@ -82,7 +64,7 @@ class Packet:
 
     Parameters
     ----------
-    ctx : :class:`PacketContext`
+    ctx : :class:`Packet.Context`
         The context for the :class:`Packet`.
     **fields
         The names and corresponding values of the fields
@@ -138,6 +120,65 @@ class Packet:
     for it in the constructor.
     """
 
+    class _ContextMeta(type):
+        # A metaclass to ensure Packet.Context subclasses are properly hashable.
+
+        def __new__(cls, name, bases, namespace):
+            if "__hash__" not in namespace:
+                raise TypeError(f"'{namespace['__qualname__']}' must provide a '__hash__' implementation")
+
+            return super().__new__(cls, name, bases, namespace)
+
+    class Context(metaclass=_ContextMeta):
+        r"""The context for a :class:`Packet`.
+
+        :class:`Packet.Context`\s are used to pass arbitrary data
+        to :class:`Packet` operations, typically just being wrapped
+        in a :class:`.Type.Context` and sent off to :class:`~.Type`
+        operations, such as unpacking and packing.
+
+        You should customize this class to suit your own purposes,
+        like so::
+
+            >>> import pak
+            >>> class MyPacket(pak.Packet):
+            ...     class Context(pak.Packet.Context):
+            ...         def __init__(self):
+            ...             self.info = ...
+            ...             super().__init__()
+            ...
+            ...         def __hash__(self):
+            ...             return hash(self.info)
+            ...
+
+        When no :class:`Packet.Context` is provided to :class:`Packet`
+        operations that may accept one, then your subclass is attempted
+        to be defaultl constructed and used instead.
+
+        Warnings
+        --------
+        Subclasses **must** be properly hashable. Accordingly, this
+        means that subclasses should also be immutable. Therefore,
+        the constructor of :class:`Packet.Context` sets the constructed
+        object to be immutable.
+
+        If a subclass of :class:`Packet.Context` does not provide its
+        own ``__hash__`` implementation, then a :exc:`TypeError` is raised.
+        """
+
+        def __init__(self):
+            self._mutable_flag = True
+
+        def __setattr__(self, attr, value):
+            if hasattr(self, "_mutable_flag"):
+                raise TypeError(f"'{type(self).__qualname__}' is immutable")
+
+            super().__setattr__(attr, value)
+
+        def __hash__(self):
+            # A default 'Packet.Context' has no unique information.
+            return hash(tuple())
+
     # The fields dictionary for 'Packet'.
     #
     # Since 'Packet' has no annotations, and has no parent to fall back on
@@ -192,7 +233,7 @@ class Packet:
 
         Parameters
         ----------
-        ctx : :class:`PacketContext`
+        ctx : :class:`Packet.Context`
             The context for the :class:`Packet`.
 
         Returns
@@ -220,6 +261,9 @@ class Packet:
             @classmethod
             def real_id(cls, *, ctx=None):
                 """Gets the ID of the packet."""
+
+                if ctx is None:
+                    ctx = cls.Context()
 
                 return id.get(ctx=ctx)
         else:
@@ -305,7 +349,7 @@ class Packet:
 
         Parameters
         ----------
-        ctx : :class:`PacketContext`
+        ctx : :class:`Packet.Context`
             The context for the :class:`Packet`.
 
         Returns
@@ -341,7 +385,7 @@ class Packet:
         ----------
         buf : file object or :class:`bytes` or :class:`bytearray`
             The buffer containing the raw data.
-        ctx : :class:`PacketContext`
+        ctx : :class:`Packet.Context`
             The context for the :class:`Packet`.
 
         Returns
@@ -384,7 +428,7 @@ class Packet:
 
         Parameters
         ----------
-        ctx : :class:`PacketContext`
+        ctx : :class:`Packet.Context`
             The context for the :class:`Packet`.
 
         Returns
@@ -425,7 +469,7 @@ class Packet:
 
         Parameters
         ----------
-        ctx : :class:`PacketContext`
+        ctx : :class:`Packet.Context`
             The context for the :class:`Packet`.
 
         Returns
@@ -452,20 +496,23 @@ class Packet:
         return packed_header + self.pack_without_header(ctx=ctx)
 
     def type_ctx(self, ctx):
-        """Converts a :class:`PacketContext` to a :class:`~.TypeContext`.
+        """Converts a :class:`Packet.Context` to a :class:`.Type.Context`.
 
         Parameters
         ----------
-        ctx : :class:`PacketContext`
+        ctx : :class:`Packet.Context` or ``None``
             The context for the :class:`Packet`.
 
         Returns
         -------
-        :class:`~.TypeContext`
+        :class:`.Type.Context`
             The context for a :class:`~.Type`.
         """
 
-        return TypeContext(self, ctx=ctx)
+        if ctx is None:
+            ctx = self.Context()
+
+        return Type.Context(self, ctx=ctx)
 
     @classmethod
     def field_names(cls):
@@ -721,7 +768,7 @@ class Packet:
 
             .. seealso::
                 :meth:`Packet.id`
-        ctx : :class:`PacketContext`
+        ctx : :class:`Packet.Context` or ``None``
             The context for  the :class:`Packet`.
 
         Returns
@@ -730,6 +777,9 @@ class Packet:
             If ``None``, then there is no :class:`Packet` whose
             ID is ``id``. Otherwise returns the appropriate subclass.
         """
+
+        if ctx is None:
+            ctx = cls.Context()
 
         for subclass in cls.subclasses():
             subclass_id = subclass.id(ctx=ctx)
@@ -821,7 +871,7 @@ class _Header(Packet):
         then it will be called with the ``ctx`` keyword argument.
 
         If not ``None``, then no ``**fields`` must be passed.
-    ctx : :class:`PacketContext`
+    ctx : :class:`Packet.Context`
         The context for the :class:`Packet`.
     **fields
         The names and corresponding values of the fields

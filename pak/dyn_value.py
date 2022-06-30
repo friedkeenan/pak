@@ -150,7 +150,7 @@ class DynamicValue(abc.ABC):
 
         Parameters
         ----------
-        ctx : :class:`~.PacketContext` or :class:`~.TypeContext`
+        ctx : :class:`.Packet.Context` or :class:`.Type.Context`
             The context for the dynamic value.
 
         Returns

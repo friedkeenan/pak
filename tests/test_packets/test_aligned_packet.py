@@ -1,21 +1,21 @@
 import pytest
 from pak import *
 
-class TestAligned(AlignedPacket):
+class AlignedTest(AlignedPacket):
     first:  Int16
     second: Int32
     third:  Int8
 
 test_aligned_packet_marshal = test.packet_behavior_func(
     (
-        TestAligned(first=1, second=2, third=3),
+        AlignedTest(first=1, second=2, third=3),
 
         b"\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00"
     ),
 )
 
 def test_aligned_packet_size():
-    assert TestAligned().size() == 12
+    assert AlignedTest().size() == 12
 
 def test_faulty_aligned_packet():
     class FaultyPacket(AlignedPacket):

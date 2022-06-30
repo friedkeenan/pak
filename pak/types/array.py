@@ -127,11 +127,11 @@ class Array(Type):
 
     @classmethod
     def real_size(cls, *, ctx):
-        """Gets the real size of the :class:`Array` based on the :class:`~.TypeContext`.
+        """Gets the real size of the :class:`Array` based on the :class:`.Type.Context`.
 
         Parameters
         ----------
-        ctx : :class:`~.TypeContext`
+        ctx : :class:`.Type.Context`
             The context for the :class:`~.Type`.
 
         Returns
