@@ -77,6 +77,10 @@ def type_behavior(type_cls, *values_and_data, static_size, alignment=None, defau
     else:
         assert type_cls.size(type_cls.STATIC_SIZE, ctx=ctx) == static_size
 
+    # We import 'pytest' locally so that pytest does not become a
+    # required dependency of the library. Another solution would
+    # be to make it so this module is not imported with everything
+    # else, but I am not fond of that solution at all really.
     if alignment is None:
         import pytest
 
