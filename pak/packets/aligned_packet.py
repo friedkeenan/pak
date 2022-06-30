@@ -1,4 +1,4 @@
-"""Contains :class:`~.AlignedPacket`."""
+r""":class:`~.Packet`\s which align their fields."""
 
 from .. import util
 from ..types.type import Type, TypeContext
@@ -6,6 +6,7 @@ from .packet import Packet
 
 __all__ = [
     "AlignedPacket",
+    "AlignedHeader",
 ]
 
 class AlignedPacket(Packet):
@@ -16,7 +17,7 @@ class AlignedPacket(Packet):
         :class:`~.AlignedCompound`
 
     The fields of an :class:`AlignedPacket` are aligned in the
-    same way the fields of a struct would be in  C or C+, including
+    same way the fields of a struct would be in  C or C++, including
     the ending padding.
 
     The header of an :class:`AlignedPacket` is not taken into account
@@ -94,7 +95,7 @@ class AlignedPacket(Packet):
         return self
 
     def pack_without_header(self, *, ctx=None):
-        """Overrdies :meth:`.Packet.pack_without_header` to handle alignment padding."""
+        """Overrides :meth:`.Packet.pack_without_header` to handle alignment padding."""
 
         type_ctx = self.type_ctx(ctx)
 
@@ -108,3 +109,39 @@ class AlignedPacket(Packet):
         """Overrides :meth:`.Packet.size` to handle alignment padding."""
 
         return super().size(ctx=ctx) + sum(self._padding_lengths(ctx=ctx))
+
+class AlignedHeader(Packet.Header, AlignedPacket):
+    r"""A :class:`.Packet.Header` which aligns its fields.
+
+    This is not the default header of :class:`AlignedPacket`
+    since :class:`AlignedPacket`\s may often have headers which
+    do not align their fields, nor even have any header at all.
+    Additionally, there are unaligned :class:`~.Packet`\s which
+    may have headers which align their fields.
+
+    This class is nevertheless still provided however as the
+    double inheritance required may be tricky to get right.
+
+    .. note::
+
+        There is no alignment performed between the header
+        and the :class:`~.Packet` proper.
+
+    Examples
+    --------
+    >>> import pak
+    >>> class MyPacket(pak.Packet):
+    ...     id = 1
+    ...     field: pak.UInt64
+    ...     class Header(pak.AlignedHeader):
+    ...         id:   pak.UInt8
+    ...         size: pak.UInt16
+    ...
+    >>> MyPacket.Header.alignment()
+    2
+    >>> # The '\xAA' byte represents alignment padding.
+    >>> MyPacket.Header.unpack(b"\x01\xAA\x08\x00")
+    MyPacket.Header(id=1, size=8)
+    >>> MyPacket(field=2).pack()
+    b'\x01\x00\x08\x00\x02\x00\x00\x00\x00\x00\x00\x00'
+    """

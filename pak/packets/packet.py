@@ -771,7 +771,7 @@ class Packet:
 
 # Will be set to 'Packet.Header'.
 class _Header(Packet):
-    """The header for a :class:`Packet`.
+    r"""The header for a :class:`Packet`.
 
     Must be accessible from the ``Header`` attribute
     of your :class:`Packet` class, such as ``MyPacket.Header``.
@@ -848,6 +848,9 @@ class _Header(Packet):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
+        # TODO: Is this correct behavior, or should we just not check this?
+        # Technically it's only bad if a packet header has its own header which
+        # would marshal to anything but empty bytes.
         if cls.Header is not Packet.Header:
             raise TypeError(f"'{cls.__qualname__}' may have no header of its own")
 
