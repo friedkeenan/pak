@@ -80,7 +80,7 @@ def bind_annotations(func, *args, **kwargs):
         The annotations for ``*args``, of the form
         ``[(value, annotation)]``.
     kwargs_annotations : :class:`dict`
-        The annotations for ``*args``, of the form
+        The annotations for ``**kwargs``, of the form
         ``{name: (value, annotation)}``.
     """
 
