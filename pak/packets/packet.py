@@ -123,10 +123,14 @@ class Packet:
     class _ContextMeta(type):
         # A metaclass to ensure Packet.Context subclasses are properly hashable.
         #
-        # This metaclass is unfortunately needed since for whatever reason checking
-        # for 'cls.__hash__ is super().__hash__' in '__init_subclass__' does not
-        # work for this. Additionally this allows users to do something like
-        # '__hash__ = Packet.Context.__hash__' to give an implementation and have it work.
+        # This metaclass isn't *strictly* needed to check if a 'Packet.Context'
+        # provides a '__hash__' implementation, since checking
+        # 'cls.__hash__ is Packet.Context.__hash__' in '__init_subclass__' would
+        # likely be sufficient to provide *enough* safety. However that would
+        # restrict certain ways of defining an implementation, i.e. doing
+        # '__hash__ = Packet.Context.__hash__', and would not enforce the user
+        # thinking about hashability in all cases, i.e. when inheriting from a
+        # class that inherits from 'Packet.Context'.
 
         def __new__(cls, name, bases, namespace):
             if namespace.get("__hash__") is None:
