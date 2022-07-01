@@ -72,13 +72,13 @@ class PacketHandler:
         Parameters
         ----------
         listener
-            The :class`~.Packet` listener possibly passed to
+            The :class:`~.Packet` listener possibly passed to
             :meth:`register_packet_listener`.
 
         Returns
         -------
         :class:`bool`
-            Whether `listener` is a registered :class:`~.Packet` listener.
+            Whether ``listener`` is a registered :class:`~.Packet` listener.
         """
 
         return listener in self._packet_listeners

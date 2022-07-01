@@ -193,7 +193,20 @@ class Type(abc.ABC):
 
     @staticmethod
     def prepare_types(func):
-        """A decorator that converts arguments annotated with :class:`Type` to a :class:`Type`."""
+        """A decorator that converts arguments annotated with :class:`Type` to a :class:`Type`.
+
+        Examples
+        --------
+        >>> import pak
+        >>> @pak.Type.prepare_types
+        ... def example(arg: pak.Type):
+        ...     print(arg.__qualname__)
+        ...
+        >>> example(pak.Int8)
+        Int8
+        >>> example(None)
+        EmptyType
+        """
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
