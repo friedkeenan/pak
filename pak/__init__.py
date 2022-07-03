@@ -15,6 +15,7 @@ from .dyn_value import *
 from .types.type     import *
 from .types.array    import *
 from .types.numeric  import *
+from .types.string   import *
 from .types.bit_mask import *
 from .types.compound import *
 from .types.enum     import *

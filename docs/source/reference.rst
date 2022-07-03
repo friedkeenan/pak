@@ -27,6 +27,7 @@ Types
     ~types.misc
     ~types.numeric
     ~types.optional
+    ~types.string
     ~types.type
 
 Utilities

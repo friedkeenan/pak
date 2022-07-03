@@ -1,6 +1,5 @@
 r"""Miscellaneous :class:`~.Type`\s."""
 
-import codecs
 import struct
 
 from .. import util
@@ -10,7 +9,6 @@ __all__ = [
     "EmptyType",
     "Padding",
     "RawByte",
-    "Char",
     "StructType",
 ]
 
@@ -116,113 +114,6 @@ class RawByte(Type):
     @classmethod
     def _pack(cls, value, *, ctx):
         return bytes(value[:1])
-
-class Char(Type):
-    r"""A single character.
-
-    Can be used with :class:`~.Array`, for which
-    this :class:`~.Type` is special-cased to produce
-    a :class:`str` value.
-
-    By default, ASCII is used as the encoding. This is
-    to ensure that by default, one :class:`Char` maps to
-    one byte of raw data.
-
-    .. note::
-
-        ``Char[None]`` will read to the end of the buffer
-        as other :class:`~.Array`\s will, **not**
-        just to the next null-byte.
-
-    Parameters
-    ----------
-    encoding : :class:`str`
-        The encoding to use to encode/decode data.
-    """
-
-    _default = "a"
-
-    encoding = "ascii"
-
-    @classmethod
-    def decode(cls, buf, *, chars=-1):
-        """Decodes a string from raw data.
-
-        Uses the class's encoding to decode the data.
-
-        Parameters
-        ----------
-        buf : file object
-            The file object containing the raw data.
-        chars : :class:`int`
-            How many characters to decode.
-
-        Returns
-        -------
-        :class:`str`
-            The decoded string.
-        """
-
-        reader = codecs.getreader(cls.encoding)(buf)
-        string = reader.read(chars=chars)
-
-        if len(string) < chars:
-            raise util.BufferOutOfDataError("Reading characters failed")
-
-        return string
-
-    @classmethod
-    def encode(cls, string):
-        """Encodes a string to raw data.
-
-        Uses the class's encoding to encode the string.
-
-        Parameters
-        ----------
-        string : :class:`str`
-            The string to encode.
-
-        Returns
-        -------
-        :class:`bytes`
-            The encoded data.
-        """
-
-        return string.encode(cls.encoding)
-
-    @classmethod
-    def _size(cls, value, *, ctx):
-        # TODO: See if there's a more generic way to do this.
-
-        if cls.encoding == "ascii":
-            return 1
-
-        return None
-
-    @classmethod
-    def _alignment(cls, *, ctx):
-        # TODO: See if there's a more generic way to do this.
-
-        if cls.encoding == "ascii":
-            return 1
-
-        return None
-
-    @classmethod
-    def _unpack(cls, buf, *, ctx):
-        return cls.decode(buf, chars=1)
-
-    @classmethod
-    def _pack(cls, value, *, ctx):
-        return cls.encode(value[:1])
-
-    @classmethod
-    def _call(cls, encoding):
-        return cls.make_type(
-            f"{cls.__qualname__}({repr(encoding)})",
-
-            encoding = encoding,
-        )
 
 class StructType(Type):
     """A wrapper over :func:`struct.pack` and :func:`struct.unpack`.

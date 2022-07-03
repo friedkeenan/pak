@@ -4,7 +4,8 @@ import inspect
 
 from .. import util
 from .type import Type, NoStaticSizeError
-from .misc import Padding, RawByte, Char
+from .string import Char
+from .misc import Padding, RawByte
 
 __all__ = [
     "Array",

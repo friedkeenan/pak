@@ -44,39 +44,6 @@ def test_raw_byte():
     with pytest.raises(util.BufferOutOfDataError):
         RawByte.unpack(b"")
 
-def test_char():
-    test.type_behavior(
-        Char,
-
-        ("h", b"h"),
-
-        static_size = 1,
-        alignment   = 1,
-        default     = "a"
-    )
-
-    assert Char.pack("Hello") == b"H"
-
-    with pytest.raises(UnicodeDecodeError, match="codec can't decode byte"):
-        Char.unpack(b"\x80")
-
-    with pytest.raises(UnicodeEncodeError, match="codec can't encode character"):
-        Char.pack("\x80")
-
-    with pytest.raises(util.BufferOutOfDataError):
-        Char.unpack(b"")
-
-    Utf8Char = Char("utf-8")
-    test.type_behavior(
-        Utf8Char,
-
-        ("h",    b"h"),
-        ("\x80", b"\xC2\x80"),
-
-        static_size = None,
-        default     = "a",
-    )
-
 def test_struct():
     # StructType also gets tested further
     # with the numeric types which inherit
