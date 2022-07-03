@@ -227,6 +227,22 @@ def test_header():
                 class Header(Packet.Header):
                     pass
 
+def test_header_correct_context():
+    class Test(Packet):
+        class Context(Packet.Context):
+            __hash__ = Packet.Context.__hash__
+
+        def check_ctx(self, *, ctx):
+            # Make sure we receive the context for 'Test',
+            # and not for 'Test.Header', which would just be
+            # 'Packet.Context'.
+            return isinstance(ctx, Test.Context)
+
+        class Header(Packet.Header):
+            check_ctx: Bool
+
+    assert Test().header().check_ctx
+
 def test_id():
     class TestEmpty(Packet):
         pass

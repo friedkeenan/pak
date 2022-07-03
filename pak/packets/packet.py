@@ -378,6 +378,12 @@ class Packet:
         MyPacket.Header(id=1)
         """
 
+        # This is necessary because when the header tries to create
+        # its own context, then it would use the incorrect class to
+        # potentially default construct the context.
+        if ctx is None:
+            ctx = self.Context()
+
         return self.Header(self, ctx=ctx)
 
     @classmethod
