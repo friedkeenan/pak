@@ -17,8 +17,13 @@ class BasicPacket(Packet):
     attr2: Int16
 
 def test_packet():
+    assert isinstance(BasicPacket.attr1, Int8)
+
     p = BasicPacket()
     assert p.attr1 == 0 and p.attr2 == 0
+
+    # Test deleting fields works.
+    del p.attr1
 
     test.packet_behavior(
         (BasicPacket(attr1=0, attr2=1), b"\x00\x01\x00"),

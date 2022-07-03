@@ -178,3 +178,16 @@ def test_cached_make_type():
             return cls.make_type("blah")
 
     assert TestCall() is TestCall()
+
+def test_not_implemented_methods():
+    with pytest.raises(TypeError, match="initialized"):
+        Type.__init__(object())
+
+    with pytest.raises(NotImplementedError):
+        Type.unpack(b"")
+
+    with pytest.raises(NotImplementedError):
+        Type.pack(None)
+
+    with pytest.raises(NotImplementedError):
+        Type._call()

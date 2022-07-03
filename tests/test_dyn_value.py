@@ -1,3 +1,4 @@
+import pytest
 from pak import *
 
 def test_dynamic_value():
@@ -65,3 +66,7 @@ def test_explciit_disable():
     assert not DummyDynamicValue._enabled
 
     assert DynamicValue("abc") == "abc"
+
+def test_not_implemented_get():
+    with pytest.raises(NotImplementedError):
+        DynamicValue.get(object())

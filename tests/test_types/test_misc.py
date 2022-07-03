@@ -15,6 +15,18 @@ def test_empty():
 
     assert EmptyType.size() == 0
 
+    class TestDescriptor(Packet):
+        empty: EmptyType
+
+    assert isinstance(TestDescriptor.empty, EmptyType)
+
+    p = TestDescriptor()
+    p.empty = "whatever value"
+    assert p.empty is None
+
+    # Test we can still delete EmptyType fields.
+    del p.empty
+
 def test_padding():
     assert Padding.default() == None
 
@@ -28,6 +40,18 @@ def test_padding():
         Padding.unpack(b"")
 
     assert Padding.size() == 1
+
+    class TestDescriptor(Packet):
+        padding: Padding
+
+    assert isinstance(TestDescriptor.padding, Padding)
+
+    p = TestDescriptor()
+    p.padding = "whatever value"
+    assert p.padding is None
+
+    # Test we can still delete Padding fields.
+    del p.padding
 
 def test_raw_byte():
     test.type_behavior(

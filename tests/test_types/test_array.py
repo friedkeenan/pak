@@ -35,11 +35,15 @@ def test_padding_array():
     assert p.test == 2 and p.array is None
     assert buf.tell() == 3
 
+    # Test you can properly delete padding array attributes.
+    del p.array
+
     ctx_len_2 = TestAttr(test=2).type_ctx(None)
     Padding["test"].size(ctx=ctx_len_2) == 2
 
     assert Padding[2].pack("whatever value")    == b"\x00\x00"
     assert Padding[Int8].pack("whatever value") == b"\x00"
+    assert Padding[None].pack("whatever value") == b""
 
     with pytest.raises(util.BufferOutOfDataError):
         Padding[2].unpack(b"\x00")
@@ -239,6 +243,10 @@ def test_array():
         array: Int8["test"]
 
     assert TestAttr(test=2).array == [0, 0]
+
+    # Test you can properly delete array attributes.
+    p = TestAttr()
+    del p.array
 
     test.packet_behavior(
         (TestAttr(test=2, array=[0, 1]), b"\x02\x00\x01"),

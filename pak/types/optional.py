@@ -151,11 +151,9 @@ class Optional(Type):
 
             return b""
 
-        if cls.is_at_end():
-            if value is not None:
-                return cls.elem_type.pack(value, ctx=ctx)
-
-            return b""
+        # If the optional is at the end.
+        if value is not None:
+            return cls.elem_type.pack(value, ctx=ctx)
 
         return b""
 
