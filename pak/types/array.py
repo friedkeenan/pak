@@ -41,6 +41,8 @@ class Array(Type):
     elem_type  = None
     array_size = None
 
+    # TODO: Make generic system for specializing 'Array' behavior.
+
     @classmethod
     def is_padding(cls):
         """Gets whether the :class:`Array` is for :class:`~.Padding`.

@@ -139,6 +139,8 @@ class PrefixedString(Type):
         )
 
 # TODO: Do we really want this Type?
+# It's very nice but hard to get right and it may be nice
+# to have it special cased for 'Array'.
 class Char(Type):
     r"""A single character.
 
@@ -149,6 +151,10 @@ class Char(Type):
         Before using :class:`Char`, make sure that those
         :class:`~.Type`\s or one you make yourself would
         not work better for your needs.
+
+        This :class:`~.Type` can have different sizes depending
+        on the encoding, because conceptually **it represents
+        a codepoint**.
 
     Can be used with :class:`~.Array`, for which
     this :class:`~.Type` is special-cased to produce
