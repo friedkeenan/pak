@@ -334,11 +334,16 @@ class Packet:
         cls._init_fields_from_annotations()
 
     def __init__(self, *, ctx=None, **fields):
-        type_ctx = self.type_ctx(ctx)
+        # Lazy initialized when needed.
+        type_ctx = None
+
         for attr, attr_type in self.enumerate_field_types():
             if attr in fields:
                 setattr(self, attr, fields.pop(attr))
             else:
+                if type_ctx is None:
+                    type_ctx = self.type_ctx(ctx)
+
                 default = attr_type.default(ctx=type_ctx)
                 try:
                     setattr(self, attr, default)

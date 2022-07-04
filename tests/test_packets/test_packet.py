@@ -68,6 +68,18 @@ def test_packet_context():
     with pytest.raises(TypeError, match="immutable"):
         ctx.attr = "new"
 
+    class MyPacket(Packet):
+        field: Int8
+
+        Context = MyContext
+
+    # 'MyPacket.Context' requires an argument so default constructing won't work.
+    with pytest.raises(TypeError, match="argument"):
+        MyPacket()
+
+    # Test that a context isn't needed when fields are supplied.
+    assert MyPacket(field=1).field == 1
+
 def test_reserved_field():
     with pytest.raises(ReservedFieldError, match="ctx"):
         class TestReservedField(Packet):
