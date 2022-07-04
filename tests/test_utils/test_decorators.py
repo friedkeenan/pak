@@ -47,3 +47,23 @@ def test_max_size_cache():
 
     # Make sure the old parameter is now uncached.
     assert test_max_size(1) is not obj
+
+def test_class_or_instance_method():
+    class Test:
+        @util.class_or_instance_method
+        def method(cls):
+            return "class"
+
+        @method.instance
+        def method(self):
+            return "instance"
+
+    assert Test.method()   == "class"
+    assert Test().method() == "instance"
+
+    # The 'TypeError' we raise gets turned into a 'RuntimeError'.
+    with pytest.raises(RuntimeError,):
+        class MissingInstanceMethod:
+            @util.class_or_instance_method
+            def method(cls):
+                pass

@@ -294,6 +294,21 @@ def test_id():
 
         assert TestDynamicId.Header.unpack(b"\x02") == TestDynamicId.Header(id=2)
 
+def test_packet_size():
+    class StaticPacket(Packet):
+        field: UInt8
+
+    assert StaticPacket.size()   == 1
+    assert StaticPacket().size() == 1
+
+    class DynamicPacket(Packet):
+        field: ULEB128
+
+    with pytest.raises(NoStaticSizeError):
+        DynamicPacket.size()
+
+    assert DynamicPacket().size() == 1
+
 def test_subclass_id():
     class Root(Packet):
         pass

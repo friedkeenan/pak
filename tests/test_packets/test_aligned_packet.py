@@ -15,6 +15,7 @@ test_aligned_packet_marshal = test.packet_behavior_func(
 )
 
 def test_aligned_packet_size():
+    assert AlignedTest.size()   == 12
     assert AlignedTest().size() == 12
 
 def test_faulty_aligned_packet():

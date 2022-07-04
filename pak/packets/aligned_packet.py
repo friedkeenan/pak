@@ -106,9 +106,19 @@ class AlignedPacket(Packet):
             for (field_type, value), padding_amount in zip(self.field_types_and_values(), self._padding_lengths(type_ctx=type_ctx))
         )
 
-    def size(self, *, ctx=None):
+    @util.class_or_instance_method
+    def size(cls, *, ctx=None):
         """Overrides :meth:`.Packet.size` to handle alignment padding."""
 
+        if ctx is None:
+            ctx = cls.Context()
+
+        type_ctx = Type.Context(ctx=ctx)
+
+        return super().size(ctx=ctx) + sum(cls._padding_lengths(type_ctx=type_ctx))
+
+    @size.instance
+    def size(self, *, ctx=None):
         type_ctx = self.type_ctx(ctx)
 
         return super().size(ctx=ctx) + sum(self._padding_lengths(type_ctx=type_ctx))

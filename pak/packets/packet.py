@@ -713,12 +713,24 @@ class Packet:
         for attr, attr_type in self.enumerate_field_types():
             yield attr, attr_type, getattr(self, attr)
 
-    def size(self, *, ctx=None):
+    @util.class_or_instance_method
+    def size(cls, *, ctx=None):
         """Gets the cumulative size of the fields of the :class:`Packet`.
+
+        This may be called either as a :class:`classmethod` or as an instance
+        method. When called as a :class:`classmethod`, the static size of
+        the :class:`Packet` is attempted to be calculated, irrespective of
+        any values. When called as an instance method, then the values of
+        the fields of the :class:`Packet` are used to calculate the size.
 
         .. note::
 
             The header is not included in the size.
+
+        Parameters
+        ----------
+        ctx : :class:`Packet.Context`
+            The context for the :class:`Packet`.
 
         Returns
         -------
@@ -734,8 +746,19 @@ class Packet:
         ...
         >>> MyPacket().size()
         12
+        >>> MyPacket.size()
+        12
         """
 
+        if ctx is None:
+            ctx = cls.Context()
+
+        type_ctx = Type.Context(ctx=ctx)
+
+        return sum(field_type.size(ctx=type_ctx) for field_type in cls.field_types())
+
+    @size.instance
+    def size(self, *, ctx=None):
         type_ctx = self.type_ctx(ctx)
 
         return sum(
