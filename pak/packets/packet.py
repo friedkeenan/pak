@@ -4,6 +4,7 @@ r"""Generic code for :class:`~.Packet`\s."""
 # so few members, but in the event it gets too large,
 # it should be split up.
 
+import copy
 import inspect
 
 from .. import util
@@ -514,6 +515,39 @@ class Packet:
         packed_header = self.header(ctx=ctx).pack(ctx=ctx)
 
         return packed_header + self.pack_without_header(ctx=ctx)
+
+    def copy(self):
+        """Copies the :class:`Packet`.
+
+        Returns
+        -------
+        :class:`Packet`
+            The copied :class:`Packet`.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class MyPacket(pak.Packet):
+        ...     field: pak.Int8
+        ...
+        >>> orig = MyPacket(field=1)
+        >>> copy = orig.copy()
+        >>> copy == orig
+        True
+        >>> copy is not orig
+        True
+        >>>
+        >>> # Attributes that aren't fields will also be copied:
+        >>> orig = MyPacket(field=2)
+        >>> orig.custom_attr = "custom"
+        >>> copy = orig.copy()
+        >>> copy == orig
+        True
+        >>> copy.custom_attr
+        'custom'
+        """
+
+        return copy.deepcopy(self)
 
     def type_ctx(self, ctx):
         """Converts a :class:`Packet.Context` to a :class:`.Type.Context`.
