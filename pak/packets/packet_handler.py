@@ -66,7 +66,7 @@ class _most_derived_packet_listener:
                 listener = self._listeners.get(base)
 
                 if listener is not None:
-                    # Return bpund method
+                    # Return bound method
                     return types.MethodType(listener, self._instance)
 
         def __setattr__(self, attr, value):
