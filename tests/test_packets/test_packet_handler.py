@@ -36,14 +36,101 @@ def test_listeners_for_packet():
 
     assert handler.listeners_for_packet(Packet(), flag=True) == [listener]
 
-def test_async_register():
-    def non_async_listener(packet):
+class GeneralPacket(Packet):
         pass
 
-    handler = AsyncPacketHandler()
+class DerivedPacket(GeneralPacket):
+    pass
 
-    with pytest.raises(TypeError, match="non_async_listener"):
-        handler.register_packet_listener(non_async_listener, Packet)
+class MoreDerivedPacket(DerivedPacket):
+    pass
+
+class AdjacentDerivedPacket(GeneralPacket):
+    pass
+
+class MostDerivedHandler(PacketHandler):
+    def __repr__(self):
+        return "REPR"
+
+    @most_derived_packet_listener(GeneralPacket)
+    def most_derived(self):
+        return GeneralPacket
+
+    @most_derived.derived_listener(DerivedPacket)
+    def most_derived(self):
+        return DerivedPacket
+
+    @most_derived.derived_listener(MoreDerivedPacket)
+    def most_derived(self):
+        return MoreDerivedPacket
+
+    @most_derived.derived_listener(AdjacentDerivedPacket)
+    def most_derived(self):
+        return AdjacentDerivedPacket
+
+def test_most_derived_packet_listener():
+    assert repr(MostDerivedHandler.most_derived) == "<most_derived_packet_listener tests.test_packets.test_packet_handler.MostDerivedHandler.most_derived>"
+
+    handler = MostDerivedHandler()
+
+    assert repr(handler.most_derived) == "<bound most_derived_packet_listener MostDerivedHandler.most_derived of REPR>"
+
+    assert handler.most_derived == handler.most_derived
+    assert hash(handler.most_derived) == hash(handler.most_derived)
+    with pytest.raises(TypeError, match="immutable"):
+        handler.most_derived.attr = 1
+
+    assert handler.is_listener_registered(handler.most_derived)
+
+    assert handler.listeners_for_packet(GeneralPacket())[0]()         is GeneralPacket
+    assert handler.listeners_for_packet(DerivedPacket())[0]()         is DerivedPacket
+    assert handler.listeners_for_packet(MoreDerivedPacket())[0]()     is MoreDerivedPacket
+    assert handler.listeners_for_packet(AdjacentDerivedPacket())[0]() is AdjacentDerivedPacket
+
+    assert handler.listeners_for_packet(Packet) == []
+
+def test_most_derived_packet_listener_multiple():
+    with pytest.raises(TypeError, match="GeneralPacket"):
+        class BadHandler(PacketHandler):
+            @most_derived_packet_listener(GeneralPacket)
+            def most_derived(self):
+                pass
+
+            @most_derived.derived_listener(GeneralPacket)
+            def most_derived(self):
+                pass
+
+def test_most_derived_packet_listener_copies():
+    class TestHandler(PacketHandler):
+        @most_derived_packet_listener(GeneralPacket)
+        def most_derived_orig(self):
+            return GeneralPacket
+
+        @most_derived_orig.derived_listener(DerivedPacket)
+        def most_derived_new(self):
+            return DerivedPacket
+
+    assert TestHandler.most_derived_orig is not TestHandler.most_derived_new
+
+    handler = TestHandler()
+
+    general_listeners = handler.listeners_for_packet(GeneralPacket())
+    derived_listeners = handler.listeners_for_packet(DerivedPacket())
+
+    assert len(general_listeners) == 2
+    assert len(derived_listeners) == 2
+
+    # Both return 'GeneralPacket'.
+    assert {listener() for listener in general_listeners} == {GeneralPacket}
+
+    # One returns 'GeneralPacket', one returns 'DerivedPacket'.
+    #
+    # We shouldn't check the order of the listeners because that is a fragile
+    # interface that ultimately depends on the alphabetical order of the listeners.
+    assert {listener() for listener in derived_listeners} == {GeneralPacket, DerivedPacket}
+
+def test_async_register():
+    handler = AsyncPacketHandler()
 
     async def async_listener(packet):
         pass

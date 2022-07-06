@@ -2,10 +2,12 @@ r"""Tools for handling :class:`~.Packet`\s."""
 
 import asyncio
 import inspect
+import types
 from contextlib import asynccontextmanager
 
 __all__ = [
     "packet_listener",
+    "most_derived_packet_listener",
     "PacketHandler",
     "AsyncPacketHandler",
 ]
@@ -45,6 +47,128 @@ def packet_listener(*packet_types, **flags):
         listener._packet_listener_data = (packet_types, flags)
 
         return listener
+
+    return decorator
+
+class _most_derived_packet_listener:
+    class _bound:
+        def __init__(self, parent, instance):
+            self.__qualname__ = parent.__qualname__
+
+            self._listeners = parent._listeners
+            self._packet_listener_data = ((parent._general_type,), parent._flags)
+
+            # Setting this will make the '_bound' object immutable.
+            self._instance  = instance
+
+        def to_real_listener(self, packet):
+            for base in type(packet).mro():
+                listener = self._listeners.get(base)
+
+                if listener is not None:
+                    # Return bpund method
+                    return types.MethodType(listener, self._instance)
+
+        def __setattr__(self, attr, value):
+            if hasattr(self, "_instance"):
+                raise TypeError(f"{repr(self)} is immutable")
+
+            super().__setattr__(attr, value)
+
+        def __hash__(self):
+            # Use 'frozenset' to ignore the order of listeners.
+            return hash((frozenset(self._listeners.items()), id(self._instance)))
+
+        def __eq__(self, other):
+            return (
+                self._instance is other._instance and
+
+                # Use 'frozenset' to ignore the order of listeners.
+                frozenset(self._listeners.items()) == frozenset(self._listeners.items())
+            )
+
+        def __repr__(self):
+            return f"<bound most_derived_packet_listener {self.__qualname__} of {repr(self._instance)}>"
+
+    def __init__(self, most_general_packet_type, listeners, flags):
+        self._general_type = most_general_packet_type
+        self._listeners    = listeners
+        self._flags        = flags
+
+    def __set_name__(self, owner, name):
+        self.__module__   = owner.__module__
+        self.__qualname__ = f"{owner.__qualname__}.{name}"
+
+    def __get__(self, instance, owner=None):
+        if instance is None:
+            return self
+
+        return self._bound(self, instance)
+
+    def derived_listener(self, derived_packet_type):
+        if derived_packet_type in self._listeners:
+            raise TypeError(f"most_derived_packet_listener already has a listener for {derived_packet_type.__qualname__}")
+
+        def decorator(listener):
+            new_listeners = dict(self._listeners)
+            new_listeners[derived_packet_type] = listener
+
+            return _most_derived_packet_listener(self._general_type, new_listeners, self._flags)
+
+        return decorator
+
+    def __repr__(self):
+        return f"<most_derived_packet_listener {self.__module__}.{self.__qualname__}>"
+
+def most_derived_packet_listener(most_general_packet_type, **flags):
+    r"""A decorator for :class:`~.Packet` listeners that dispatch only to the
+    listener corresponding to the most derived :class:`~.Packet` type.
+
+    Parameters
+    ----------
+    most_general_packet_type : subclass of :class:`~.Packet`
+        The most general :class:`~.Packet` for the listener, i.e. the
+        base class for all the :class:`~.Packet`\s the listener will
+        handle.
+    **flags
+        See :meth:`PacketHandler.listeners_for_packet`.
+
+    Examples
+    --------
+    >>> import pak
+    >>> class GeneralPacket(pak.Packet):
+    ...     pass
+    ...
+    >>> class DerivedPacket(GeneralPacket):
+    ...     pass
+    ...
+    >>> class MoreDerivedPacket(DerivedPacket):
+    ...     pass
+    ...
+    >>> class MyHandler(pak.PacketHandler):
+    ...     @pak.most_derived_packet_listener(GeneralPacket)
+    ...     def most_derived(self):
+    ...         return "general"
+    ...
+    ...     @most_derived.derived_listener(DerivedPacket)
+    ...     def most_derived(self):
+    ...         return "derived"
+    ...
+    ...     @most_derived.derived_listener(MoreDerivedPacket)
+    ...     def most_derived(self):
+    ...         return "more derived"
+    ...
+    >>> handler = MyHandler()
+    >>> handler.listeners_for_packet(GeneralPacket())[0]()
+    'general'
+    >>> handler.listeners_for_packet(DerivedPacket())[0]()
+    'derived'
+    >>> handler.listeners_for_packet(MoreDerivedPacket())[0]()
+    'more derived'
+    """
+
+    def decorator(listener):
+        return _most_derived_packet_listener(most_general_packet_type, {most_general_packet_type: listener}, flags)
 
     return decorator
 
@@ -141,11 +265,22 @@ class PacketHandler:
 
         self._packet_listeners.pop(listener)
 
+    def _to_real_listener(self, listener, packet):
+        method = getattr(listener, "to_real_listener", None)
+        if method is None:
+            return listener
+
+        return method(packet)
+
     def listeners_for_packet(self, packet, **flags):
         """Gets the listeners for a certain :class:`~.Packet`.
 
         It is the caller's responsibility to send the :class:`~.Packet`
         to the returned listeners.
+
+        If a :class:`~.Packet` listener has a ``to_real_listener`` attribute,
+        then that attribute will be called with the ``packet`` parameter to
+        get the real :class:`~.Packet` listener to be returned.
 
         Parameters
         ----------
@@ -180,7 +315,7 @@ class PacketHandler:
         """
 
         return [
-            listener
+            self._to_real_listener(listener, packet)
 
             for listener, (packet_types, listener_flags) in self._packet_listeners.items()
 
@@ -198,34 +333,6 @@ class AsyncPacketHandler(PacketHandler):
         self._listener_tasks = []
 
         super().__init__()
-
-    def register_packet_listener(self, listener, *packet_types, **flags):
-        r"""Registers an asynchronous :class:`~.Packet` listener.
-
-        See :meth:`PacketHandler.register_packet_listener` for more details.
-
-        Parameters
-        ----------
-        listener : coroutine function
-            The asynchronous :class:`~.Packet` listener.
-        *packet_types : subclass of :class:`~.Packet`
-            The :class:`~.Packet`\s to listen for.
-        **flags
-            The flags which must match for the listener to be returned by
-            :meth:`PacketHandler.listeners_for_packet`.
-
-        Raises
-        ------
-        :exc:`TypeError`
-            If ``listener`` is not a coroutine function.
-        """
-
-        if not inspect.iscoroutinefunction(listener):
-            raise TypeError(
-                f"Function {listener.__qualname__} cannot be an async packet listener because it is not a coroutine function"
-            )
-
-        super().register_packet_listener(listener, *packet_types, **flags)
 
     def create_listener_task(self, coroutine):
         """Creates an asynchronous task for a :class:`~.Packet` listener.
