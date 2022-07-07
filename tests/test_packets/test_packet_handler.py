@@ -48,6 +48,9 @@ class MoreDerivedPacket(DerivedPacket):
 class AdjacentDerivedPacket(GeneralPacket):
     pass
 
+class UnrelatedPacket(Packet):
+    pass
+
 class MostDerivedHandler(PacketHandler):
     def __repr__(self):
         return "REPR"
@@ -87,16 +90,26 @@ def test_most_derived_packet_listener():
     assert handler.listeners_for_packet(MoreDerivedPacket())[0]()     is MoreDerivedPacket
     assert handler.listeners_for_packet(AdjacentDerivedPacket())[0]() is AdjacentDerivedPacket
 
-    assert handler.listeners_for_packet(Packet) == []
+    assert handler.listeners_for_packet(UnrelatedPacket) == []
 
-def test_most_derived_packet_listener_multiple():
-    with pytest.raises(TypeError, match="GeneralPacket"):
+def test_most_derived_packet_listener_errors():
+    with pytest.raises(ValueError, match="GeneralPacket"):
         class BadHandler(PacketHandler):
             @most_derived_packet_listener(GeneralPacket)
             def most_derived(self):
                 pass
 
             @most_derived.derived_listener(GeneralPacket)
+            def most_derived(self):
+                pass
+
+    with pytest.raises(ValueError, match="UnrelatedPacket.*GeneralPacket"):
+        class BadHandler(PacketHandler):
+            @most_derived_packet_listener(GeneralPacket)
+            def most_derived(self):
+                pass
+
+            @most_derived.derived_listener(UnrelatedPacket)
             def most_derived(self):
                 pass
 

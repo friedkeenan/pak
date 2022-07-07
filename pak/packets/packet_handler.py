@@ -106,8 +106,11 @@ class _most_derived_packet_listener:
         return self._bound(self, instance)
 
     def derived_listener(self, derived_packet_type):
+        if not issubclass(derived_packet_type, self._general_type):
+            raise ValueError(f"'{derived_packet_type.__qualname__}' is not a subclass of '{self._general_type.__qualname__}'")
+
         if derived_packet_type in self._listeners:
-            raise TypeError(f"most_derived_packet_listener already has a listener for {derived_packet_type.__qualname__}")
+            raise ValueError(f"most_derived_packet_listener already has a listener for {derived_packet_type.__qualname__}")
 
         def decorator(listener):
             new_listeners = dict(self._listeners)
