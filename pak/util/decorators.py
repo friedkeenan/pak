@@ -1,7 +1,6 @@
 """Custom decorators."""
 
 import functools
-import types
 from collections.abc import Hashable
 
 __all__ = [
@@ -60,10 +59,16 @@ def cache(func=None, *, force_hashable=True, max_size=None, **kwargs):
 class class_or_instance_method:
     """A decorator to call either a :class:`classmethod` or an instance method.
 
+    This, similarly to :class:`classmethod`, propagates other descriptors
+    as well, allowing combinations of :class:`class_or_instance_method` with
+    :class:`property` for example.
+
     Parameters
     ----------
     class_method : function
         The function for the :class:`classmethod`.
+    instance_method : function or ``None``
+        The function for the instance method.
 
     Examples
     --------
@@ -83,9 +88,9 @@ class class_or_instance_method:
     'instance'
     """
 
-    def __init__(self, class_method):
+    def __init__(self, class_method, instance_method=None):
         self.class_method    = class_method
-        self.instance_method = None
+        self.instance_method = instance_method
 
         self.__doc__ = class_method.__doc__
 
@@ -108,16 +113,19 @@ class class_or_instance_method:
             The descriptor with the newly set instance method.
         """
 
-        self.instance_method = instance_method
-
-        return self
+        return class_or_instance_method(self.class_method, instance_method)
 
     def __set_name__(self, owner, name):
         if self.instance_method is None:
             raise TypeError(f"{type(self).__qualname__} '{owner.__qualname__}.{name}' must have an instance method")
 
     def __get__(self, instance, owner=None):
-        if instance is None:
-            return types.MethodType(self.class_method, owner)
+        # 'classmethod' in fact propagates the '__get__' call instead of
+        # just returning a bound method. This allows users to create
+        # "class properties" by combining 'classmethod' and 'property'.
+        # We support the same here.
 
-        return types.MethodType(self.instance_method, instance)
+        if instance is None:
+            return self.class_method.__get__(owner, owner)
+
+        return self.instance_method.__get__(instance, owner)

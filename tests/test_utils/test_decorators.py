@@ -1,3 +1,4 @@
+import inspect
 import pytest
 from pak import *
 
@@ -62,8 +63,45 @@ def test_class_or_instance_method():
     assert Test().method() == "instance"
 
     # The 'TypeError' we raise gets turned into a 'RuntimeError'.
-    with pytest.raises(RuntimeError,):
+    with pytest.raises(RuntimeError):
         class MissingInstanceMethod:
             @util.class_or_instance_method
             def method(cls):
                 pass
+
+def test_class_or_instance_method_descriptor_propagate():
+    class Test:
+        @util.class_or_instance_method
+        @property
+        def attr(cls):
+            return "class"
+
+        @attr.instance
+        @property
+        def attr(self):
+            return "instance"
+
+    assert Test.attr   == "class"
+    assert Test().attr == "instance"
+
+def test_class_or_instance_method_copy():
+    class Test:
+        @util.class_or_instance_method
+        def method_orig(cls):
+            return "orig class"
+
+        @method_orig.instance
+        def method_orig(self):
+            return "orig instance"
+
+        @method_orig.instance
+        def method_new(self):
+            return "new instance"
+
+    assert inspect.getattr_static(Test, "method_orig") is not inspect.getattr_static(Test, "method_new")
+
+    assert Test.method_orig()   == "orig class"
+    assert Test().method_orig() == "orig instance"
+
+    assert Test.method_new()   == "orig class"
+    assert Test().method_new() == "new instance"
