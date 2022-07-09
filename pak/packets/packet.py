@@ -791,7 +791,7 @@ class Packet:
 
         return sum(field_type.size(ctx=type_ctx) for field_type in cls.field_types())
 
-    @size.instance
+    @size.instance_method
     def size(self, *, ctx=None):
         type_ctx = self.type_ctx(ctx)
 

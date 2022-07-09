@@ -53,11 +53,15 @@ def test_class_or_instance_method():
     class Test:
         @util.class_or_instance_method
         def method(cls):
+            """docstring"""
+
             return "class"
 
-        @method.instance
+        @method.instance_method
         def method(self):
             return "instance"
+
+    assert inspect.getattr_static(Test, "method").__doc__ == "docstring"
 
     assert Test.method()   == "class"
     assert Test().method() == "instance"
@@ -76,7 +80,7 @@ def test_class_or_instance_method_descriptor_propagate():
         def attr(cls):
             return "class"
 
-        @attr.instance
+        @attr.instance_method
         @property
         def attr(self):
             return "instance"
@@ -90,18 +94,26 @@ def test_class_or_instance_method_copy():
         def method_orig(cls):
             return "orig class"
 
-        @method_orig.instance
+        @method_orig.instance_method
         def method_orig(self):
             return "orig instance"
 
-        @method_orig.instance
+        @method_orig.instance_method
         def method_new(self):
             return "new instance"
 
-    assert inspect.getattr_static(Test, "method_orig") is not inspect.getattr_static(Test, "method_new")
+        @method_new.class_method
+        def method_newer(cls):
+            return "newer class"
+
+    assert inspect.getattr_static(Test, "method_orig")  is not inspect.getattr_static(Test, "method_new")
+    assert inspect.getattr_static(Test, "method_newer") is not inspect.getattr_static(Test, "method_new")
 
     assert Test.method_orig()   == "orig class"
     assert Test().method_orig() == "orig instance"
 
     assert Test.method_new()   == "orig class"
     assert Test().method_new() == "new instance"
+
+    assert Test.method_newer()   == "newer class"
+    assert Test().method_newer() == "new instance"

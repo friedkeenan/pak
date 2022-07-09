@@ -57,7 +57,10 @@ def cache(func=None, *, force_hashable=True, max_size=None, **kwargs):
     return wrapper
 
 class class_or_instance_method:
-    """A decorator to call either a :class:`classmethod` or an instance method.
+    """A decorator to call either a class method or an instance method.
+
+    The :attr:`__doc__` method is set to the :attr:`__doc__` attribute of
+    the associated class method.
 
     This, similarly to :class:`classmethod`, propagates other descriptors
     as well, allowing combinations of :class:`class_or_instance_method` with
@@ -66,7 +69,7 @@ class class_or_instance_method:
     Parameters
     ----------
     class_method : function
-        The function for the :class:`classmethod`.
+        The function for the class method.
     instance_method : function or ``None``
         The function for the instance method.
 
@@ -78,7 +81,7 @@ class class_or_instance_method:
     ...     def method(cls):
     ...         return "class"
     ...
-    ...     @method.instance
+    ...     @method.instance_method
     ...     def method(self):
     ...         return "instance"
     ...
@@ -89,12 +92,12 @@ class class_or_instance_method:
     """
 
     def __init__(self, class_method, instance_method=None):
-        self.class_method    = class_method
-        self.instance_method = instance_method
+        self._class_method    = class_method
+        self._instance_method = instance_method
 
         self.__doc__ = class_method.__doc__
 
-    def instance(self, instance_method):
+    def instance_method(self, instance_method):
         """A decorator that sets the instance method.
 
         .. warning::
@@ -113,10 +116,26 @@ class class_or_instance_method:
             The descriptor with the newly set instance method.
         """
 
-        return class_or_instance_method(self.class_method, instance_method)
+        return class_or_instance_method(self._class_method, instance_method)
+
+    def class_method(self, class_method):
+        """A decorator that sets the class method.
+
+        Parameters
+        ----------
+        class_method : function
+            The function for the class method.
+
+        Returns
+        -------
+        :class:`class_or_instance_method`
+            The descriptor with the newly set class method.
+        """
+
+        return class_or_instance_method(class_method, self._instance_method)
 
     def __set_name__(self, owner, name):
-        if self.instance_method is None:
+        if self._instance_method is None:
             raise TypeError(f"{type(self).__qualname__} '{owner.__qualname__}.{name}' must have an instance method")
 
     def __get__(self, instance, owner=None):
@@ -126,6 +145,6 @@ class class_or_instance_method:
         # We support the same here.
 
         if instance is None:
-            return self.class_method.__get__(owner, owner)
+            return self._class_method.__get__(owner, owner)
 
-        return self.instance_method.__get__(instance, owner)
+        return self._instance_method.__get__(instance, owner)

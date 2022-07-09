@@ -117,7 +117,7 @@ class AlignedPacket(Packet):
 
         return super().size(ctx=ctx) + sum(cls._padding_lengths(type_ctx=type_ctx))
 
-    @size.instance
+    @size.instance_method
     def size(self, *, ctx=None):
         type_ctx = self.type_ctx(ctx)
 
