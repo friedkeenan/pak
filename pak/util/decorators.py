@@ -116,7 +116,7 @@ class class_or_instance_method:
             The descriptor with the newly set instance method.
         """
 
-        return class_or_instance_method(self._class_method, instance_method)
+        return type(self)(self._class_method, instance_method)
 
     def class_method(self, class_method):
         """A decorator that sets the class method.
@@ -132,7 +132,7 @@ class class_or_instance_method:
             The descriptor with the newly set class method.
         """
 
-        return class_or_instance_method(class_method, self._instance_method)
+        return type(self)(class_method, self._instance_method)
 
     def __set_name__(self, owner, name):
         if self._instance_method is None:

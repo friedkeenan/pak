@@ -117,3 +117,18 @@ def test_class_or_instance_method_copy():
 
     assert Test.method_newer()   == "newer class"
     assert Test().method_newer() == "new instance"
+
+def test_class_or_instance_method_inherit():
+    class inherited_class_or_instance_method(util.class_or_instance_method):
+        pass
+
+    class Test:
+        @inherited_class_or_instance_method
+        def method(cls):
+            pass
+
+        @method.instance_method
+        def method(self):
+            pass
+
+    assert isinstance(inspect.getattr_static(Test, "method"), inherited_class_or_instance_method)
