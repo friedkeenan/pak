@@ -61,6 +61,8 @@ jobs:
 
       - name: Upload code coverage
         uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: false
 
       - name: Run doctests in rst files
         run: |
