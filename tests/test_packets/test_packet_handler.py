@@ -92,7 +92,7 @@ def test_most_derived_packet_listener():
 
     assert handler.listeners_for_packet(UnrelatedPacket) == []
 
-def test_most_derived_packet_listener_errors():
+def test_most_derived_packet_listener_override():
     with pytest.raises(ValueError, match="GeneralPacket"):
         class BadHandler(PacketHandler):
             @most_derived_packet_listener(GeneralPacket)
@@ -103,6 +103,20 @@ def test_most_derived_packet_listener_errors():
             def most_derived(self):
                 pass
 
+    class GoodHandler(PacketHandler):
+        @most_derived_packet_listener(GeneralPacket)
+        def most_derived(self):
+            return "original"
+
+        @most_derived.derived_listener(GeneralPacket, override=True)
+        def most_derived(self):
+            return "overridden"
+
+    handler = GoodHandler()
+
+    assert handler.listeners_for_packet(GeneralPacket())[0]() == "overridden"
+
+def test_most_derived_packet_listener_not_subclass():
     with pytest.raises(ValueError, match="UnrelatedPacket.*GeneralPacket"):
         class BadHandler(PacketHandler):
             @most_derived_packet_listener(GeneralPacket)
@@ -110,6 +124,16 @@ def test_most_derived_packet_listener_errors():
                 pass
 
             @most_derived.derived_listener(UnrelatedPacket)
+            def most_derived(self):
+                pass
+
+    with pytest.raises(ValueError, match="GeneralPacket.*DerivedPacket"):
+        class BadHandler(PacketHandler):
+            @most_derived_packet_listener(DerivedPacket)
+            def most_derived(self):
+                pass
+
+            @most_derived.derived_listener(GeneralPacket)
             def most_derived(self):
                 pass
 

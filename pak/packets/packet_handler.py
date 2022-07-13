@@ -105,11 +105,11 @@ class _most_derived_packet_listener:
 
         return self._bound(self, instance)
 
-    def derived_listener(self, derived_packet_type):
+    def derived_listener(self, derived_packet_type, *, override=False):
         if not issubclass(derived_packet_type, self._general_type):
             raise ValueError(f"'{derived_packet_type.__qualname__}' is not a subclass of '{self._general_type.__qualname__}'")
 
-        if derived_packet_type in self._listeners:
+        if not override and derived_packet_type in self._listeners:
             raise ValueError(f"most_derived_packet_listener already has a listener for {derived_packet_type.__qualname__}")
 
         def decorator(listener):
@@ -168,6 +168,16 @@ def most_derived_packet_listener(most_general_packet_type, **flags):
     'derived'
     >>> handler.listeners_for_packet(MoreDerivedPacket())[0]()
     'more derived'
+    >>> # You can pass 'override=True' to 'derived_listener'
+    >>> # to override a previously set listener.
+    >>> class MyDerivedHandler(MyHandler):
+    ...     @MyHandler.most_derived.derived_listener(MoreDerivedPacket, override=True)
+    ...     def most_derived(self):
+    ...         return "overridden more derived"
+    ...
+    >>> handler = MyDerivedHandler()
+    >>> handler.listeners_for_packet(MoreDerivedPacket())[0]()
+    'overridden more derived'
     """
 
     def decorator(listener):
@@ -423,7 +433,9 @@ class AsyncPacketHandler(PacketHandler):
         ...     packet  = pak.Packet()
         ...     async with handler.listener_task_context(listen_sequentially=False):
         ...         for listener in handler.listeners_for_packet(packet):
-        ...             await listener(packet)
+        ...             handler.create_listener_task(listener(packet))
+        ...
+        ...     await handler.end_listener_tasks(timeout=2)
         ...
         >>> asyncio.run(main())
         fast_listener
