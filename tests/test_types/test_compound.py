@@ -1,17 +1,16 @@
+import pak
 import pytest
-from pak import *
-
 
 def test_static_compound():
-    TestStaticCompound = Compound(
+    TestStaticCompound = pak.Compound(
         "TestStaticCompound",
 
-        first  = Int8,
-        second = Int16,
-        third  = Char[2],
+        first  = pak.Int8,
+        second = pak.Int16,
+        third  = pak.Char[2],
     )
 
-    test.type_behavior(
+    pak.test.type_behavior(
         TestStaticCompound,
 
         ((1, 2, "hi"), b"\x01\x02\x00hi"),
@@ -30,21 +29,21 @@ def test_static_compound():
     assert obj.second == 0
     assert obj.third  == "aa"
 
-    class TestAttrSet(Packet):
+    class TestAttrSet(pak.Packet):
         compound: TestStaticCompound
 
     assert isinstance(TestAttrSet(compound=(0, 0, "aa")).compound, TestStaticCompound.value_type)
 
 def test_dynamic_compound():
-    TestDynamicCompound = Compound(
+    TestDynamicCompound = pak.Compound(
         "TestDynamicCompound",
 
-        first  = Int8,
-        second = ULEB128,
-        third  = Char[2],
+        first  = pak.Int8,
+        second = pak.ULEB128,
+        third  = pak.Char[2],
     )
 
-    test.type_behavior(
+    pak.test.type_behavior(
         TestDynamicCompound,
 
         ((1, 2,   "hi"), b"\x01\x02hi"),
@@ -55,15 +54,15 @@ def test_dynamic_compound():
     )
 
 def test_aligned_compound():
-    TestAligned = AlignedCompound(
+    TestAligned = pak.AlignedCompound(
         "TestAligned",
 
-        first  = Int16,
-        second = Int32,
-        third  = Int8,
+        first  = pak.Int16,
+        second = pak.Int32,
+        third  = pak.Int8,
     )
 
-    test.type_behavior(
+    pak.test.type_behavior(
         TestAligned,
 
         ((1, 2, 3), b"\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00"),
@@ -74,10 +73,10 @@ def test_aligned_compound():
     )
 
 def test_faulty_aligned_compound():
-    FaultyCompound = AlignedCompound(
+    FaultyCompound = pak.AlignedCompound(
         "FaultyCompound",
 
-        field = ULEB128,
+        field = pak.ULEB128,
     )
 
     with pytest.raises(TypeError, match="no alignment"):

@@ -1,7 +1,7 @@
+import pak
 import pytest
-from pak import *
 
-class StringToIntDynamicValue(DynamicValue):
+class StringToIntDynamicValue(pak.DynamicValue):
     _type = str
 
     _enabled = False
@@ -12,12 +12,12 @@ class StringToIntDynamicValue(DynamicValue):
     def get(self, *, ctx=None):
         return int(self.string)
 
-class BasicPacket(Packet):
-    attr1: Int8
-    attr2: Int16
+class BasicPacket(pak.Packet):
+    attr1: pak.Int8
+    attr2: pak.Int16
 
 def test_packet():
-    assert isinstance(BasicPacket.attr1, Int8)
+    assert isinstance(BasicPacket.attr1, pak.Int8)
 
     p = BasicPacket()
     assert p.attr1 == 0 and p.attr2 == 0
@@ -25,7 +25,7 @@ def test_packet():
     # Test deleting fields works.
     del p.attr1
 
-    test.packet_behavior(
+    pak.test.packet_behavior(
         (BasicPacket(attr1=0, attr2=1), b"\x00\x01\x00"),
     )
 
@@ -40,36 +40,36 @@ def test_packet():
         BasicPacket(test=0)
 
 def test_packet_context():
-    assert hash(Packet.Context()) == hash(Packet.Context())
+    assert hash(pak.Packet.Context()) == hash(pak.Packet.Context())
 
     with pytest.raises(TypeError, match="__hash__"):
-        class MyContext(Packet.Context):
+        class MyContext(pak.Packet.Context):
             pass
 
     with pytest.raises(TypeError, match="__hash__"):
-        class MyContext(Packet.Context):
+        class MyContext(pak.Packet.Context):
             # This class says it can't be hashed (in the standard way)
             # but still provides its own __hash__ member.
             __hash__ = None
 
-    ctx = Packet.Context()
+    ctx = pak.Packet.Context()
     with pytest.raises(TypeError, match="immutable"):
         ctx.attr = "test"
 
-    class MyContext(Packet.Context):
+    class MyContext(pak.Packet.Context):
         def __init__(self, attr):
             self.attr = attr
 
             super().__init__()
 
-        __hash__ = Packet.Context.__hash__
+        __hash__ = pak.Packet.Context.__hash__
 
     ctx = MyContext("test")
     with pytest.raises(TypeError, match="immutable"):
         ctx.attr = "new"
 
-    class MyPacket(Packet):
-        field: Int8
+    class MyPacket(pak.Packet):
+        field: pak.Int8
 
         Context = MyContext
 
@@ -81,25 +81,25 @@ def test_packet_context():
     assert MyPacket(field=1).field == 1
 
 def test_reserved_field():
-    with pytest.raises(ReservedFieldError, match="ctx"):
-        class TestReservedField(Packet):
-            ctx: Int8
+    with pytest.raises(pak.ReservedFieldError, match="ctx"):
+        class TestReservedField(pak.Packet):
+            ctx: pak.Int8
 
 def test_typelike_attr():
-    Type.register_typelike(int, lambda x: Int8)
+    pak.Type.register_typelike(int, lambda x: pak.Int8)
 
-    class TestTypelike(Packet):
+    class TestTypelike(pak.Packet):
         attr: 1
 
-    test.packet_behavior(
+    pak.test.packet_behavior(
         (TestTypelike(attr=5), b"\x05"),
     )
 
-    Type.unregister_typelike(int)
+    pak.Type.unregister_typelike(int)
 
 def test_packet_property():
-    class TestProperty(Packet):
-        prop: Int8
+    class TestProperty(pak.Packet):
+        prop: pak.Int8
 
         @property
         def prop(self):
@@ -112,15 +112,15 @@ def test_packet_property():
     p = TestProperty()
     assert p.prop == 0
 
-    test.packet_behavior(
+    pak.test.packet_behavior(
         (TestProperty(prop=1), b"\x01"),
     )
 
     p = TestProperty(prop=1.5)
     assert p.prop == 1
 
-    class TestReadOnly(Packet):
-        read_only: Int8
+    class TestReadOnly(pak.Packet):
+        read_only: pak.Int8
 
         @property
         def read_only(self):
@@ -129,7 +129,7 @@ def test_packet_property():
     p = TestReadOnly()
     assert p.read_only == 1
 
-    test.packet_behavior(
+    pak.test.packet_behavior(
         (TestReadOnly(), b"\x01"),
     )
 
@@ -140,23 +140,23 @@ def test_packet_property():
         TestReadOnly(read_only=2)
 
 def test_packet_inheritance():
-    class TestParent(Packet):
-        test: Int8
+    class TestParent(pak.Packet):
+        test: pak.Int8
 
     class TestChildBasic(TestParent):
         pass
 
     class TestChildOverride(TestParent):
-        other: Int8
+        other: pak.Int8
 
     # Fields will get passed down
-    assert list(TestChildBasic.enumerate_field_types())    == [("test", Int8)]
-    assert list(TestChildOverride.enumerate_field_types()) == [("test", Int8), ("other", Int8)]
+    assert list(TestChildBasic.enumerate_field_types())    == [("test", pak.Int8)]
+    assert list(TestChildOverride.enumerate_field_types()) == [("test", pak.Int8), ("other", pak.Int8)]
 
     assert TestChildBasic()    == TestParent()
     assert TestChildOverride() != TestParent()
 
-    test.packet_behavior(
+    pak.test.packet_behavior(
         (
             TestChildBasic(test=1),
 
@@ -170,27 +170,27 @@ def test_packet_inheritance():
         ),
     )
 
-    with pytest.raises(DuplicateFieldError, match="test"):
+    with pytest.raises(pak.DuplicateFieldError, match="test"):
         class TestDuplicateField(TestParent):
-            test: Int8
+            test: pak.Int8
 
 def test_packet_multiple_inheritance():
-    class FirstParent(Packet):
-        first: Int8
+    class FirstParent(pak.Packet):
+        first: pak.Int8
 
-    class SecondParent(Packet):
-        second: Int16
+    class SecondParent(pak.Packet):
+        second: pak.Int16
 
     class Child(FirstParent, SecondParent):
-        child: Int32
+        child: pak.Int32
 
     assert list(Child.enumerate_field_types()) == [
-        ("first",  Int8),
-        ("second", Int16),
-        ("child",  Int32),
+        ("first",  pak.Int8),
+        ("second", pak.Int16),
+        ("child",  pak.Int32),
     ]
 
-    test.packet_behavior(
+    pak.test.packet_behavior(
         (
             Child(first=1, second=2, child=3),
 
@@ -201,33 +201,33 @@ def test_packet_multiple_inheritance():
     assert Child() != FirstParent()
     assert Child() != SecondParent()
 
-    with pytest.raises(DuplicateFieldError, match="first"):
+    with pytest.raises(pak.DuplicateFieldError, match="first"):
         class TestDuplicateFirstField(FirstParent, SecondParent):
-            first: Int64
+            first: pak.Int64
 
-    with pytest.raises(DuplicateFieldError, match="second"):
+    with pytest.raises(pak.DuplicateFieldError, match="second"):
         class TestDuplicateSecondField(FirstParent, SecondParent):
-            second: Int64
+            second: pak.Int64
 
-    class DuplicateFirstParent(Packet):
-        test: Int8
+    class DuplicateFirstParent(pak.Packet):
+        test: pak.Int8
 
-    class DuplicateSecondParent(Packet):
-        test: Int16
+    class DuplicateSecondParent(pak.Packet):
+        test: pak.Int16
 
-    with pytest.raises(DuplicateFieldError, match="test"):
+    with pytest.raises(pak.DuplicateFieldError, match="test"):
         class TestDuplicateFieldFromParents(DuplicateFirstParent, DuplicateSecondParent):
             pass
 
 def test_header():
-    class Test(Packet):
-        class Header(Packet.Header):
-            size: UInt8
+    class Test(pak.Packet):
+        class Header(pak.Packet.Header):
+            size: pak.UInt8
 
-        byte: Int8
-        short: Int16
+        byte:  pak.Int8
+        short: pak.Int16
 
-    test.packet_behavior(
+    pak.test.packet_behavior(
         (Test.Header(size=3), b"\x03"),
     )
 
@@ -239,15 +239,15 @@ def test_header():
         Test.Header(Test(), size=2)
 
     with pytest.raises(TypeError, match="header"):
-        class TestHeaderWithHeader(Packet):
-            class Header(Packet.Header):
-                class Header(Packet.Header):
+        class TestHeaderWithHeader(pak.Packet):
+            class Header(pak.Packet.Header):
+                class Header(pak.Packet.Header):
                     pass
 
 def test_header_correct_context():
-    class Test(Packet):
-        class Context(Packet.Context):
-            __hash__ = Packet.Context.__hash__
+    class Test(pak.Packet):
+        class Context(pak.Packet.Context):
+            __hash__ = pak.Packet.Context.__hash__
 
         def check_ctx(self, *, ctx):
             # Make sure we receive the context for 'Test',
@@ -255,25 +255,25 @@ def test_header_correct_context():
             # 'Packet.Context'.
             return isinstance(ctx, Test.Context)
 
-        class Header(Packet.Header):
-            check_ctx: Bool
+        class Header(pak.Packet.Header):
+            check_ctx: pak.Bool
 
     assert Test().header().check_ctx
 
 def test_id():
-    class TestEmpty(Packet):
+    class TestEmpty(pak.Packet):
         pass
 
     assert TestEmpty.id() is None
-    test.packet_behavior(
+    pak.test.packet_behavior(
         (TestEmpty(), b""),
     )
 
-    assert TestEmpty.Header.unpack(b"test") == Packet.Header()
+    assert TestEmpty.Header.unpack(b"test") == pak.Packet.Header()
 
-    class TestStaticId(Packet):
-        class Header(Packet.Header):
-            id: Int8
+    class TestStaticId(pak.Packet):
+        class Header(pak.Packet.Header):
+            id: pak.Int8
 
         id = 1
 
@@ -283,9 +283,9 @@ def test_id():
     assert TestStaticId.Header.unpack(b"\x02") == TestStaticId.Header(id=2)
 
     with StringToIntDynamicValue.context():
-        class TestDynamicId(Packet):
-            class Header(Packet.Header):
-                id: Int8
+        class TestDynamicId(pak.Packet):
+            class Header(pak.Packet.Header):
+                id: pak.Int8
 
             id = "1"
 
@@ -295,22 +295,22 @@ def test_id():
         assert TestDynamicId.Header.unpack(b"\x02") == TestDynamicId.Header(id=2)
 
 def test_packet_size():
-    class StaticPacket(Packet):
-        field: UInt8
+    class StaticPacket(pak.Packet):
+        field: pak.UInt8
 
     assert StaticPacket.size()   == 1
     assert StaticPacket().size() == 1
 
-    class DynamicPacket(Packet):
-        field: ULEB128
+    class DynamicPacket(pak.Packet):
+        field: pak.ULEB128
 
-    with pytest.raises(NoStaticSizeError):
+    with pytest.raises(pak.NoStaticSizeError):
         DynamicPacket.size()
 
     assert DynamicPacket().size() == 1
 
 def test_subclass_id():
-    class Root(Packet):
+    class Root(pak.Packet):
         pass
 
     class Child1(Root):
@@ -327,6 +327,6 @@ def test_subclass_id():
     assert Root.subclass_with_id(2) is GrandChild1
     assert Root.subclass_with_id(3) is None
 
-test_generic = test.packet_behavior_func(
-    (GenericPacket(data=b"\xAA\xBB\xCC"), b"\xAA\xBB\xCC"),
+test_generic = pak.test.packet_behavior_func(
+    (pak.GenericPacket(data=b"\xAA\xBB\xCC"), b"\xAA\xBB\xCC"),
 )

@@ -1,10 +1,10 @@
+import pak
 import pytest
-from pak import *
 
 def test_static_string():
-    TestString = StaticString(4)
+    TestString = pak.StaticString(4)
 
-    test.type_behavior(
+    pak.test.type_behavior(
         TestString,
 
         ("abc", b"abc\x00"),
@@ -34,9 +34,9 @@ def test_static_string():
         TestString.pack("\u200B\u200B")
 
 def test_prefixed_string():
-    TestPrefixed = PrefixedString(UInt8)
+    TestPrefixed = pak.PrefixedString(pak.UInt8)
 
-    test.type_behavior(
+    pak.test.type_behavior(
         TestPrefixed,
 
         ("abc", b"\x03abc"),
@@ -53,8 +53,8 @@ def test_prefixed_string():
     assert TestPrefixed.unpack(b"\x01\xFF") == "\uFFFD"
 
 def test_char():
-    test.type_behavior(
-        Char,
+    pak.test.type_behavior(
+        pak.Char,
 
         ("h", b"h"),
 
@@ -63,19 +63,19 @@ def test_char():
         default     = "a"
     )
 
-    assert Char.pack("Hello") == b"H"
+    assert pak.Char.pack("Hello") == b"H"
 
     with pytest.raises(UnicodeDecodeError, match="codec can't decode byte"):
-        Char.unpack(b"\x80")
+        pak.Char.unpack(b"\x80")
 
     with pytest.raises(UnicodeEncodeError, match="codec can't encode character"):
-        Char.pack("\x80")
+        pak.Char.pack("\x80")
 
-    with pytest.raises(util.BufferOutOfDataError):
-        Char.unpack(b"")
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        pak.Char.unpack(b"")
 
-    Utf8Char = Char("utf-8")
-    test.type_behavior(
+    Utf8Char = pak.Char("utf-8")
+    pak.test.type_behavior(
         Utf8Char,
 
         ("h",    b"h"),

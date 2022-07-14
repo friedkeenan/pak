@@ -1,13 +1,12 @@
 import abc
-from pak import *
-
+import pak
 
 def test_defaulted():
-    DefaultedInt8 = Defaulted(Int8, 1)
+    DefaultedInt8 = pak.Defaulted(pak.Int8, 1)
 
-    assert DefaultedInt8.mro() == [DefaultedInt8, Int8, StructType, Defaulted, Type, abc.ABC, object]
+    assert DefaultedInt8.mro() == [DefaultedInt8, pak.Int8, pak.StructType, pak.Defaulted, pak.Type, abc.ABC, object]
 
-    test.type_behavior(
+    pak.test.type_behavior(
         DefaultedInt8,
 
         (0, b"\x00"),

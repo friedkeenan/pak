@@ -1,9 +1,9 @@
 import math
-from pak import *
+import pak
 
-test_bool = test.type_behavior_func(
+test_bool = pak.test.type_behavior_func(
 
-    Bool,
+    pak.Bool,
 
     (False, b"\x00"),
     (True,  b"\x01"),
@@ -13,8 +13,8 @@ test_bool = test.type_behavior_func(
     default     = False,
 )
 
-test_int8 = test.type_behavior_func(
-    Int8,
+test_int8 = pak.test.type_behavior_func(
+    pak.Int8,
 
     (1,        b"\x01"),
     (2**7 - 1, b"\x7F"),
@@ -26,8 +26,8 @@ test_int8 = test.type_behavior_func(
     default     = 0,
 )
 
-test_uint8 = test.type_behavior_func(
-    UInt8,
+test_uint8 = pak.test.type_behavior_func(
+    pak.UInt8,
 
     (1,        b"\x01"),
     (2**8 - 1, b"\xFF"),
@@ -37,8 +37,8 @@ test_uint8 = test.type_behavior_func(
     default     = 0,
 )
 
-test_int16 = test.type_behavior_func(
-    Int16,
+test_int16 = pak.test.type_behavior_func(
+    pak.Int16,
 
     (1,         b"\x01\x00"),
     (2**15 - 1, b"\xFF\x7F"),
@@ -50,8 +50,8 @@ test_int16 = test.type_behavior_func(
     default     = 0,
 )
 
-test_uint16 = test.type_behavior_func(
-    UInt16,
+test_uint16 = pak.test.type_behavior_func(
+    pak.UInt16,
 
     (1,         b"\x01\x00"),
     (2**16 - 1, b"\xFF\xFF"),
@@ -61,8 +61,8 @@ test_uint16 = test.type_behavior_func(
     default     = 0,
 )
 
-test_int32 = test.type_behavior_func(
-    Int32,
+test_int32 = pak.test.type_behavior_func(
+    pak.Int32,
 
     (1,         b"\x01\x00\x00\x00"),
     (2**31 - 1, b"\xFF\xFF\xFF\x7F"),
@@ -74,8 +74,8 @@ test_int32 = test.type_behavior_func(
     default     = 0,
 )
 
-test_uint32 = test.type_behavior_func(
-    UInt32,
+test_uint32 = pak.test.type_behavior_func(
+    pak.UInt32,
 
     (1,         b"\x01\x00\x00\x00"),
     (2**32 - 1, b"\xFF\xFF\xFF\xFF"),
@@ -85,8 +85,8 @@ test_uint32 = test.type_behavior_func(
     default     = 0,
 )
 
-test_int64 = test.type_behavior_func(
-    Int64,
+test_int64 = pak.test.type_behavior_func(
+    pak.Int64,
 
     (1,         b"\x01\x00\x00\x00\x00\x00\x00\x00"),
     (2**63 - 1, b"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F"),
@@ -98,8 +98,8 @@ test_int64 = test.type_behavior_func(
     default     = 0,
 )
 
-test_uint64 = test.type_behavior_func(
-    UInt64,
+test_uint64 = pak.test.type_behavior_func(
+    pak.UInt64,
 
     (1,         b"\x01\x00\x00\x00\x00\x00\x00\x00"),
     (2**64 - 1, b"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"),
@@ -110,8 +110,8 @@ test_uint64 = test.type_behavior_func(
 )
 
 def test_float32():
-    test.type_behavior(
-        Float32,
+    pak.test.type_behavior(
+        pak.Float32,
 
         # Normal numbers
         (1,                      b"\x00\x00\x80\x3F"),
@@ -141,11 +141,11 @@ def test_float32():
     )
 
     # NaN (cannot be checked with equality)
-    assert math.isnan(Float32.unpack(b"\x01\x00\x80\x7F"))
+    assert math.isnan(pak.Float32.unpack(b"\x01\x00\x80\x7F"))
 
 def test_float64():
-    test.type_behavior(
-        Float64,
+    pak.test.type_behavior(
+        pak.Float64,
 
         # Normal numbers
         (1,                       b"\x00\x00\x00\x00\x00\x00\xf0\x3F"),
@@ -175,10 +175,10 @@ def test_float64():
     )
 
     # NaN (cannot be checked with equality)
-    assert math.isnan(Float64.unpack(b"\x01\x00\x00\x00\x00\x00\xF0\x7F"))
+    assert math.isnan(pak.Float64.unpack(b"\x01\x00\x00\x00\x00\x00\xF0\x7F"))
 
-test_leb128 = test.type_behavior_func(
-    LEB128,
+test_leb128 = pak.test.type_behavior_func(
+    pak.LEB128,
 
     (0,         b"\x00"),
     (1,         b"\x01"),
@@ -202,8 +202,8 @@ test_leb128 = test.type_behavior_func(
     default     = 0,
 )
 
-test_uleb128 = test.type_behavior_func(
-    ULEB128,
+test_uleb128 = pak.test.type_behavior_func(
+    pak.ULEB128,
 
     (0,         b"\x00"),
     (1,         b"\x01"),

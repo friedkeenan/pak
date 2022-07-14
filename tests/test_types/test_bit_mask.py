@@ -1,17 +1,17 @@
+import pak
 import pytest
-from pak import *
 
 def test_static_bit_mask():
-    TestStaticMask = BitMask(
+    TestStaticMask = pak.BitMask(
         "TestStaticMask",
-        UInt8,
+        pak.UInt8,
 
         first  = 0,
         second = (1, 3),
         third  = (3, 5),
     )
 
-    test.type_behavior(
+    pak.test.type_behavior(
         TestStaticMask,
 
         ((False, 0, 0),  b"\x00"),
@@ -39,22 +39,22 @@ def test_static_bit_mask():
     assert obj.second == 0
     assert obj.third  == 0
 
-    class TestAttrSet(Packet):
+    class TestAttrSet(pak.Packet):
         bitmask: TestStaticMask
 
     assert isinstance(TestAttrSet(bitmask=(False, 0, 0)).bitmask, TestStaticMask.value_type)
 
 def test_dynamic_bit_mask():
-    TestDynamicMask = BitMask(
+    TestDynamicMask = pak.BitMask(
         "TestDynamicMask",
-        ULEB128,
+        pak.ULEB128,
 
         first  = 0,
         second = (1, 3),
         third  = (7, 9),
     )
 
-    test.type_behavior(
+    pak.test.type_behavior(
         TestDynamicMask,
 
         ((False, 0, 0), b"\x00"),

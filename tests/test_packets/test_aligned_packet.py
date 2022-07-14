@@ -1,12 +1,12 @@
+import pak
 import pytest
-from pak import *
 
-class AlignedTest(AlignedPacket):
-    first:  Int16
-    second: Int32
-    third:  Int8
+class AlignedTest(pak.AlignedPacket):
+    first:  pak.Int16
+    second: pak.Int32
+    third:  pak.Int8
 
-test_aligned_packet_marshal = test.packet_behavior_func(
+test_aligned_packet_marshal = pak.test.packet_behavior_func(
     (
         AlignedTest(first=1, second=2, third=3),
 
@@ -19,8 +19,8 @@ def test_aligned_packet_size():
     assert AlignedTest().size() == 12
 
 def test_faulty_aligned_packet():
-    class FaultyPacket(AlignedPacket):
-        field: ULEB128
+    class FaultyPacket(pak.AlignedPacket):
+        field: pak.ULEB128
 
     with pytest.raises(TypeError, match="no alignment"):
         FaultyPacket.unpack(b"\x00")
@@ -29,8 +29,8 @@ def test_faulty_aligned_packet():
         FaultyPacket().pack()
 
 def test_aligned_packet_read_only():
-    class TestReadOnly(AlignedPacket):
-        field: Int8
+    class TestReadOnly(pak.AlignedPacket):
+        field: pak.Int8
 
         @property
         def field(self):

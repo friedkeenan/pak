@@ -1,9 +1,9 @@
 import inspect
+import pak
 import pytest
-from pak import *
 
 def test_uncustomized_cache():
-    @util.cache
+    @pak.util.cache
     def test_uncustomized(x):
         return object()
 
@@ -19,7 +19,7 @@ def test_uncustomized_cache():
         test_uncustomized({})
 
 def test_force_hashable_cache():
-    @util.cache(force_hashable=False)
+    @pak.util.cache(force_hashable=False)
     def test_hashable(x):
         return object()
 
@@ -37,7 +37,7 @@ def test_force_hashable_cache():
     assert test_hashable({}) is not obj
 
 def test_max_size_cache():
-    @util.cache(max_size=1)
+    @pak.util.cache(max_size=1)
     def test_max_size(x):
         return object()
 
@@ -51,7 +51,7 @@ def test_max_size_cache():
 
 def test_class_or_instance_method():
     class Test:
-        @util.class_or_instance_method
+        @pak.util.class_or_instance_method
         def method(cls):
             """docstring"""
 
@@ -69,13 +69,13 @@ def test_class_or_instance_method():
     # The 'TypeError' we raise gets turned into a 'RuntimeError'.
     with pytest.raises(RuntimeError):
         class MissingInstanceMethod:
-            @util.class_or_instance_method
+            @pak.util.class_or_instance_method
             def method(cls):
                 pass
 
 def test_class_or_instance_method_descriptor_propagate():
     class Test:
-        @util.class_or_instance_method
+        @pak.util.class_or_instance_method
         @property
         def attr(cls):
             return "class"
@@ -90,7 +90,7 @@ def test_class_or_instance_method_descriptor_propagate():
 
 def test_class_or_instance_method_copy():
     class Test:
-        @util.class_or_instance_method
+        @pak.util.class_or_instance_method
         def method_orig(cls):
             return "orig class"
 
@@ -119,7 +119,7 @@ def test_class_or_instance_method_copy():
     assert Test().method_newer() == "new instance"
 
 def test_class_or_instance_method_inherit():
-    class inherited_class_or_instance_method(util.class_or_instance_method):
+    class inherited_class_or_instance_method(pak.util.class_or_instance_method):
         pass
 
     class Test:

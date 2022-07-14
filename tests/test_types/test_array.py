@@ -1,32 +1,32 @@
 import io
+import pak
 import pytest
-from pak import *
 
 def test_padding_array():
-    assert Padding[2].default() is None
+    assert pak.Padding[2].default() is None
 
     buf = io.BytesIO(b"\x00\x00\x01\x00\x00")
-    assert Padding[2].unpack(buf) is None
+    assert pak.Padding[2].unpack(buf) is None
     assert buf.tell() == 2
 
-    assert Padding[2].size() == 2
+    assert pak.Padding[2].size() == 2
 
-    assert Padding[Int8].unpack(buf) is None
+    assert pak.Padding[pak.Int8].unpack(buf) is None
     assert buf.tell() == 4
 
-    with pytest.raises(NoStaticSizeError):
-        Padding[Int8].size()
+    with pytest.raises(pak.NoStaticSizeError):
+        pak.Padding[pak.Int8].size()
 
     buf = io.BytesIO(b"test data")
-    assert Padding[None].unpack(buf) is None
+    assert pak.Padding[None].unpack(buf) is None
     assert buf.tell() == 9
 
-    with pytest.raises(NoStaticSizeError):
-        Padding[None].size()
+    with pytest.raises(pak.NoStaticSizeError):
+        pak.Padding[None].size()
 
-    class TestAttr(Packet):
-        test:  Int8
-        array: Padding["test"]
+    class TestAttr(pak.Packet):
+        test:  pak.Int8
+        array: pak.Padding["test"]
 
     assert TestAttr(test=2).array is None
 
@@ -39,30 +39,30 @@ def test_padding_array():
     del p.array
 
     ctx_len_2 = TestAttr(test=2).type_ctx(None)
-    Padding["test"].size(ctx=ctx_len_2) == 2
+    pak.Padding["test"].size(ctx=ctx_len_2) == 2
 
-    assert Padding[2].pack("whatever value")    == b"\x00\x00"
-    assert Padding[Int8].pack("whatever value") == b"\x00"
-    assert Padding[None].pack("whatever value") == b""
+    assert pak.Padding[2].pack("whatever value")    == b"\x00\x00"
+    assert pak.Padding[pak.Int8].pack("whatever value") == b"\x00"
+    assert pak.Padding[None].pack("whatever value") == b""
 
-    with pytest.raises(util.BufferOutOfDataError):
-        Padding[2].unpack(b"\x00")
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        pak.Padding[2].unpack(b"\x00")
 
-    with pytest.raises(util.BufferOutOfDataError):
-        Padding[Int8].unpack(b"\x01")
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        pak.Padding[pak.Int8].unpack(b"\x01")
 
-    with pytest.raises(util.BufferOutOfDataError):
+    with pytest.raises(pak.util.BufferOutOfDataError):
         TestAttr.unpack(b"\x01")
 
 def test_raw_byte_array():
-    assert RawByte[2].default() == b"\x00\x00"
+    assert pak.RawByte[2].default() == b"\x00\x00"
 
-    assert isinstance(RawByte[1].unpack(b"\x00"), bytearray)
+    assert isinstance(pak.RawByte[1].unpack(b"\x00"), bytearray)
 
     # Values are actually bytearrays but will still
     # have equality with bytes objects.
-    test.type_behavior(
-        RawByte[2],
+    pak.test.type_behavior(
+        pak.RawByte[2],
 
         (b"\xAA\xBB", b"\xAA\xBB"),
 
@@ -70,8 +70,8 @@ def test_raw_byte_array():
         default     = b"\x00\x00",
     )
 
-    test.type_behavior(
-        RawByte[Int8],
+    pak.test.type_behavior(
+        pak.RawByte[pak.Int8],
 
         (b"\xAA\xBB", b"\x02\xAA\xBB"),
         (b"",         b"\x00"),
@@ -80,8 +80,8 @@ def test_raw_byte_array():
         default     = b"",
     )
 
-    test.type_behavior(
-        RawByte[None],
+    pak.test.type_behavior(
+        pak.RawByte[None],
 
         (b"\xAA\xBB\xCC", b"\xAA\xBB\xCC"),
 
@@ -89,19 +89,19 @@ def test_raw_byte_array():
         default     = b"",
     )
 
-    class TestAttr(Packet):
-        test: Int8
-        array: RawByte["test"]
+    class TestAttr(pak.Packet):
+        test: pak.Int8
+        array: pak.RawByte["test"]
 
     assert TestAttr(test=2).array == b"\x00\x00"
 
-    test.packet_behavior(
+    pak.test.packet_behavior(
         (TestAttr(test=2, array=b"\x00\x01"), b"\x02\x00\x01"),
     )
 
     ctx_len_2 = TestAttr(test=2, array=b"\x00\x01").type_ctx(None)
-    test.type_behavior(
-        RawByte["test"],
+    pak.test.type_behavior(
+        pak.RawByte["test"],
 
         (b"\x00\x01", b"\x00\x01"),
 
@@ -110,24 +110,24 @@ def test_raw_byte_array():
         ctx         = ctx_len_2,
     )
 
-    assert RawByte[2].pack(b"\xAA\xBB\xCC")          == b"\xAA\xBB"
-    assert RawByte[2].pack(b"\xAA")                  == b"\xAA\x00"
-    assert RawByte[Int8].unpack(b"\x02\xAA\xBB\xCC") == b"\xAA\xBB"
+    assert pak.RawByte[2].pack(b"\xAA\xBB\xCC")          == b"\xAA\xBB"
+    assert pak.RawByte[2].pack(b"\xAA")                  == b"\xAA\x00"
+    assert pak.RawByte[pak.Int8].unpack(b"\x02\xAA\xBB\xCC") == b"\xAA\xBB"
 
-    with pytest.raises(util.BufferOutOfDataError):
-        RawByte[2].unpack(b"\x00")
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        pak.RawByte[2].unpack(b"\x00")
 
-    with pytest.raises(util.BufferOutOfDataError):
-        RawByte[Int8].unpack(b"\x01")
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        pak.RawByte[pak.Int8].unpack(b"\x01")
 
-    with pytest.raises(util.BufferOutOfDataError):
+    with pytest.raises(pak.util.BufferOutOfDataError):
         TestAttr.unpack(b"\x01")
 
 def test_char_array():
-    assert isinstance(Char[1].unpack(b"a"), str)
+    assert isinstance(pak.Char[1].unpack(b"a"), str)
 
-    test.type_behavior(
-        Char[2],
+    pak.test.type_behavior(
+        pak.Char[2],
 
         ("ab", b"ab"),
 
@@ -136,8 +136,8 @@ def test_char_array():
         default     = "aa",
     )
 
-    test.type_behavior(
-        Char[Int8],
+    pak.test.type_behavior(
+        pak.Char[pak.Int8],
 
         ("ab", b"\x02ab"),
         ("",   b"\x00"),
@@ -146,8 +146,8 @@ def test_char_array():
         default     = "",
     )
 
-    test.type_behavior(
-        Char[None],
+    pak.test.type_behavior(
+        pak.Char[None],
 
         ("abc", b"abc"),
 
@@ -155,19 +155,19 @@ def test_char_array():
         default     = "",
     )
 
-    class TestAttr(Packet):
-        test:  Int8
-        array: Char["test"]
+    class TestAttr(pak.Packet):
+        test:  pak.Int8
+        array: pak.Char["test"]
 
     assert TestAttr(test=2).array == "aa"
 
-    test.packet_behavior(
+    pak.test.packet_behavior(
         (TestAttr(test=2, array="ab"), b"\x02ab"),
     )
 
     ctx_len_2 = TestAttr(test=2, array="ab").type_ctx(None)
-    test.type_behavior(
-        Char["test"],
+    pak.test.type_behavior(
+        pak.Char["test"],
 
         ("ab", b"ab"),
 
@@ -177,21 +177,21 @@ def test_char_array():
         ctx         = ctx_len_2,
     )
 
-    assert Char[2].pack("abc")           == b"ab"
-    assert Char[2].pack("a")             == b"aa"
-    assert Char[Int8].unpack(b"\x02abc") ==  "ab"
+    assert pak.Char[2].pack("abc")           == b"ab"
+    assert pak.Char[2].pack("a")             == b"aa"
+    assert pak.Char[pak.Int8].unpack(b"\x02abc") ==  "ab"
 
-    with pytest.raises(util.BufferOutOfDataError):
-        Char[2].unpack(b"a")
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        pak.Char[2].unpack(b"a")
 
-    with pytest.raises(util.BufferOutOfDataError):
-        Char[Int8].unpack(b"\x01")
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        pak.Char[pak.Int8].unpack(b"\x01")
 
-    with pytest.raises(util.BufferOutOfDataError):
+    with pytest.raises(pak.util.BufferOutOfDataError):
         TestAttr.unpack(b"\x01")
 
-    Utf8Char = Char("utf-8")
-    test.type_behavior(
+    Utf8Char = pak.Char("utf-8")
+    pak.test.type_behavior(
         Utf8Char[None],
 
         ("ab", b"ab"),
@@ -201,10 +201,10 @@ def test_char_array():
     )
 
 def test_array():
-    assert issubclass(Int8[2], Array)
+    assert issubclass(pak.Int8[2], pak.Array)
 
-    test.type_behavior(
-        Int8[2],
+    pak.test.type_behavior(
+        pak.Int8[2],
 
         ([0, 1], b"\x00\x01"),
 
@@ -213,8 +213,8 @@ def test_array():
         default     = [0, 0],
     )
 
-    test.type_behavior(
-        Int8[Int8],
+    pak.test.type_behavior(
+        pak.Int8[pak.Int8],
 
         ([0, 1], b"\x02\x00\x01"),
         ([],     b"\x00"),
@@ -223,8 +223,8 @@ def test_array():
         default     = [],
     )
 
-    test.type_behavior(
-        Int8[None],
+    pak.test.type_behavior(
+        pak.Int8[None],
 
         ([0, 1, 2], b"\x00\x01\x02"),
 
@@ -232,15 +232,15 @@ def test_array():
         default     = [],
     )
 
-    assert Int8[2].pack([1]) == b"\x01\x00"
+    assert pak.Int8[2].pack([1]) == b"\x01\x00"
 
     # Conveniently testing string sizes will also
     # test function sizes.
-    assert Int8["test"].has_size_function()
+    assert pak.Int8["test"].has_size_function()
 
-    class TestAttr(Packet):
-        test:  Int8
-        array: Int8["test"]
+    class TestAttr(pak.Packet):
+        test:  pak.Int8
+        array: pak.Int8["test"]
 
     assert TestAttr(test=2).array == [0, 0]
 
@@ -248,13 +248,13 @@ def test_array():
     p = TestAttr()
     del p.array
 
-    test.packet_behavior(
+    pak.test.packet_behavior(
         (TestAttr(test=2, array=[0, 1]), b"\x02\x00\x01"),
     )
 
     ctx_len_2 = TestAttr(test=2, array=[0, 1]).type_ctx(None)
-    test.type_behavior(
-        Int8["test"],
+    pak.test.type_behavior(
+        pak.Int8["test"],
 
         ([0, 1], b"\x00\x01"),
 
@@ -265,10 +265,10 @@ def test_array():
     )
 
     with pytest.raises(Exception):
-        Int8[2].unpack(b"\x00")
+        pak.Int8[2].unpack(b"\x00")
 
     with pytest.raises(Exception):
-        Int8[Int8].unpack(b"\x01")
+        pak.Int8[pak.Int8].unpack(b"\x01")
 
     with pytest.raises(Exception):
         TestAttr.unpack(b"\x01")

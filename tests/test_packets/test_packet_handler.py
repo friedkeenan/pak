@@ -1,24 +1,24 @@
 import asyncio
+import pak
 import pytest
-from pak import *
 
 def test_register():
     def listener(packet):
         pass
 
-    handler = PacketHandler()
+    handler = pak.PacketHandler()
 
     with pytest.raises(TypeError):
         # No packet types passed.
         handler.register_packet_listener(listener)
 
-    handler.register_packet_listener(listener, Packet)
+    handler.register_packet_listener(listener, pak.Packet)
 
     assert handler.is_listener_registered(listener)
 
     with pytest.raises(ValueError, match="registered"):
         # 'listener' is already registered.
-        handler.register_packet_listener(listener, Packet)
+        handler.register_packet_listener(listener, pak.Packet)
 
     handler.unregsiter_packet_listener(listener)
 
@@ -28,15 +28,15 @@ def test_listeners_for_packet():
     def listener(packet):
         pass
 
-    handler = PacketHandler()
-    handler.register_packet_listener(listener, Packet, flag=True)
+    handler = pak.PacketHandler()
+    handler.register_packet_listener(listener, pak.Packet, flag=True)
 
-    assert handler.listeners_for_packet(Packet())             == []
-    assert handler.listeners_for_packet(Packet(), flag=False) == []
+    assert handler.listeners_for_packet(pak.Packet())             == []
+    assert handler.listeners_for_packet(pak.Packet(), flag=False) == []
 
-    assert handler.listeners_for_packet(Packet(), flag=True) == [listener]
+    assert handler.listeners_for_packet(pak.Packet(), flag=True) == [listener]
 
-class GeneralPacket(Packet):
+class GeneralPacket(pak.Packet):
         pass
 
 class DerivedPacket(GeneralPacket):
@@ -48,14 +48,14 @@ class MoreDerivedPacket(DerivedPacket):
 class AdjacentDerivedPacket(GeneralPacket):
     pass
 
-class UnrelatedPacket(Packet):
+class UnrelatedPacket(pak.Packet):
     pass
 
-class MostDerivedHandler(PacketHandler):
+class MostDerivedHandler(pak.PacketHandler):
     def __repr__(self):
         return "REPR"
 
-    @most_derived_packet_listener(GeneralPacket)
+    @pak.most_derived_packet_listener(GeneralPacket)
     def most_derived(self):
         return GeneralPacket
 
@@ -94,8 +94,8 @@ def test_most_derived_packet_listener():
 
 def test_most_derived_packet_listener_override():
     with pytest.raises(ValueError, match="GeneralPacket"):
-        class BadHandler(PacketHandler):
-            @most_derived_packet_listener(GeneralPacket)
+        class BadHandler(pak.PacketHandler):
+            @pak.most_derived_packet_listener(GeneralPacket)
             def most_derived(self):
                 pass
 
@@ -103,8 +103,8 @@ def test_most_derived_packet_listener_override():
             def most_derived(self):
                 pass
 
-    class GoodHandler(PacketHandler):
-        @most_derived_packet_listener(GeneralPacket)
+    class GoodHandler(pak.PacketHandler):
+        @pak.most_derived_packet_listener(GeneralPacket)
         def most_derived(self):
             return "original"
 
@@ -118,8 +118,8 @@ def test_most_derived_packet_listener_override():
 
 def test_most_derived_packet_listener_not_subclass():
     with pytest.raises(ValueError, match="UnrelatedPacket.*GeneralPacket"):
-        class BadHandler(PacketHandler):
-            @most_derived_packet_listener(GeneralPacket)
+        class BadHandler(pak.PacketHandler):
+            @pak.most_derived_packet_listener(GeneralPacket)
             def most_derived(self):
                 pass
 
@@ -128,8 +128,8 @@ def test_most_derived_packet_listener_not_subclass():
                 pass
 
     with pytest.raises(ValueError, match="GeneralPacket.*DerivedPacket"):
-        class BadHandler(PacketHandler):
-            @most_derived_packet_listener(DerivedPacket)
+        class BadHandler(pak.PacketHandler):
+            @pak.most_derived_packet_listener(DerivedPacket)
             def most_derived(self):
                 pass
 
@@ -138,8 +138,8 @@ def test_most_derived_packet_listener_not_subclass():
                 pass
 
 def test_most_derived_packet_listener_copies():
-    class TestHandler(PacketHandler):
-        @most_derived_packet_listener(GeneralPacket)
+    class TestHandler(pak.PacketHandler):
+        @pak.most_derived_packet_listener(GeneralPacket)
         def most_derived_orig(self):
             return GeneralPacket
 
@@ -167,18 +167,18 @@ def test_most_derived_packet_listener_copies():
     assert {listener() for listener in derived_listeners} == {GeneralPacket, DerivedPacket}
 
 def test_async_register():
-    handler = AsyncPacketHandler()
+    handler = pak.AsyncPacketHandler()
 
     async def async_listener(packet):
         pass
 
-    handler.register_packet_listener(async_listener, Packet)
+    handler.register_packet_listener(async_listener, pak.Packet)
     assert handler.is_listener_registered(async_listener)
 
 @pytest.mark.asyncio
 async def test_async_listener_tasks():
-    handler = AsyncPacketHandler()
-    packet  = Packet()
+    handler = pak.AsyncPacketHandler()
+    packet  = pak.Packet()
 
     async def unending_listener(packet):
         packet.executed_task = True
@@ -186,7 +186,7 @@ async def test_async_listener_tasks():
         while True:
             await asyncio.sleep(0)
 
-    handler.register_packet_listener(unending_listener, Packet)
+    handler.register_packet_listener(unending_listener, pak.Packet)
     async with handler.listener_task_context(listen_sequentially=False):
         for listener in handler.listeners_for_packet(packet):
             handler.create_listener_task(listener(packet))
