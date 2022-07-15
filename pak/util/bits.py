@@ -37,9 +37,9 @@ def to_signed(num, *, bits):
 
     The two's complement representation of integers is used.
 
-    See Also
-    --------
-    :func:`to_unsigned`
+    .. seealso::
+
+        :func:`to_unsigned`
 
     Parameters
     ----------
@@ -74,9 +74,9 @@ def to_unsigned(num, *, bits):
 
     The two's complement representation of integers is used.
 
-    See Also
-    --------
-    :func:`to_signed`
+    .. seealso::
+
+        :func:`to_signed`
 
     Parameters
     ----------

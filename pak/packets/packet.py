@@ -165,15 +165,15 @@ class Packet:
         operations that may accept one, then your subclass is attempted
         to be defaultl constructed and used instead.
 
-        Warnings
-        --------
-        Subclasses **must** be properly hashable. Accordingly, this
-        means that subclasses should also be immutable. Therefore,
-        the constructor of :class:`Packet.Context` sets the constructed
-        object to be immutable.
+        .. warning::
 
-        If a subclass of :class:`Packet.Context` does not provide its
-        own ``__hash__`` implementation, then a :exc:`TypeError` is raised.
+            Subclasses **must** be properly hashable. Accordingly, this
+            means that subclasses should also be immutable. Therefore,
+            the constructor of :class:`Packet.Context` sets the constructed
+            object to be immutable.
+
+            If a subclass of :class:`Packet.Context` does not provide its
+            own ``__hash__`` implementation, then a :exc:`TypeError` is raised.
         """
 
         def __init__(self):
@@ -222,10 +222,10 @@ class Packet:
             The ID of a :class:`Packet` is not checked for
             equality between :class:`Packet`\s.
 
-        Warnings
-        --------
-        The ID of a :class:`Packet` must be both hashable and equality
-        comparable for various facilities involving IDs to work correctly.
+        .. warning::
+
+            The ID of a :class:`Packet` must be both hashable and equality
+            comparable for various facilities involving IDs to work correctly.
 
         Many protocols have a :class:`Packet.Header` prefixing each
         :class:`Packet` with just an ID. To model this common protocol,

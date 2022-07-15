@@ -30,6 +30,14 @@ Types
     ~types.string
     ~types.type
 
+I/O Facilities
+##############
+.. autosummary::
+    :toctree: reference
+    :nosignatures:
+
+    ~io.connection
+
 Utilities
 #########
 .. autosummary::

@@ -17,7 +17,7 @@ class StaticString(Type):
     A :exc:`ValueError` is raised when unpacking if
     no null terminator is found in the data.
 
-    Additionally, :exc:`ValueError` is raised when packing
+    Additionally, a :exc:`ValueError` is raised when packing
     if the to-be-packed value is too long for the static size.
 
     Parameters
@@ -157,7 +157,7 @@ class PrefixedString(Type):
         )
 
 # TODO: Do we really want this Type?
-# It's very nice but hard to get right and it may be nice
+# It's very niche but hard to get right and it may be nice
 # to have it special cased for 'Array'.
 class Char(Type):
     r"""A single character.

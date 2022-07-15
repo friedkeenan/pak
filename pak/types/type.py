@@ -550,10 +550,10 @@ class Type(abc.ABC):
     def unpack(cls, buf, *, ctx=None):
         """Unpacks raw data into its corresponding value.
 
-        Warnings
-        --------
-        Do **not** override this method. Instead override
-        :meth:`_unpack`.
+        .. warning::
+
+            Do **not** override this method. Instead override
+            :meth:`_unpack`.
 
         Parameters
         ----------
@@ -581,10 +581,10 @@ class Type(abc.ABC):
     def pack(cls, value, *, ctx=None):
         """Packs a value into its corresponding raw data.
 
-        Warnings
-        --------
-        Do **not** override this method. Instead override
-        :meth:`_pack`.
+        .. warning::
+
+            Do **not** override this method. Instead override
+            :meth:`_pack`.
 
         Parameters
         ----------
@@ -613,10 +613,10 @@ class Type(abc.ABC):
 
         To be overridden by subclasses.
 
-        Warnings
-        --------
-        Do not use this method directly, **always** use
-        :meth:`unpack` instead.
+        .. warning::
+
+            Do not use this method directly, **always** use
+            :meth:`unpack` instead.
 
         Parameters
         ----------
@@ -640,10 +640,10 @@ class Type(abc.ABC):
 
         To be overridden by subclasses.
 
-        Warnings
-        --------
-        Do not use this method directly, **always** use
-        :meth:`pack` instead.
+        .. warning::
+
+            Do not use this method directly, **always** use
+            :meth:`pack` instead.
 
         Parameters
         ----------

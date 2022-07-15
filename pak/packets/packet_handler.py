@@ -15,9 +15,9 @@ __all__ = [
 def packet_listener(*packet_types, **flags):
     r"""A decorator for :class:`~.Packet` listeners.
 
-    See Also
-    --------
-    :meth:`PacketHandler.register_packet_listener`
+    .. seealso::
+
+        :meth:`PacketHandler.register_packet_listener`
 
     Parameters
     ----------
@@ -223,9 +223,9 @@ class PacketHandler:
     def register_packet_listener(self, listener, *packet_types, **flags):
         r"""Registers a :class:`~.Packet` listener.
 
-        See Also
-        --------
-        :meth:`listeners_for_packet`
+        .. seealso::
+
+            :meth:`listeners_for_packet`
 
         Parameters
         ----------
