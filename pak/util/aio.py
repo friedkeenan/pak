@@ -3,8 +3,14 @@
 import asyncio
 
 __all__ = [
+    "yield_exec",
     "AsyncValueHolder",
 ]
+
+async def yield_exec():
+    """Yields execution to other tasks in the event loop."""
+
+    await asyncio.sleep(0)
 
 class AsyncValueHolder:
     """An asynchronous value holder.

@@ -37,6 +37,7 @@ I/O Facilities
     :nosignatures:
 
     ~io.connection
+    ~io.streams
 
 Utilities
 #########
