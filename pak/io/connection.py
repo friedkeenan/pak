@@ -74,7 +74,7 @@ class Connection(abc.ABC):
     def close(self):
         """Closes the :class:`Connection`.
 
-        Should be used along with the :meth:`wait_closed` method.
+        This method should be used along with the :meth:`wait_closed` method.
         """
 
         if self.writer is None:

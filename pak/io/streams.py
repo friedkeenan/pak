@@ -6,10 +6,18 @@ from .. import util
 
 __all__ = [
     "ByteStreamReader",
+    "ByteStreamWriter",
 ]
 
 class ByteStreamReader:
     """An :class:`asyncio.StreamReader` which reads from predetermined data.
+
+    .. note::
+
+        While this technically does not inherit from
+        :class:`asyncio.StreamReader`, it has the same
+        API and semantics. Thus it is perfectly usable
+        for e.g. :class:`io.Connection <.Connection>`.
 
     Parameters
     ----------
@@ -139,3 +147,85 @@ class ByteStreamReader:
         """
 
         return len(self._buffer) == 0
+
+class ByteStreamWriter:
+    """An :class:`asyncio.StreamWriter` which writes to an internal buffer.
+
+    .. note::
+
+        While this technically does not inherit from
+        :class:`asyncio.StreamWriter`, it has the same
+        API and semantics. Thus it is perfectly usable
+        for e.g. :class:`io.Connection <.Connection>`.
+    """
+
+    def __init__(self):
+        self._buffer = bytearray()
+
+        self._close_event = asyncio.Event()
+
+    @property
+    def written_data(self):
+        """The data that has been written.
+
+        Returns
+        -------
+        :class:`bytes`
+        """
+
+        return bytes(self._buffer)
+
+    def write(self, data):
+        """Writes data to the internal buffer.
+
+        This method should be used along with the :meth:`drain` method.
+
+        Parameters
+        ----------
+        data : bytes-like
+            The data to write.
+        """
+
+        self._buffer.extend(data)
+
+    def writelines(self, data):
+        """Writes an iterable of bytes to the internal buffer.
+
+        This method should be used along with the :meth:`drain` method.
+
+        Parameters
+        ----------
+        data : iterable of bytes-like
+            The iterable of bytes to write.
+        """
+
+        self.write(b"".join(data))
+
+    async def drain(self):
+        """Waits until it is appropriate to resume writing to the :class:`ByteStreamWriter`."""
+
+        await util.yield_exec()
+
+    def close(self):
+        """Closes the :class:`ByteStreamWriter`.
+
+        This method should be used along with the :meth:`wait_closed` method.
+        """
+
+        self._close_event.set()
+
+    def is_closing(self):
+        """Gets whether the :class:`ByteStreamWriter` is closed or in the process of closing.
+
+        Returns
+        -------
+        :class:`bool`
+            Whether the :class:`ByteStreamWriter` is closed or in the process of closing.
+        """
+
+        return self._close_event.is_set()
+
+    async def wait_closed(self):
+        """Waits until the :class:`ByteStreamWriter` is closed."""
+
+        await self._close_event.wait()

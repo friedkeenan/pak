@@ -10,9 +10,9 @@ async def test_byte_stream_reader_read():
 
     assert await reader.read(1) == b"a"
     assert await reader.read()  == b"bcd"
-    assert await reader.read()  == b""
 
     assert reader.at_eof()
+    assert await reader.read() == b""
 
 @pytest.mark.asyncio
 async def test_byte_stream_reader_readline():
@@ -22,6 +22,8 @@ async def test_byte_stream_reader_readline():
     assert await reader.readline() == b"efgh"
 
     assert reader.at_eof()
+
+    assert await reader.readline() == b""
 
 @pytest.mark.asyncio
 async def test_byte_stream_reader_readexactly():
@@ -35,8 +37,8 @@ async def test_byte_stream_reader_readexactly():
     assert exc_info.value.partial  == b"bcd"
     assert exc_info.value.expected == 4
 
-    assert await reader.readexactly(0) == b""
     assert reader.at_eof()
+    assert await reader.readexactly(0) == b""
 
 @pytest.mark.asyncio
 async def test_byte_stream_reader_readuntil():
@@ -54,3 +56,69 @@ async def test_byte_stream_reader_readuntil():
     assert exc_info.value.expected is None
 
     assert reader.at_eof()
+
+@pytest.mark.asyncio
+async def test_byte_stream_writer_close():
+    writer = pak.io.ByteStreamWriter()
+
+    assert not writer.is_closing()
+
+    class ClosedSentinel:
+        def __init__(self):
+            self.flag = False
+
+    closed_sentinel = ClosedSentinel()
+
+    async def set_closed_flag():
+        await writer.wait_closed()
+
+        closed_sentinel.flag = True
+
+    set_closed_task = asyncio.create_task(set_closed_flag())
+
+    # Give 'set_closed_task' a chance to execute.
+    await pak.util.yield_exec()
+
+    # 'writer' is still not closed.
+    assert not closed_sentinel.flag
+
+    writer.close()
+    assert writer.is_closing()
+
+    # Give 'set_closed_task' another chance to execute.
+    await pak.util.yield_exec()
+    assert closed_sentinel.flag
+
+    await set_closed_task
+
+@pytest.mark.asyncio
+async def test_byte_stream_writer_write():
+    writer = pak.io.ByteStreamWriter()
+
+    assert writer.written_data == b""
+
+    writer.write(b"abcd")
+    await writer.drain()
+
+    assert writer.written_data == b"abcd"
+
+    writer.close()
+    await writer.wait_closed()
+
+    # Make sure we can still access the written data after closing.
+    assert writer.written_data == b"abcd"
+
+@pytest.mark.asyncio
+async def test_byte_stream_writer_writelines():
+    writer = pak.io.ByteStreamWriter()
+
+    writer.writelines([
+        b"abcd",
+        b"efgh",
+    ])
+    await writer.drain()
+
+    assert writer.written_data == b"abcdefgh"
+
+    writer.close()
+    await writer.wait_closed()
