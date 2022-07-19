@@ -11,7 +11,7 @@ __all__ = [
     "packet_behavior_func",
 ]
 
-#: Am object passed to :func:`type_behavior` to indicate a :class:`~.Type` has no default value.
+#: An object passed to :func:`type_behavior` to indicate a :class:`~.Type` has no default value.
 NO_DEFAULT = util.UniqueSentinel("NO_DEFAULT")
 
 def type_behavior(type_cls, *values_and_data, static_size, alignment=None, default, ctx=None):

@@ -1,6 +1,7 @@
 """Contains :class:`io.Connection <.Connection>`."""
 
 import abc
+import asyncio
 
 from .. import util
 
@@ -37,6 +38,10 @@ class Connection(abc.ABC):
         The stream for outgoing data.
     ctx : :class:`.Packet.Context`
         The context for incoming and outgoing :class:`~.Packet`\s.
+
+        This should **always** be passed to :class:`~.Packet`
+        operations, such as :meth:`.Packet.unpack` and
+        :meth:`.Packet.pack`.
 
     Examples
     --------
@@ -76,6 +81,8 @@ class Connection(abc.ABC):
 
         This method should be used along with the :meth:`wait_closed` method.
         """
+
+        self._cancel_specific_reads()
 
         if self.writer is None:
             return
@@ -147,7 +154,7 @@ class Connection(abc.ABC):
             return None
 
     @abc.abstractmethod
-    async def _read_general_packet(self):
+    async def _read_next_packet(self):
         """Reads the next incoming :class:`~.Packet`.
 
         .. note::
@@ -224,18 +231,16 @@ class Connection(abc.ABC):
         """
 
         while not self.is_closing():
-            packet = await self._read_general_packet()
+            packet = await self._read_next_packet()
             if packet is None:
                 self.close()
                 await self.wait_closed()
 
-                break
+                return
 
             self._dispatch_to_specific_reads(packet)
 
             yield packet
-
-        self._cancel_specific_reads()
 
     async def read_packet(self, packet_to_read):
         r"""Reads a specific type of :class:`~.Packet` from the incoming stream of :class:`~.Packet`\s.
