@@ -178,18 +178,17 @@ def test_async_register():
 @pytest.mark.asyncio
 async def test_async_listener_tasks():
     handler = pak.AsyncPacketHandler()
-    packet  = pak.Packet()
 
-    async def unending_listener(packet):
-        packet.executed_task = True
-
+    async def unending_listener():
         while True:
-            await asyncio.sleep(0)
+            await pak.util.yield_exec()
 
     handler.register_packet_listener(unending_listener, pak.Packet)
     async with handler.listener_task_context(listen_sequentially=False):
-        for listener in handler.listeners_for_packet(packet):
-            handler.create_listener_task(listener(packet))
+        for listener in handler.listeners_for_packet(pak.Packet()):
+            unending_listener_task = handler.create_listener_task(listener())
+
+    assert not unending_listener_task.done()
 
     try:
         await asyncio.wait_for(handler.end_listener_tasks(timeout=0), timeout=1)
@@ -198,6 +197,19 @@ async def test_async_listener_tasks():
         # This should never happen since the listener tasks should be canceled.
         assert False
 
-    assert packet.executed_task
+    assert unending_listener_task.done()
 
-    # TODO: Figure out how to test listening sequentially.
+@pytest.mark.asyncio
+async def test_async_listener_tasks_sequential():
+    handler = pak.AsyncPacketHandler()
+
+    async def yielding_listener():
+        await pak.util.yield_exec()
+
+    handler.register_packet_listener(yielding_listener, pak.Packet)
+    async with handler.listener_task_context(listen_sequentially=True):
+        for listener in handler.listeners_for_packet(pak.Packet()):
+            yielding_listener_task = handler.create_listener_task(listener())
+
+    assert yielding_listener_task.done()
+    assert not yielding_listener_task.cancelled()
