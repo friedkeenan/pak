@@ -94,8 +94,9 @@ class DynamicValue(abc.ABC):
         super().__init_subclass__(**kwargs)
 
         if cls._enabled is None:
-            # TODO: Calling 'enable' sets the '_enabled' attribute, which may make
-            # this problematic with inheritance. Do we care about that use case?
+            # NOTE: Calling 'enable' sets the '_enabled' attribute,
+            # which may make this problematic with inheritance.
+            # Presently however we do not care about this potential issue.
             cls.enable()
 
         # Reset '__new__' to a conventional state.

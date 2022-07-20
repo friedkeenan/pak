@@ -7,19 +7,19 @@ def test_static_compound():
 
         first  = pak.Int8,
         second = pak.Int16,
-        third  = pak.Char[2],
+        third  = pak.StaticString(3),
     )
 
     pak.test.type_behavior(
         TestStaticCompound,
 
-        ((1, 2, "hi"), b"\x01\x02\x00hi"),
+        ((1, 2, "hi"), b"\x01\x02\x00hi\x00"),
 
-        static_size = 5,
-        default     = (0, 0, "aa"),
+        static_size = 6,
+        default     = (0, 0, ""),
     )
 
-    obj = TestStaticCompound.unpack(b"\x00\x00\x00aa")
+    obj = TestStaticCompound.unpack(b"\x00\x00\x00aa\x00")
 
     # The value type has equality with tuples.
     assert obj == (0, 0, "aa")
@@ -40,17 +40,17 @@ def test_dynamic_compound():
 
         first  = pak.Int8,
         second = pak.ULEB128,
-        third  = pak.Char[2],
+        third  = pak.StaticString(3),
     )
 
     pak.test.type_behavior(
         TestDynamicCompound,
 
-        ((1, 2,   "hi"), b"\x01\x02hi"),
-        ((1, 128, "hi"), b"\x01\x80\x01hi"),
+        ((1, 2,   "hi"), b"\x01\x02hi\x00"),
+        ((1, 128, "hi"), b"\x01\x80\x01hi\x00"),
 
         static_size = None,
-        default     = (0, 0, "aa"),
+        default     = (0, 0, ""),
     )
 
 def test_aligned_compound():

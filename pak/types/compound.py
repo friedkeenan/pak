@@ -104,10 +104,15 @@ class AlignedCompound(Compound):
         An :class:`AlignedCompound` must have at least one field to be used in full.
     """
 
-    # TODO: Should we add an 'alignas' feature?
-    # We could but I think there's too much to think about
-    # to justify adding it presently. Maybe if there is
-    # demand for it in the future it can be added.
+    # NOTE: We currently decline to add an 'align_as' feature.
+    #
+    # I think there's too much to think about to justify adding
+    # it presently. Maybe if there is demand for it in the
+    # future it can be added.
+    #
+    # Additionally, the features that 'align_as' would give can
+    # also be accomplished with manually creating 'Padding' fields,
+    # albeit perhaps not as elegantly.
     #
     # Things to consider:
     # - Should an 'align_as' attribute be typelike, getting
@@ -118,6 +123,7 @@ class AlignedCompound(Compound):
     #   typelikes and ints and DynamicValues?
     # - For 'AlignedPacket', should other AlignedPackets be able to
     #   be set to its 'align_as' attribute?
+    # - Should individual fields be able to have 'align_as' applied to them?
 
     @classmethod
     def _padding_lengths(cls, *, ctx):

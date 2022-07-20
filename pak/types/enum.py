@@ -48,10 +48,8 @@ class Enum(Type):
     elem_type = None
     enum_type = None
 
-    # TODO: Figure out whether this is really the best API.
-    # I am leaning towards that this is the best we can do
-    # to handle invalid enum values, but there are potential
-    # issues:
+    # NOTE: I feel this is the best API we can manage in order
+    # to handle invalid enum values, but there are possible issues:
     #
     # - By collapsing every invalid enum value down to a single
     #   object, you lose the information of what the offending

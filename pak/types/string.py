@@ -8,10 +8,20 @@ from .type import Type
 __all__ = [
     "StaticString",
     "PrefixedString",
-    "Char",
 ]
 
-# TODO: Do we want a null-terminated and not null-terminated version?
+# NOTE: We do not implement both a null-terminated and non-null-terminated
+# version of 'StaticString'.
+#
+# I feel as if almost all instances of a statically sized string would
+# be from a language such as C which would be expecting a null terminator
+# in say a 'char' array struct member. Additionally, without a null terminator,
+# all strings would have to be the same length, instead of just having
+# to fit within the same buffer.
+#
+# However, if it is found that a non-null-terminated version of this is
+# desirable and has widespread enough utility, then I would be willing
+# to include such a Type.
 class StaticString(Type):
     """A null-terminated string with a static size.
 
@@ -156,140 +166,3 @@ class PrefixedString(Type):
             prefix   = prefix,
             encoding = encoding,
         )
-
-# TODO: Do we really want this Type?
-# It's very niche but hard to get right and it may be nice
-# to have it special cased for 'Array'.
-class Char(Type):
-    r"""A single character.
-
-    .. warning::
-
-        This is a more niche :class:`~.Type` than
-        :class:`StaticString` or :class:`PrefixedString`.
-        Before using :class:`Char`, make sure that those
-        :class:`~.Type`\s or one you make yourself would
-        not work better for your needs.
-
-        This :class:`~.Type` can have different sizes depending
-        on the encoding, because conceptually **it represents
-        a codepoint**.
-
-    Can be used with :class:`~.Array`, for which
-    this :class:`~.Type` is special-cased to produce
-    a :class:`str` value.
-
-    By default, ASCII is used as the encoding. This is
-    to ensure that by default, one :class:`Char` maps to
-    one byte of raw data.
-
-    .. note::
-
-        ``Char[None]`` will read to the end of the buffer
-        as other :class:`~.Array`\s will, **not**
-        just to the next null-byte.
-
-    Parameters
-    ----------
-    encoding : :class:`str`
-        The encoding to use to encode/decode data.
-    """
-
-    _default = "a"
-
-    encoding = "ascii"
-
-    @classmethod
-    def decode(cls, buf, *, chars=-1):
-        """Decodes a string from raw data.
-
-        Uses the class's encoding to decode the data.
-
-        Parameters
-        ----------
-        buf : file object
-            The file object containing the raw data.
-        chars : :class:`int`
-            How many characters to decode.
-
-        Returns
-        -------
-        :class:`str`
-            The decoded string.
-        """
-
-        reader = codecs.getreader(cls.encoding)(buf)
-        string = reader.read(chars=chars)
-
-        if len(string) < chars:
-            raise util.BufferOutOfDataError("Reading characters failed")
-
-        return string
-
-    @classmethod
-    def encode(cls, string):
-        """Encodes a string to raw data.
-
-        Uses the class's encoding to encode the string.
-
-        Parameters
-        ----------
-        string : :class:`str`
-            The string to encode.
-
-        Returns
-        -------
-        :class:`bytes`
-            The encoded data.
-        """
-
-        return string.encode(cls.encoding)
-
-    @classmethod
-    def _size(cls, value, *, ctx):
-        # TODO: See if there's a more generic way to do this.
-
-        if cls.encoding == "ascii":
-            return 1
-
-        return None
-
-    @classmethod
-    def _alignment(cls, *, ctx):
-        # TODO: See if there's a more generic way to do this.
-
-        if cls.encoding == "ascii":
-            return 1
-
-        return None
-
-    @classmethod
-    def _unpack(cls, buf, *, ctx):
-        return cls.decode(buf, chars=1)
-
-    @classmethod
-    def _pack(cls, value, *, ctx):
-        return cls.encode(value[:1])
-
-    @classmethod
-    def _call(cls, encoding):
-        return cls.make_type(
-            f"{cls.__qualname__}({repr(encoding)})",
-
-            encoding = encoding,
-        )
-
-    @classmethod
-    def _array_default(cls, size, *, ctx):
-        return "a" * size
-
-    @classmethod
-    def _array_unpack(cls, buf, size, *, ctx):
-        if size is None:
-            return cls.decode(buf)
-
-        return cls.decode(buf, chars=size)
-
-    @classmethod
-    def _array_pack(cls, value, size, *, ctx):
-        return cls.encode(value)

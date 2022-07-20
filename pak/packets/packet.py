@@ -287,9 +287,6 @@ class Packet:
 
     @classmethod
     def _init_fields_from_annotations(cls):
-        # TODO: Figure out a good way to have generic
-        # anonymous field names.
-
         annotations = util.annotations(cls)
 
         cls._fields = {}
@@ -877,8 +874,12 @@ class Packet:
             zip(self.field_values(), other.field_values())
         )
 
-    # TODO: Should we implement '__hash__' even though Packets are not immutable?
+    # NOTE: We do not implement '__hash__' since Packets are not immutable.
     # Technically mutability is contextual and not a fact of a type.
+    # However, making Packets hashable would just not line up with proper
+    # semantics in any genuine use case that requires 'Packet' itself to be hashable.
+    # Users may always implement hashing themselves.
+    __hash__ = None
 
     def __repr__(self):
         return (
@@ -975,9 +976,10 @@ class _Header(Packet):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
-        # TODO: Is this correct behavior, or should we just not check this?
-        # Technically it's only bad if a packet header has its own header which
-        # would marshal to anything but empty bytes.
+        # NOTE: Technically it's only bad if a packet header has its own header
+        # which would marshal to anything but empty bytes. However, potential
+        # headers which would marshal to empty bytes but still have 'genuine'
+        # values are pathological cases which I have no interest in supporting.
         if cls.Header is not Packet.Header:
             raise TypeError(f"'{cls.__qualname__}' may have no header of its own")
 

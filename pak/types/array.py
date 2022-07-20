@@ -3,10 +3,7 @@ r""":class:`~.Type`\s for contiguous data of the same :class:`~.Type`."""
 import collections
 import inspect
 
-from .. import util
-from .type import Type, NoStaticSizeError
-from .string import Char
-from .misc import Padding, RawByte
+from .type import Type
 
 __all__ = [
     "Array",
