@@ -84,3 +84,80 @@ def test_char():
         static_size = None,
         default     = "a",
     )
+
+def test_char_array():
+    assert isinstance(pak.Char[1].unpack(b"a"), str)
+
+    pak.test.type_behavior(
+        pak.Char[2],
+
+        ("ab", b"ab"),
+
+        static_size = 2,
+        alignment   = 1,
+        default     = "aa",
+    )
+
+    pak.test.type_behavior(
+        pak.Char[pak.Int8],
+
+        ("ab", b"\x02ab"),
+        ("",   b"\x00"),
+
+        static_size = None,
+        default     = "",
+    )
+
+    pak.test.type_behavior(
+        pak.Char[None],
+
+        ("abc", b"abc"),
+
+        static_size = None,
+        default     = "",
+    )
+
+    class TestAttr(pak.Packet):
+        test:  pak.Int8
+        array: pak.Char["test"]
+
+    assert TestAttr(test=2).array == "aa"
+
+    pak.test.packet_behavior(
+        (TestAttr(test=2, array="ab"), b"\x02ab"),
+    )
+
+    ctx_len_2 = TestAttr(test=2, array="ab").type_ctx(None)
+    pak.test.type_behavior(
+        pak.Char["test"],
+
+        ("ab", b"ab"),
+
+        static_size = 2,
+        alignment   = 1,
+        default     = "aa",
+        ctx         = ctx_len_2,
+    )
+
+    assert pak.Char[2].pack("abc")           == b"ab"
+    assert pak.Char[2].pack("a")             == b"aa"
+    assert pak.Char[pak.Int8].unpack(b"\x02abc") ==  "ab"
+
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        pak.Char[2].unpack(b"a")
+
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        pak.Char[pak.Int8].unpack(b"\x01")
+
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        TestAttr.unpack(b"\x01")
+
+    Utf8Char = pak.Char("utf-8")
+    pak.test.type_behavior(
+        Utf8Char[None],
+
+        ("ab", b"ab"),
+
+        static_size = None,
+        default     = "",
+    )

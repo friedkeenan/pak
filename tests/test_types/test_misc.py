@@ -53,6 +53,61 @@ def test_padding():
     # Test we can still delete Padding fields.
     del p.padding
 
+def test_padding_array():
+    assert pak.Padding[2].default() is None
+
+    buf = io.BytesIO(b"\x00\x00\x01\x00\x00")
+    assert pak.Padding[2].unpack(buf) is None
+    assert buf.tell() == 2
+
+    assert pak.Padding[2].size() == 2
+
+    assert pak.Padding[pak.Int8].unpack(buf) is None
+    assert buf.tell() == 4
+
+    with pytest.raises(pak.NoStaticSizeError):
+        pak.Padding[pak.Int8].size()
+
+    buf = io.BytesIO(b"test data")
+    assert pak.Padding[None].unpack(buf) is None
+    assert buf.tell() == 9
+
+    with pytest.raises(pak.NoStaticSizeError):
+        pak.Padding[None].size()
+
+    class TestAttr(pak.Packet):
+        test:  pak.Int8
+        array: pak.Padding["test"]
+
+    assert TestAttr(test=2).array is None
+
+    buf = io.BytesIO(b"\x02\xAA\xBB\xCC")
+    p   = TestAttr.unpack(buf)
+    assert p.test == 2 and p.array is None
+    assert buf.tell() == 3
+
+    # Test you can properly delete padding array attributes.
+    del p.array
+
+    ctx_len_2 = TestAttr(test=2).type_ctx(None)
+    pak.Padding["test"].size(ctx=ctx_len_2) == 2
+
+    assert pak.Padding[2].pack(None)             == b"\x00\x00"
+    assert pak.Padding[2].pack("whatever value") == b"\x00\x00"
+
+    assert pak.Padding[pak.Int8].pack("whatever value") == b"\x00"
+
+    assert pak.Padding[None].pack("whatever value") == b""
+
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        pak.Padding[2].unpack(b"\x00")
+
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        pak.Padding[pak.Int8].unpack(b"\x01")
+
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        TestAttr.unpack(b"\x01")
+
 def test_raw_byte():
     pak.test.type_behavior(
         pak.RawByte,
@@ -67,6 +122,75 @@ def test_raw_byte():
 
     with pytest.raises(pak.util.BufferOutOfDataError):
         pak.RawByte.unpack(b"")
+
+def test_raw_byte_array():
+    assert pak.RawByte[2].default() == b"\x00\x00"
+
+    assert isinstance(pak.RawByte[1].unpack(b"\x00"), bytearray)
+
+    # Values are actually bytearrays but will still
+    # have equality with bytes objects.
+    pak.test.type_behavior(
+        pak.RawByte[2],
+
+        (b"\xAA\xBB", b"\xAA\xBB"),
+
+        static_size = 2,
+        default     = b"\x00\x00",
+    )
+
+    pak.test.type_behavior(
+        pak.RawByte[pak.Int8],
+
+        (b"\xAA\xBB", b"\x02\xAA\xBB"),
+        (b"",         b"\x00"),
+
+        static_size = None,
+        default     = b"",
+    )
+
+    pak.test.type_behavior(
+        pak.RawByte[None],
+
+        (b"\xAA\xBB\xCC", b"\xAA\xBB\xCC"),
+
+        static_size = None,
+        default     = b"",
+    )
+
+    class TestAttr(pak.Packet):
+        test: pak.Int8
+        array: pak.RawByte["test"]
+
+    assert TestAttr(test=2).array == b"\x00\x00"
+
+    pak.test.packet_behavior(
+        (TestAttr(test=2, array=b"\x00\x01"), b"\x02\x00\x01"),
+    )
+
+    ctx_len_2 = TestAttr(test=2, array=b"\x00\x01").type_ctx(None)
+    pak.test.type_behavior(
+        pak.RawByte["test"],
+
+        (b"\x00\x01", b"\x00\x01"),
+
+        static_size = 2,
+        default     = b"\x00\x00",
+        ctx         = ctx_len_2,
+    )
+
+    assert pak.RawByte[2].pack(b"\xAA\xBB\xCC")          == b"\xAA\xBB"
+    assert pak.RawByte[2].pack(b"\xAA")                  == b"\xAA\x00"
+    assert pak.RawByte[pak.Int8].unpack(b"\x02\xAA\xBB\xCC") == b"\xAA\xBB"
+
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        pak.RawByte[2].unpack(b"\x00")
+
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        pak.RawByte[pak.Int8].unpack(b"\x01")
+
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        TestAttr.unpack(b"\x01")
 
 def test_struct():
     # StructType also gets tested further

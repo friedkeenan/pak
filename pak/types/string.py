@@ -11,6 +11,7 @@ __all__ = [
     "Char",
 ]
 
+# TODO: Do we want a null-terminated and not null-terminated version?
 class StaticString(Type):
     """A null-terminated string with a static size.
 
@@ -277,3 +278,18 @@ class Char(Type):
 
             encoding = encoding,
         )
+
+    @classmethod
+    def _array_default(cls, size, *, ctx):
+        return "a" * size
+
+    @classmethod
+    def _array_unpack(cls, buf, size, *, ctx):
+        if size is None:
+            return cls.decode(buf)
+
+        return cls.decode(buf, chars=size)
+
+    @classmethod
+    def _array_pack(cls, value, size, *, ctx):
+        return cls.encode(value)

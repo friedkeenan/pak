@@ -560,7 +560,7 @@ class Type(abc.ABC):
         buf : file object or :class:`bytes` or :class:`bytearray`
             The buffer containing the raw data.
         ctx : :class:`Type.Context` or ``None``
-            The context for the type.
+            The context for the :class:`Type`.
 
             If ``None``, then an empty :class:`Type.Context` is used.
 
@@ -591,7 +591,7 @@ class Type(abc.ABC):
         value
             The value to pack.
         ctx : :class:`Type.Context` or ``None``
-            The context for the type.
+            The context for the :class:`Type`.
 
             If ``None``, then an empty :class:`Type.Context` is used.
 
@@ -623,7 +623,7 @@ class Type(abc.ABC):
         buf : file object
             The buffer containing the raw data.
         ctx : :class:`Type.Context`
-            The context for the type.
+            The context for the :class:`Type`.
 
         Returns
         -------
@@ -650,7 +650,7 @@ class Type(abc.ABC):
         value
             The value to pack.
         ctx : :class:`Type.Context`
-            The context for the type.
+            The context for the :class:`Type`.
 
         Returns
         -------
@@ -659,6 +659,132 @@ class Type(abc.ABC):
         """
 
         raise NotImplementedError
+
+    @classmethod
+    def _array_default(cls, size, *, ctx):
+        """Gets the default value for an :class:`~.Array` with the :class:`Type` as its element.
+
+        Parameters
+        ----------
+        size : :class:`int`
+            The number of elements to create a default for.
+        ctx : :class:`Type.Context`
+            The context for the :class:`Type`.
+
+        Returns
+        -------
+        any
+            The default value for an :class:`~.Array` with
+            the :class:`Type` as its element.
+        """
+
+        return [cls.default(ctx=ctx) for x in range(size)]
+
+    @classmethod
+    def _array_unpack(cls, buf, size, *, ctx):
+        """Unpacks an :class:`~.Array` with the :class:`Type` as its element.
+
+        Parameters
+        ----------
+        buf : file object
+            The buffer containing the raw data.
+        size : :class:`int` or ``None``
+            The number of elements to unpack.
+
+            If ``None``, then as many elements
+            as possible should be unpacked from
+            ``buf``.
+        ctx : :class:`Type.Context`
+            The context for the :class:`Type`.
+
+        Returns
+        -------
+        any
+            The corresponding value for an :class:`~.Array` with
+            the :class:`Type` as its element.
+        """
+
+        if size is not None:
+            return [cls.unpack(buf, ctx=ctx) for x in range(size)]
+
+        array = []
+        while True:
+            try:
+                elem = cls.unpack(buf, ctx=ctx)
+
+            except:
+                return array
+
+            array.append(elem)
+
+    @classmethod
+    def _array_dynamic_size(cls, value, *, ctx):
+        """Gets the number of elements for an :class:`~.Array` with the :class:`Type` as its element.
+
+        This method is only called when the :class:`~.Array` is prefixed
+        by a :class:`Type` or has a size of ``None``, meaning it should
+        read until the end of a :class:`~.Packet`, since in all other cases
+        the size is predetermined.
+
+        Parameters
+        ----------
+        value
+            The value to get the number of elements of.
+        ctx : :class:`Type.Context`
+            The context for the :class:`Type`.
+
+        Returns
+        -------
+        :class:`int`
+            The corresponding number of elements for ``value``.
+        """
+
+        return len(value)
+
+    @classmethod
+    def _array_pack(cls, value, size, *, ctx):
+        """Packs the value of an :class:`~.Array` with the :class:`Type` as its element.
+
+        Parameters
+        ----------
+        value
+            The value of the :class:`~.Array`.
+        size : :class:`int`
+            The number of elements in the :class:`~.Array`.
+        ctx : :class:`Type.Context`
+            The context for the :class:`Type`.
+
+        Returns
+        -------
+        :class:`bytes`
+            The corresponding raw data of the :class:`~.Array`.
+
+            This only includes the *body* of the :class:`~.Array`,
+            not length prefixes or anything of that sort.
+        """
+
+        return b"".join(cls.pack(x, ctx=ctx) for x in value)
+
+    @classmethod
+    def _array_transform_value(cls, value):
+        """Transforms the value of an :class:`~.Array` field with the :class:`Type` as its element.
+
+        Called when the descriptor form of an :class:`~.Array` has its value set.
+
+        Parameters
+        ----------
+        value
+            The original value.
+
+        Returns
+        -------
+        any
+            The transformed value.
+
+            This transformed value will be the one that gets set.
+        """
+
+        return value
 
     # TODO: When Python 3.7 support is dropped, make 'name' and 'bases' positional-only.
     @classmethod

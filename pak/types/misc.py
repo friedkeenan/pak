@@ -90,6 +90,35 @@ class Padding(Type):
     def _pack(cls, value, *, ctx):
         return b"\x00"
 
+    @classmethod
+    def _array_default(cls, size, *, ctx):
+        return None
+
+    @classmethod
+    def _array_unpack(cls, buf, size, *, ctx):
+        if size is None:
+            buf.read()
+
+            return None
+
+        data = buf.read(size)
+        if len(data) < size:
+            raise util.BufferOutOfDataError("Reading padding failed")
+
+        return None
+
+    @classmethod
+    def _array_dynamic_size(cls, value, *, ctx):
+        return 0
+
+    @classmethod
+    def _array_pack(cls, value, size, *, ctx):
+        return b"\00" * size
+
+    @classmethod
+    def _array_transform_value(cls, value):
+        return None
+
 class RawByte(Type):
     """A single byte of data.
 
@@ -114,6 +143,29 @@ class RawByte(Type):
     @classmethod
     def _pack(cls, value, *, ctx):
         return bytes(value[:1])
+
+    @classmethod
+    def _array_default(cls, size, *, ctx):
+        return bytearray(size)
+
+    @classmethod
+    def _array_unpack(cls, buf, size, *, ctx):
+        if size is None:
+            return bytearray(buf.read())
+
+        data = buf.read(size)
+        if len(data) < size:
+            raise util.BufferOutOfDataError("Reading data failed")
+
+        return bytearray(data)
+
+    @classmethod
+    def _array_pack(cls, value, size, *, ctx):
+        return bytes(value)
+
+    @classmethod
+    def _array_transform_value(cls, value):
+        return bytearray(value)
 
 class StructType(Type):
     """A wrapper over :func:`struct.pack` and :func:`struct.unpack`.
