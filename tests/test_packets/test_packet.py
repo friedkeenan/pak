@@ -52,9 +52,16 @@ def test_packet_context():
             # but still provides its own __hash__ member.
             __hash__ = None
 
+    with pytest.raises(TypeError, match="__eq__"):
+        class MyContext(pak.Packet.Context):
+            __hash__ = pak.Packet.Context
+
     ctx = pak.Packet.Context()
     with pytest.raises(TypeError, match="immutable"):
         ctx.attr = "test"
+
+    assert pak.Packet.Context() == pak.Packet.Context()
+    assert pak.Packet.Context() != object()
 
     class MyContext(pak.Packet.Context):
         def __init__(self, attr):
@@ -62,7 +69,11 @@ def test_packet_context():
 
             super().__init__()
 
-        __hash__ = pak.Packet.Context.__hash__
+        def __hash__(self):
+            return hash(self.attr)
+
+        def __eq__(self, other):
+            return self.attr == other.attr
 
     ctx = MyContext("test")
     with pytest.raises(TypeError, match="immutable"):
@@ -248,6 +259,7 @@ def test_header_correct_context():
     class Test(pak.Packet):
         class Context(pak.Packet.Context):
             __hash__ = pak.Packet.Context.__hash__
+            __eq__   = pak.Packet.Context.__eq__
 
         def check_ctx(self, *, ctx):
             # Make sure we receive the context for 'Test',

@@ -1,8 +1,4 @@
-r"""Generic code for :class:`~.Packet`\s."""
-
-# This module isn't split up currently because it has
-# so few members, but in the event it gets too large,
-# it should be split up.
+r"""Base code for :class:`~.Packet`\s."""
 
 import copy
 import inspect
@@ -135,7 +131,10 @@ class Packet:
 
         def __new__(cls, name, bases, namespace):
             if namespace.get("__hash__") is None:
-                raise TypeError(f"'{namespace['__qualname__']}' must provide a '__hash__' implementation")
+                raise TypeError(f"'{namespace['__qualname__']}' must provide an implemention of '__hash__'")
+
+            if namespace.get("__eq__") is None:
+                raise TypeError(f"'{namespace['__qualname__']}' must provide an implemention of '__eq__'")
 
             return super().__new__(cls, name, bases, namespace)
 
@@ -160,6 +159,9 @@ class Packet:
             ...         def __hash__(self):
             ...             return hash(self.info)
             ...
+            ...         def __eq__(self, other):
+            ...             return self.info == other.info
+            ...
 
         When no :class:`Packet.Context` is provided to :class:`Packet`
         operations that may accept one, then your subclass is attempted
@@ -174,6 +176,9 @@ class Packet:
 
             If a subclass of :class:`Packet.Context` does not provide its
             own ``__hash__`` implementation, then a :exc:`TypeError` is raised.
+            Since all hashable objects should also be equality comparable,
+            if a subclass of :class:`Packet.Context` does not provide its own
+            ``__eq__`` implementation, then a :exc:`TypeError` is raised as well.
         """
 
         def __init__(self):
@@ -188,6 +193,14 @@ class Packet:
         def __hash__(self):
             # A default 'Packet.Context' has no unique information.
             return hash(tuple())
+
+        def __eq__(self, other):
+            # All objects of type 'Packet.Context' are equal.
+
+            if type(other) is not type(self):
+                return NotImplemented
+
+            return True
 
     # The fields dictionary for 'Packet'.
     #

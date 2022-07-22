@@ -12,6 +12,9 @@ class DummyPacket(pak.Packet):
         def __hash__(self):
             return hash(self.value)
 
+        def __eq__(self, other):
+            return self.value == other.value
+
     class Header(pak.Packet.Header):
         id:   pak.UInt8
         size: pak.UInt8

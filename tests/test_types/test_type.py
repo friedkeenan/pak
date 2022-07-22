@@ -22,6 +22,9 @@ def test_type_context():
         def __hash__(self):
             return hash(self.attr)
 
+        def __eq__(self, other):
+            return self.attr == other.attr
+
     p          = pak.Packet()
     packet_ctx = MyPacketContext("test")
     type_ctx   = p.type_ctx(packet_ctx)
