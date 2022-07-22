@@ -131,10 +131,10 @@ class Packet:
 
         def __new__(cls, name, bases, namespace):
             if namespace.get("__hash__") is None:
-                raise TypeError(f"'{namespace['__qualname__']}' must provide an implemention of '__hash__'")
+                raise TypeError(f"'{namespace['__qualname__']}' must provide an implementation of '__hash__'")
 
             if namespace.get("__eq__") is None:
-                raise TypeError(f"'{namespace['__qualname__']}' must provide an implemention of '__eq__'")
+                raise TypeError(f"'{namespace['__qualname__']}' must provide an implementation of '__eq__'")
 
             return super().__new__(cls, name, bases, namespace)
 
