@@ -102,7 +102,11 @@ def bind_annotations(func, *args, **kwargs):
         if len(args_annotations) != len(args):
             raise TypeError("Too many positional arguments")
 
-    # Find the **kwargs parameter
+    # Find the '**kwargs' parameter.
+    # We need to do this so we can map annotations
+    # to parameters that would be consumed by the
+    # '**kwargs' parameter but may be passed before
+    # we would come across it otherwise.
     var_kwarg = None
     for param in parameters.values():
         if param.kind == param.VAR_KEYWORD:

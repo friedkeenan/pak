@@ -1022,6 +1022,9 @@ _Header.__name__     = "Header"
 _Header.__qualname__ = "Packet.Header"
 Packet.Header        = _Header
 
+# Remove access through '_Header' to stop it from showing in docs.
+del _Header
+
 class GenericPacket(Packet):
     """A generic collection of data.
 
