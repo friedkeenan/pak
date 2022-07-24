@@ -6,9 +6,78 @@ from .. import util
 from .type import Type
 
 __all__ = [
-    "StaticString",
     "PrefixedString",
+    "StaticString",
 ]
+
+class PrefixedString(Type):
+    """A string prefixed by its length.
+
+    Parameters
+    ----------
+    prefix : typelike
+        The :class:`~.Type` which prefixes the string data
+        and represents the length of the string.
+
+        The prefixed length represents the amount of **bytes**
+        the string data takes up.
+
+        .. note::
+
+            This does not include null terminators.
+    encoding : :class:`str` or ``None``
+        The encoding to encode/decode the data.
+
+        If ``None``, then the value of the :attr:`encoding`
+        attribute is used.
+    errors : :class:`str`
+        The error handling scheme for encoding/decoding errors.
+
+        If ``None``, then the value of the :attr:`errors`
+        attribute is used.
+    """
+
+    _default = ""
+
+    prefix   = None
+    encoding = "utf-8"
+    errors   = "strict"
+
+    @classmethod
+    def _size(cls, value, *, ctx):
+        if value is cls.STATIC_SIZE:
+            return None
+
+        return cls.prefix.size(len(value), ctx=ctx) + len(value.encode(cls.encoding, errors=cls.errors))
+
+    @classmethod
+    def _unpack(cls, buf, *, ctx):
+        length = cls.prefix.unpack(buf, ctx=ctx)
+        data   = buf.read(length)
+
+        return data.decode(cls.encoding, errors=cls.errors)
+
+    @classmethod
+    def _pack(cls, value, *, ctx):
+        data = value.encode(cls.encoding, errors=cls.errors)
+
+        return cls.prefix.pack(len(data), ctx=ctx) + data
+
+    @classmethod
+    @Type.prepare_types
+    def _call(cls, prefix: Type, *, encoding=None, errors=None):
+        if encoding is None:
+            encoding = cls.encoding
+
+        if errors is None:
+            errors = cls.errors
+
+        return cls.make_type(
+            f"PrefixedString({prefix.__qualname__})",
+
+            prefix   = prefix,
+            encoding = encoding,
+        )
 
 # NOTE: We do not implement both a null-terminated and non-null-terminated
 # version of 'StaticString'.
@@ -58,7 +127,7 @@ class StaticString(Type):
     _default   = ""
 
     encoding = "utf-8"
-    errors   = "replace"
+    errors   = "strict"
 
     @classmethod
     def _unpack(cls, buf, *, ctx):
@@ -95,74 +164,5 @@ class StaticString(Type):
             f"StaticString({size})",
 
             _size    = size,
-            encoding = encoding,
-        )
-
-class PrefixedString(Type):
-    """A string prefixed by its length.
-
-    Parameters
-    ----------
-    prefix : typelike
-        The :class:`~.Type` which prefixes the string data
-        and represents the length of the string.
-
-        The prefixed length represents the amount of **bytes**
-        the string data takes up.
-
-        .. note::
-
-            This does not include null terminators.
-    encoding : :class:`str` or ``None``
-        The encoding to encode/decode the data.
-
-        If ``None``, then the value of the :attr:`encoding`
-        attribute is used.
-    errors : :class:`str`
-        The error handling scheme for encoding/decoding errors.
-
-        If ``None``, then the value of the :attr:`errors`
-        attribute is used.
-    """
-
-    _default = ""
-
-    prefix   = None
-    encoding = "utf-8"
-    errors   = "replace"
-
-    @classmethod
-    def _size(cls, value, *, ctx):
-        if value is cls.STATIC_SIZE:
-            return None
-
-        return cls.prefix.size(len(value), ctx=ctx) + len(value.encode(cls.encoding, errors=cls.errors))
-
-    @classmethod
-    def _unpack(cls, buf, *, ctx):
-        length = cls.prefix.unpack(buf, ctx=ctx)
-        data   = buf.read(length)
-
-        return data.decode(cls.encoding, errors=cls.errors)
-
-    @classmethod
-    def _pack(cls, value, *, ctx):
-        data = value.encode(cls.encoding, errors=cls.errors)
-
-        return cls.prefix.pack(len(data), ctx=ctx) + data
-
-    @classmethod
-    @Type.prepare_types
-    def _call(cls, prefix: Type, *, encoding=None, errors=None):
-        if encoding is None:
-            encoding = cls.encoding
-
-        if errors is None:
-            errors = cls.errors
-
-        return cls.make_type(
-            f"PrefixedString({prefix.__qualname__})",
-
-            prefix   = prefix,
             encoding = encoding,
         )

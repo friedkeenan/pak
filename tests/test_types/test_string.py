@@ -19,7 +19,8 @@ def test_static_string():
         default     = "",
     )
 
-    assert TestString.unpack(b"\xFF\x00\x00\x00") == "\uFFFD"
+    with pytest.raises(UnicodeDecodeError, match="0xff"):
+        TestString.unpack(b"\xFF\x00\x00\x00")
 
     with pytest.raises(ValueError, match="null terminator"):
         TestString.unpack(b"abcd")
@@ -50,4 +51,5 @@ def test_prefixed_string():
         default     = "",
     )
 
-    assert TestPrefixed.unpack(b"\x01\xFF") == "\uFFFD"
+    with pytest.raises(UnicodeDecodeError, match="0xff"):
+        TestPrefixed.unpack(b"\x01\xFF")
