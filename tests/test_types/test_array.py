@@ -74,3 +74,58 @@ def test_array():
 
     with pytest.raises(Exception):
         TestAttr.unpack(b"\x01")
+
+def test_array_size():
+    class WeirdType(pak.Type):
+        @classmethod
+        def _array_static_size(cls, array_size, *, ctx):
+            return 0
+
+        @classmethod
+        def _array_default(cls, size, *, ctx):
+            return [1]
+
+        @classmethod
+        def _array_unpack(cls, buf, size, *, ctx):
+            return [1]
+
+        @classmethod
+        def _array_num_elements(cls, value, *, ctx):
+            return 1
+
+        @classmethod
+        def _array_ensure_size(cls, value, size, *, ctx):
+            return [1]
+
+        @classmethod
+        def _array_pack(cls, value, size, *, ctx):
+            return b""
+
+    pak.test.type_behavior(
+        WeirdType[2],
+
+        ([1], b""),
+
+        static_size = 0,
+        default     = [1],
+    )
+
+    pak.test.type_behavior(
+        WeirdType[pak.UInt8],
+
+        ([1], b"\x01"),
+
+        # Technically we *could* have a static size but
+        # it does not mesh well with 'Array' conceptually.
+        static_size = None,
+        default     = [1],
+    )
+
+def test_array_static_size_none():
+    class NoStaticSizeForArray(pak.Type):
+        @classmethod
+        def _array_static_size(cls, array_size, *, ctx):
+            return None
+
+    with pytest.raises(pak.NoStaticSizeError):
+        NoStaticSizeForArray[1].size()

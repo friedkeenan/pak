@@ -121,25 +121,26 @@ class Array(Type):
 
     @classmethod
     def _size(cls, value, *, ctx):
-        # If we can't get a static size of the element type, then
-        # don't bother with any calculations.
-        elem_size = cls.elem_type.size(ctx=ctx)
-
         if cls.is_fixed_size():
-            return cls.array_size * elem_size
-
-        if cls.has_size_function():
-            return cls.array_size(ctx.packet) * elem_size
-
-        if cls.is_prefixed_by_type():
+            array_size = cls.array_size
+        elif cls.has_size_function():
+            array_size = cls.array_size(ctx.packet)
+        else:
             if value is cls.STATIC_SIZE:
                 return None
 
-            value_len = len(value)
+            array_size = cls.elem_type._array_num_elements(value, ctx=ctx)
 
-            return cls.array_size.size(value_len) + value_len * elem_size
+        # If we can't get a static size of the element type, then
+        # don't bother with any calculations.
+        body_size = cls.elem_type._array_static_size(array_size, ctx=ctx)
+        if body_size is None:
+            return None
 
-        return None
+        if cls.is_prefixed_by_type():
+            return cls.array_size.size(array_size, ctx=ctx) + body_size
+
+        return body_size
 
     @classmethod
     def _alignment(cls, *, ctx):
@@ -166,18 +167,10 @@ class Array(Type):
     @classmethod
     def _pack(cls, value, *, ctx):
         if cls.is_prefixed_by_type() or cls.should_read_until_end():
-            size = cls.elem_type._array_dynamic_size(value, ctx=ctx)
-        elif isinstance(value, collections.abc.Sized):
-            size        = len(value)
-            proper_size = cls.default_size(ctx=ctx)
-            if size < proper_size:
-                value += cls.elem_type._array_default(proper_size - size, ctx=ctx)
-            elif size > proper_size:
-                value = value[:proper_size]
-
-            size = proper_size
+            size = cls.elem_type._array_num_elements(value, ctx=ctx)
         else:
-            size = cls.default_size(ctx=ctx)
+            size  = cls.default_size(ctx=ctx)
+            value = cls.elem_type._array_ensure_size(value, size, ctx=ctx)
 
         data = cls.elem_type._array_pack(value, size, ctx=ctx)
 

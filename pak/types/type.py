@@ -661,12 +661,36 @@ class Type(abc.ABC):
         raise NotImplementedError
 
     @classmethod
-    def _array_default(cls, size, *, ctx):
+    def _array_static_size(cls, array_size, *, ctx):
+        """Gets the static size of an :class:`~.Array` with the :class:`Type` as its element.
+
+        Parameters
+        ----------
+        array_size : :class:`int`
+            The number of elements to get the size of.
+        ctx : :class:`Type.Context`
+            The context for the :class:`Type`.
+
+        Returns
+        -------
+        :class:`int` or ``None``
+            The size of the raw data of an :class:`~.Array` of size ``array_size``.
+
+            If ``None``, then no static size exists.
+
+            This only includes the *body* of the :class:`~.Array`,
+            not length prefixes or anything of that sort.
+        """
+
+        return array_size * cls.size(ctx=ctx)
+
+    @classmethod
+    def _array_default(cls, array_size, *, ctx):
         """Gets the default value for an :class:`~.Array` with the :class:`Type` as its element.
 
         Parameters
         ----------
-        size : :class:`int`
+        array_size : :class:`int`
             The number of elements to create a default for.
         ctx : :class:`Type.Context`
             The context for the :class:`Type`.
@@ -678,17 +702,17 @@ class Type(abc.ABC):
             the :class:`Type` as its element.
         """
 
-        return [cls.default(ctx=ctx) for x in range(size)]
+        return [cls.default(ctx=ctx) for x in range(array_size)]
 
     @classmethod
-    def _array_unpack(cls, buf, size, *, ctx):
+    def _array_unpack(cls, buf, array_size, *, ctx):
         """Unpacks an :class:`~.Array` with the :class:`Type` as its element.
 
         Parameters
         ----------
         buf : file object
             The buffer containing the raw data.
-        size : :class:`int` or ``None``
+        array_size : :class:`int` or ``None``
             The number of elements to unpack.
 
             If ``None``, then as many elements
@@ -704,8 +728,8 @@ class Type(abc.ABC):
             the :class:`Type` as its element.
         """
 
-        if size is not None:
-            return [cls.unpack(buf, ctx=ctx) for x in range(size)]
+        if array_size is not None:
+            return [cls.unpack(buf, ctx=ctx) for x in range(array_size)]
 
         array = []
         while True:
@@ -718,13 +742,13 @@ class Type(abc.ABC):
             array.append(elem)
 
     @classmethod
-    def _array_dynamic_size(cls, value, *, ctx):
+    def _array_num_elements(cls, value, *, ctx):
         """Gets the number of elements for an :class:`~.Array` with the :class:`Type` as its element.
 
         This method is only called when the :class:`~.Array` is prefixed
         by a :class:`Type` or has a size of ``None``, meaning it should
         read until the end of a :class:`~.Packet`, since in all other cases
-        the size is predetermined.
+        the number of elements is predetermined.
 
         Parameters
         ----------
@@ -742,14 +766,43 @@ class Type(abc.ABC):
         return len(value)
 
     @classmethod
-    def _array_pack(cls, value, size, *, ctx):
+    def _array_ensure_size(cls, value, array_size, *, ctx):
+        """Ensures the value of an :class:`~.Array` with the :class:`Type` as its element is the correct size.
+
+        Parameters
+        ----------
+        value
+            The value to ensure is the correct size.
+        array_size : :class:`int`
+            The number of elements that the value should hold.
+        ctx : :class:`Type.Context`
+            The context for the :class:`Type`.
+
+        Returns
+        -------
+        any
+            The value of the :class:`~.Array` which has ``array_size`` elements.
+        """
+
+        value_len = len(value)
+
+        if value_len < array_size:
+            return value + cls._array_default(array_size - value_len, ctx=ctx)
+
+        if value_len > array_size:
+            return value[:array_size]
+
+        return value
+
+    @classmethod
+    def _array_pack(cls, value, array_size, *, ctx):
         """Packs the value of an :class:`~.Array` with the :class:`Type` as its element.
 
         Parameters
         ----------
         value
             The value of the :class:`~.Array`.
-        size : :class:`int`
+        array_size : :class:`int`
             The number of elements in the :class:`~.Array`.
         ctx : :class:`Type.Context`
             The context for the :class:`Type`.

@@ -91,29 +91,33 @@ class Padding(Type):
         return b"\x00"
 
     @classmethod
-    def _array_default(cls, size, *, ctx):
+    def _array_default(cls, array_size, *, ctx):
         return None
 
     @classmethod
-    def _array_unpack(cls, buf, size, *, ctx):
-        if size is None:
+    def _array_unpack(cls, buf, array_size, *, ctx):
+        if array_size is None:
             buf.read()
 
             return None
 
-        data = buf.read(size)
-        if len(data) < size:
+        data = buf.read(array_size)
+        if len(data) < array_size:
             raise util.BufferOutOfDataError("Reading padding failed")
 
         return None
 
     @classmethod
-    def _array_dynamic_size(cls, value, *, ctx):
+    def _array_num_elements(cls, value, *, ctx):
         return 0
 
     @classmethod
-    def _array_pack(cls, value, size, *, ctx):
-        return b"\00" * size
+    def _array_ensure_size(cls, value, array_size, *, ctx):
+        return None
+
+    @classmethod
+    def _array_pack(cls, value, array_size, *, ctx):
+        return b"\00" * array_size
 
     @classmethod
     def _array_transform_value(cls, value):
@@ -145,22 +149,22 @@ class RawByte(Type):
         return bytes(value[:1])
 
     @classmethod
-    def _array_default(cls, size, *, ctx):
-        return bytearray(size)
+    def _array_default(cls, array_size, *, ctx):
+        return bytearray(array_size)
 
     @classmethod
-    def _array_unpack(cls, buf, size, *, ctx):
-        if size is None:
+    def _array_unpack(cls, buf, array_size, *, ctx):
+        if array_size is None:
             return bytearray(buf.read())
 
-        data = buf.read(size)
-        if len(data) < size:
+        data = buf.read(array_size)
+        if len(data) < array_size:
             raise util.BufferOutOfDataError("Reading data failed")
 
         return bytearray(data)
 
     @classmethod
-    def _array_pack(cls, value, size, *, ctx):
+    def _array_pack(cls, value, array_size, *, ctx):
         return bytes(value)
 
     @classmethod
