@@ -1,4 +1,4 @@
-r""":class:`~.Type`\s for contiguous data of the same :class:`~.Type`."""
+r""":class:`.Type`\s for contiguous data of the same :class:`.Type`."""
 
 import collections
 import inspect
@@ -10,12 +10,12 @@ __all__ = [
 ]
 
 class Array(Type):
-    """A :class:`~.Type` for contiguous data.
+    """A :class:`.Type` for contiguous data.
 
     Parameters
     ----------
     elem_type : typelike
-        The :class:`~.Type` contained in the :class:`Array`.
+        The :class:`.Type` contained in the :class:`Array`.
     size : :class:`int` or typelike or :class:`str` or :class:`function` or ``None``
         The size of the :class:`Array`.
 
@@ -26,11 +26,11 @@ class Array(Type):
         and its value determines the amount of values in the array.
 
         If a :class:`str`, then the size is determined by getting the
-        attribute of the same name from the :class:`~.Packet` instance.
+        attribute of the same name from the :class:`.Packet` instance.
         Internally this is translated to a :class:`function` size.
 
         If a :class:`function`, then the size is determined by passing the
-        :class:`~.Packet` instance to the :class:`function`.
+        :class:`.Packet` instance to the :class:`function`.
 
         If ``None``, then the :class:`Array` is read until the end of
         the buffer.
@@ -53,12 +53,12 @@ class Array(Type):
 
     @classmethod
     def is_prefixed_by_type(cls):
-        """Gets whether the :class:`Array` is prefixed by a :class:`~.Type`.
+        """Gets whether the :class:`Array` is prefixed by a :class:`.Type`.
 
         Returns
         -------
         :class:`bool`
-            Whether the :class:`Array` is prefixed by a :class:`~.Type`.
+            Whether the :class:`Array` is prefixed by a :class:`.Type`.
         """
 
         return isinstance(cls.array_size, type) and issubclass(cls.array_size, Type)
@@ -95,7 +95,7 @@ class Array(Type):
         Parameters
         ----------
         ctx : :class:`.Type.Context`
-            The context for the :class:`~.Type`.
+            The context for the :class:`.Type`.
 
         Returns
         -------

@@ -1,4 +1,4 @@
-r""":class:`~.Type`\s for numbers."""
+r""":class:`.Type`\s for numbers."""
 
 from .. import util
 from .type import Type

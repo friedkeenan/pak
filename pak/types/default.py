@@ -1,4 +1,4 @@
-r""":class:`~.Type`\s for manipulating default values."""
+r""":class:`.Type`\s for manipulating default values."""
 
 from .type import Type
 
@@ -7,15 +7,15 @@ __all__ = [
 ]
 
 class Defaulted(Type):
-    """A :class:`~.Type` with a custom default value.
+    """A :class:`.Type` with a custom default value.
 
-    The resulting :class:`~.Type` inherits from
+    The resulting :class:`.Type` inherits from
     ``elem_type`` and :class:`Defaulted`, in that order.
 
     Parameters
     ----------
     elem_type : typelike
-        The :class:`~.Type` to modify the default of.
+        The :class:`.Type` to modify the default of.
     default
         The new default value.
 

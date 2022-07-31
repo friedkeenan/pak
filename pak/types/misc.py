@@ -1,4 +1,4 @@
-r"""Miscellaneous :class:`~.Type`\s."""
+r"""Miscellaneous :class:`.Type`\s."""
 
 import struct
 
@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 class EmptyType(Type):
-    """A :class:`~.Type` of no value.
+    """A :class:`.Type` of no value.
 
     It always unpacks to ``None`` and always packs
     to ``b""``. It is useful in certain cases when you
@@ -54,10 +54,10 @@ Type.register_typelike(type(None), lambda x: EmptyType)
 class Padding(Type):
     """A single byte of padding.
 
-    This :class:`~.Type` will marshal one byte to
+    This :class:`.Type` will marshal one byte to
     ``None``, and any value to ``b"\\x00"``.
 
-    It is also special-cased in :class:`~.Array`
+    It is also special-cased in :class:`.Array`
     for padding of larger length.
     """
 
@@ -127,8 +127,8 @@ class RawByte(Type):
     """A single byte of data.
 
     The main reason this exists is to be used
-    along with :class:`~.Array`, for which this
-    :class:`~.Type` is special-cased to produce a
+    along with :class:`.Array`, for which this
+    :class:`.Type` is special-cased to produce a
     :class:`bytearray` value.
     """
 

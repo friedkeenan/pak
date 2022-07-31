@@ -1,4 +1,4 @@
-r""":class:`~.Type`\s for combining :class:`~.Type`\s."""
+r""":class:`.Type`\s for combining :class:`.Type`\s."""
 
 from collections import namedtuple
 
@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 class Compound(Type):
-    r"""A :class:`~.Type` comprised of other :class:`~.Type`\s.
+    r"""A :class:`.Type` comprised of other :class:`.Type`\s.
 
     The value type of a :class:`Compound` is a
     :func:`collections.namedtuple`. Setting the
@@ -25,7 +25,7 @@ class Compound(Type):
         The name of the new :class:`Compound`.
     **elems : typelike
         The name of the fields and their
-        corresponding :class:`~.Type`\s.
+        corresponding :class:`.Type`\s.
 
         The fields of a :class:`Compound` are
         contiguous with no spacing in between,
@@ -45,12 +45,12 @@ class Compound(Type):
 
     @classmethod
     def types(cls):
-        r"""Gets the :class:`~.Type`\s of the fields of the :class:`Compound`.
+        r"""Gets the :class:`.Type`\s of the fields of the :class:`Compound`.
 
         Parameters
         ----------
         iterable
-            The :class:`~.Type`\s of the fields of the :class:`Compound`.
+            The :class:`.Type`\s of the fields of the :class:`Compound`.
         """
 
         return cls.elems.values()
@@ -94,7 +94,7 @@ class AlignedCompound(Compound):
 
     .. seealso::
 
-        :class:`~.AlignedPacket`
+        :class:`.AlignedPacket`
 
     The padding is the same as what you would get if you created a struct in C or C++,
     including the ending padding.

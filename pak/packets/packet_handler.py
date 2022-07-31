@@ -1,4 +1,4 @@
-r"""Tools for handling :class:`~.Packet`\s."""
+r"""Tools for handling :class:`.Packet`\s."""
 
 import asyncio
 import inspect
@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 def packet_listener(*packet_types, **flags):
-    r"""A decorator for :class:`~.Packet` listeners.
+    r"""A decorator for :class:`.Packet` listeners.
 
     .. seealso::
 
@@ -21,8 +21,8 @@ def packet_listener(*packet_types, **flags):
 
     Parameters
     ----------
-    *packet_types : subclass of :class:`~.Packet`
-        The :class:`~.Packet`\s to listen for.
+    *packet_types : subclass of :class:`.Packet`
+        The :class:`.Packet`\s to listen for.
     **flags
         The flags which must match for the listener to be returned by
         :meth:`PacketHandler.listeners_for_packet`.
@@ -124,14 +124,14 @@ class _most_derived_packet_listener:
         return f"<most_derived_packet_listener {self.__module__}.{self.__qualname__}>"
 
 def most_derived_packet_listener(most_general_packet_type, **flags):
-    r"""A decorator for :class:`~.Packet` listeners that dispatch only to the
-    listener corresponding to the most derived :class:`~.Packet` type.
+    r"""A decorator for :class:`.Packet` listeners that dispatch only to the
+    listener corresponding to the most derived :class:`.Packet` type.
 
     Parameters
     ----------
-    most_general_packet_type : subclass of :class:`~.Packet`
-        The most general :class:`~.Packet` for the listener, i.e. the
-        base class for all the :class:`~.Packet`\s the listener will
+    most_general_packet_type : subclass of :class:`.Packet`
+        The most general :class:`.Packet` for the listener, i.e. the
+        base class for all the :class:`.Packet`\s the listener will
         handle.
     **flags
         See :meth:`PacketHandler.listeners_for_packet`.
@@ -204,24 +204,24 @@ class PacketHandler:
             self.register_packet_listener(attr, *packet_types, **flags)
 
     def is_listener_registered(self, listener):
-        """Gets whether a :class:`~.Packet` listener is registered.
+        """Gets whether a :class:`.Packet` listener is registered.
 
         Parameters
         ----------
         listener
-            The :class:`~.Packet` listener possibly passed to
+            The :class:`.Packet` listener possibly passed to
             :meth:`register_packet_listener`.
 
         Returns
         -------
         :class:`bool`
-            Whether ``listener`` is a registered :class:`~.Packet` listener.
+            Whether ``listener`` is a registered :class:`.Packet` listener.
         """
 
         return listener in self._packet_listeners
 
     def register_packet_listener(self, listener, *packet_types, **flags):
-        r"""Registers a :class:`~.Packet` listener.
+        r"""Registers a :class:`.Packet` listener.
 
         .. seealso::
 
@@ -230,9 +230,9 @@ class PacketHandler:
         Parameters
         ----------
         listener
-            The :class:`~.Packet` listener to register.
-        *packet_types : subclass of :class:`~.Packet`
-            The :class:`~.Packet`\s to listen for.
+            The :class:`.Packet` listener to register.
+        *packet_types : subclass of :class:`.Packet`
+            The :class:`.Packet`\s to listen for.
         **flags
             The flags which must match for the listener to be returned by
             :meth:`PacketHandler.listeners_for_packet`.
@@ -268,12 +268,12 @@ class PacketHandler:
         self._packet_listeners[listener] = (packet_types, flags)
 
     def unregsiter_packet_listener(self, listener):
-        """Unregisters a :class:`~.Packet` listener.
+        """Unregisters a :class:`.Packet` listener.
 
         Parameters
         ----------
         listener
-            The :class:`~.Packet` listener passed to :meth:`register_packet_listener`.
+            The :class:`.Packet` listener passed to :meth:`register_packet_listener`.
         """
 
         self._packet_listeners.pop(listener)
@@ -286,19 +286,19 @@ class PacketHandler:
         return method(packet)
 
     def listeners_for_packet(self, packet, **flags):
-        """Gets the listeners for a certain :class:`~.Packet`.
+        """Gets the listeners for a certain :class:`.Packet`.
 
-        It is the caller's responsibility to send the :class:`~.Packet`
+        It is the caller's responsibility to send the :class:`.Packet`
         to the returned listeners.
 
-        If a :class:`~.Packet` listener has a ``to_real_listener`` attribute,
+        If a :class:`.Packet` listener has a ``to_real_listener`` attribute,
         then that attribute will be called with the ``packet`` parameter to
-        get the real :class:`~.Packet` listener to be returned.
+        get the real :class:`.Packet` listener to be returned.
 
         Parameters
         ----------
-        packet : :class:`~.Packet`
-            The :class:`~.Packet` to get listeners for.
+        packet : :class:`.Packet`
+            The :class:`.Packet` to get listeners for.
         **flags
             The flags which must match the flags a listener was registered
             with for the listener to be returned.
@@ -348,9 +348,9 @@ class AsyncPacketHandler(PacketHandler):
         super().__init__()
 
     def create_listener_task(self, coroutine):
-        """Creates an asynchronous task for a :class:`~.Packet` listener.
+        """Creates an asynchronous task for a :class:`.Packet` listener.
 
-        This method should be called when creating tasks for :class:`~.Packet`
+        This method should be called when creating tasks for :class:`.Packet`
         listeners, and :meth:`end_listener_tasks` called when **all** listening
         should end.
 
@@ -409,9 +409,9 @@ class AsyncPacketHandler(PacketHandler):
         listen_sequentially : :class:`bool`
             Whether the listeners should be called sequentially.
 
-            If ``True``, listeners responding to the same :class:`~.Packet`
+            If ``True``, listeners responding to the same :class:`.Packet`
             will still be run asynchronously, however they will all be
-            awaited before listening to another :class:`~.Packet`.
+            awaited before listening to another :class:`.Packet`.
 
             Also when ``True``, the tasks are never canceled.
 

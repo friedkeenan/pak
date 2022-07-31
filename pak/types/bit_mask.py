@@ -1,4 +1,4 @@
-r""":class:`~.Type`\s for bitmasks."""
+r""":class:`.Type`\s for bitmasks."""
 
 from collections import namedtuple
 
@@ -10,7 +10,7 @@ __all__ = [
 ]
 
 class BitMask(Type):
-    """A :class:`~.Type` for bitmasks.
+    """A :class:`.Type` for bitmasks.
 
     The value type of a :class:`BitMask` is a
     :func:`collections.namedtuple`. Setting

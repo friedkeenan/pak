@@ -1,4 +1,4 @@
-r"""String :class:`~.Type`\s."""
+r"""String :class:`.Type`\s."""
 
 import codecs
 
@@ -16,7 +16,7 @@ class PrefixedString(Type):
     Parameters
     ----------
     prefix : typelike
-        The :class:`~.Type` which prefixes the string data
+        The :class:`.Type` which prefixes the string data
         and represents the length of the string.
 
         The prefixed length represents the amount of **bytes**

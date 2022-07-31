@@ -11,19 +11,19 @@ __all__ = [
     "packet_behavior_func",
 ]
 
-#: An object passed to :func:`type_behavior` to indicate a :class:`~.Type` has no default value.
+#: An object passed to :func:`type_behavior` to indicate a :class:`.Type` has no default value.
 NO_DEFAULT = util.UniqueSentinel("NO_DEFAULT")
 
 def type_behavior(type_cls, *values_and_data, static_size, alignment=None, default, ctx=None):
-    r"""Asserts values marshal to and from expected data using a :class:`~.Type`.
+    r"""Asserts values marshal to and from expected data using a :class:`.Type`.
 
     Whether the reported size from :meth:`.Type.size` for each value equals
     the size of the packed data is also asserted.
 
     Parameters
     ----------
-    type_cls : subclass of :class:`~.Type`
-        The :class:`~.Type` to test.
+    type_cls : subclass of :class:`.Type`
+        The :class:`.Type` to test.
     *values_and_data : pair of any and :class:`bytes`
         The values and data to test.
     static_size : :class:`int` or ``None``
@@ -42,7 +42,7 @@ def type_behavior(type_cls, *values_and_data, static_size, alignment=None, defau
 
         If :data:`NO_DEFAULT`, then ``type_cls`` should have no default value.
     ctx : :class:`.Type.Context` or ``None``
-        The context for the :class:`~.Type`.
+        The context for the :class:`.Type`.
 
     Examples
     --------
@@ -134,12 +134,12 @@ def type_behavior_func(*args, **kwargs):
     return lambda: type_behavior(*args, **kwargs)
 
 def packet_behavior(*packets_and_data, ctx=None):
-    r"""Asserts :class:`~.Packet`\s marshal to and from expected data.
+    r"""Asserts :class:`.Packet`\s marshal to and from expected data.
 
     Parameters
     ----------
-    *packets_and_data : pair of :class:`~.Packet` and :class:`bytes`
-        The :class:`~.Packet`\s and data to test.
+    *packets_and_data : pair of :class:`.Packet` and :class:`bytes`
+        The :class:`.Packet`\s and data to test.
     ctx : :class:`.Packet.Context`
         The context for the :class:`Packet`\s.
 
@@ -175,8 +175,8 @@ def packet_behavior(*packets_and_data, ctx=None):
 def packet_behavior_func(*args, **kwargs):
     r"""Generates a function that calls :func:`packet_behavior`.
 
-    This should be used only if you just need to compare :class:`~.Packet`\s
-    and raw data, and the :class:`~.Packet`\s should be compared using equality.
+    This should be used only if you just need to compare :class:`.Packet`\s
+    and raw data, and the :class:`.Packet`\s should be compared using equality.
     For anything else, you should create your own function, potentially one which
     uses :func:`packet_behavior`.
 

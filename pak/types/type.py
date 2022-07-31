@@ -1,4 +1,4 @@
-r"""Base code for :class:`~.Type`\s."""
+r"""Base code for :class:`.Type`\s."""
 
 import abc
 import inspect
@@ -28,12 +28,12 @@ class NoStaticSizeError(Exception):
 class Type(abc.ABC):
     r"""A definition of how to marshal raw data to and from values.
 
-    Typically used for the types of :class:`~.Packet` fields.
+    Typically used for the types of :class:`.Packet` fields.
 
     When :class:`Types <Type>` are called, their :meth:`_call`
     :class:`classmethod` gets called, returning a new :class:`Type`.
 
-    :class:`~.Array` types can be constructed using indexing syntax,
+    :class:`.Array` types can be constructed using indexing syntax,
     like so::
 
         >>> import pak
@@ -46,7 +46,7 @@ class Type(abc.ABC):
         [1, 2, 3]
 
     The object within the brackets gets passed as the ``size`` parameter
-    to :class:`~.Array`.
+    to :class:`.Array`.
 
     Parameters
     ----------
@@ -69,7 +69,7 @@ class Type(abc.ABC):
         as if it were the :class:`.Packet.Context` itself.
 
         However, a :class:`Type.Context` also contains a :attr:`packet`
-        attribute which denotes the :class:`~.Packet` instance for which
+        attribute which denotes the :class:`.Packet` instance for which
         a :class:`Type` utility is being used for, if any is applicable.
 
         .. note::
@@ -79,7 +79,7 @@ class Type(abc.ABC):
 
         Parameters
         ----------
-        packet : :class:`~.Packet`
+        packet : :class:`.Packet`
             The packet instance that's being marshaled.
         ctx : :class:`.Packet.Context`
             The context for the packet that's being marshaled.
@@ -90,7 +90,7 @@ class Type(abc.ABC):
 
         Attributes
         ----------
-        packet : :class:`~.Packet` or ``None``
+        packet : :class:`.Packet` or ``None``
             The packet instance that's being marshaled.
         packet_ctx : :class:`.Packet.Context` or ``None``
             The context for the packet that's being marshaled.
@@ -239,7 +239,7 @@ class Type(abc.ABC):
         Parameters
         ----------
         index : :class:`int` or subclass of :class:`Type` or :class:`str` or :class:`function` or ``None``
-            The ``size`` argument passed to :class:`~.Array`.
+            The ``size`` argument passed to :class:`.Array`.
 
         Examples
         --------
@@ -393,7 +393,7 @@ class Type(abc.ABC):
 
         The alignment of a :class:`Type` is typically ignored, unless
         using something that explicitly utilizes alignment, such as
-        :class:`~.AlignedPacket` or :class:`~.AlignedCompound`.
+        :class:`.AlignedPacket` or :class:`.AlignedCompound`.
 
         Furthermore, alignment only makes sense for :class:`Type`\s
         with static sizes.
@@ -456,7 +456,7 @@ class Type(abc.ABC):
         r"""Gets the length of padding after each :class:`Type` for alignment purposes.
 
         Should rarely be used by users. In most cases
-        :class:`~.AlignedCompound` or :class:`~.AlignedPacket`
+        :class:`.AlignedCompound` or :class:`.AlignedPacket`
         should be used.
 
         Parameters
@@ -662,7 +662,7 @@ class Type(abc.ABC):
 
     @classmethod
     def _array_static_size(cls, array_size, *, ctx):
-        """Gets the static size of an :class:`~.Array` with the :class:`Type` as its element.
+        """Gets the static size of an :class:`.Array` with the :class:`Type` as its element.
 
         Parameters
         ----------
@@ -674,11 +674,11 @@ class Type(abc.ABC):
         Returns
         -------
         :class:`int` or ``None``
-            The size of the raw data of an :class:`~.Array` of size ``array_size``.
+            The size of the raw data of an :class:`.Array` of size ``array_size``.
 
             If ``None``, then no static size exists.
 
-            This only includes the *body* of the :class:`~.Array`,
+            This only includes the *body* of the :class:`.Array`,
             not length prefixes or anything of that sort.
         """
 
@@ -686,7 +686,7 @@ class Type(abc.ABC):
 
     @classmethod
     def _array_default(cls, array_size, *, ctx):
-        """Gets the default value for an :class:`~.Array` with the :class:`Type` as its element.
+        """Gets the default value for an :class:`.Array` with the :class:`Type` as its element.
 
         Parameters
         ----------
@@ -698,7 +698,7 @@ class Type(abc.ABC):
         Returns
         -------
         any
-            The default value for an :class:`~.Array` with
+            The default value for an :class:`.Array` with
             the :class:`Type` as its element.
         """
 
@@ -706,7 +706,7 @@ class Type(abc.ABC):
 
     @classmethod
     def _array_unpack(cls, buf, array_size, *, ctx):
-        """Unpacks an :class:`~.Array` with the :class:`Type` as its element.
+        """Unpacks an :class:`.Array` with the :class:`Type` as its element.
 
         Parameters
         ----------
@@ -724,7 +724,7 @@ class Type(abc.ABC):
         Returns
         -------
         any
-            The corresponding value for an :class:`~.Array` with
+            The corresponding value for an :class:`.Array` with
             the :class:`Type` as its element.
         """
 
@@ -743,11 +743,11 @@ class Type(abc.ABC):
 
     @classmethod
     def _array_num_elements(cls, value, *, ctx):
-        """Gets the number of elements for an :class:`~.Array` with the :class:`Type` as its element.
+        """Gets the number of elements for an :class:`.Array` with the :class:`Type` as its element.
 
-        This method is only called when the :class:`~.Array` is prefixed
+        This method is only called when the :class:`.Array` is prefixed
         by a :class:`Type` or has a size of ``None``, meaning it should
-        read until the end of a :class:`~.Packet`, since in all other cases
+        read until the end of a :class:`.Packet`, since in all other cases
         the number of elements is predetermined.
 
         Parameters
@@ -767,7 +767,7 @@ class Type(abc.ABC):
 
     @classmethod
     def _array_ensure_size(cls, value, array_size, *, ctx):
-        """Ensures the value of an :class:`~.Array` with the :class:`Type` as its element is the correct size.
+        """Ensures the value of an :class:`.Array` with the :class:`Type` as its element is the correct size.
 
         Parameters
         ----------
@@ -781,7 +781,7 @@ class Type(abc.ABC):
         Returns
         -------
         any
-            The value of the :class:`~.Array` which has ``array_size`` elements.
+            The value of the :class:`.Array` which has ``array_size`` elements.
         """
 
         value_len = len(value)
@@ -796,23 +796,23 @@ class Type(abc.ABC):
 
     @classmethod
     def _array_pack(cls, value, array_size, *, ctx):
-        """Packs the value of an :class:`~.Array` with the :class:`Type` as its element.
+        """Packs the value of an :class:`.Array` with the :class:`Type` as its element.
 
         Parameters
         ----------
         value
-            The value of the :class:`~.Array`.
+            The value of the :class:`.Array`.
         array_size : :class:`int`
-            The number of elements in the :class:`~.Array`.
+            The number of elements in the :class:`.Array`.
         ctx : :class:`Type.Context`
             The context for the :class:`Type`.
 
         Returns
         -------
         :class:`bytes`
-            The corresponding raw data of the :class:`~.Array`.
+            The corresponding raw data of the :class:`.Array`.
 
-            This only includes the *body* of the :class:`~.Array`,
+            This only includes the *body* of the :class:`.Array`,
             not length prefixes or anything of that sort.
         """
 
@@ -820,9 +820,9 @@ class Type(abc.ABC):
 
     @classmethod
     def _array_transform_value(cls, value):
-        """Transforms the value of an :class:`~.Array` field with the :class:`Type` as its element.
+        """Transforms the value of an :class:`.Array` field with the :class:`Type` as its element.
 
-        Called when the descriptor form of an :class:`~.Array` has its value set.
+        Called when the descriptor form of an :class:`.Array` has its value set.
 
         Parameters
         ----------

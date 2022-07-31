@@ -1,4 +1,4 @@
-r""":class:`~.Type`\s for marshaling data that might exist."""
+r""":class:`.Type`\s for marshaling data that might exist."""
 
 import inspect
 
@@ -9,32 +9,32 @@ __all__ = [
 ]
 
 class Optional(Type):
-    """A :class:`~.Type` that might exist.
+    """A :class:`.Type` that might exist.
 
     Parameters
     ----------
     elem_type : typelike
-        The underlying :class:`~.Type`.
-    exists : subclass of :class:`~.Type` or :class:`str` or :class:`function` or ``None``
-        If a subclass of :class:`~.Type`, then ``exists``
-        should be a boolean :class:`~.Type`, such as
-        :class:`~.Bool`, that says whether ``elem_type``
+        The underlying :class:`.Type`.
+    exists : subclass of :class:`.Type` or :class:`str` or :class:`function` or ``None``
+        If a subclass of :class:`.Type`, then ``exists``
+        should be a boolean :class:`.Type`, such as
+        :class:`.Bool`, that says whether ``elem_type``
         exists or not.
 
         .. note::
 
             This argument doesn't accept all typelikes.
             If you need to pass a typelike that's not a
-            subclass of :class:`~.Type`, then convert it
+            subclass of :class:`.Type`, then convert it
             first.
 
         If a :class:`str`, then whether ``elem_type`` exists
         is determined by getting that attribute of the
-        same name from the :class:`~.Packet` instance.
+        same name from the :class:`.Packet` instance.
         Internally this is translated to a :class:`function`.
 
         If a :class:`function`, then whether ``elem_type``
-        exists is determined by passing the :class:`~.Packet`
+        exists is determined by passing the :class:`.Packet`
         instance to the :class:`function`.
 
         If ``None`` then ``elem_type`` is assumed to be at the
@@ -47,26 +47,26 @@ class Optional(Type):
 
     @classmethod
     def is_prefixed_by_type(cls):
-        """Gets whether the :class:`Optional` is prefixed by a :class:`~.Type`.
+        """Gets whether the :class:`Optional` is prefixed by a :class:`.Type`.
 
         Returns
         -------
         :class:`bool`
-            Whether the :class:`Optional` is prefixed by a :class:`~.Type`.
+            Whether the :class:`Optional` is prefixed by a :class:`.Type`.
         """
 
         return isinstance(cls.exists, type) and issubclass(cls.exists, Type)
 
     @classmethod
     def has_function(cls):
-        """Gets whether the existence of the underlying :class:`~.Type`
+        """Gets whether the existence of the underlying :class:`.Type`
         is determined by a :class:`function`.
 
         Returns
         -------
         :class:`bool`
             Whether the existence of the underlying
-            :class:`~.Type` is determined by a :class:`function`.
+            :class:`.Type` is determined by a :class:`function`.
         """
 
         return inspect.isfunction(cls.exists)

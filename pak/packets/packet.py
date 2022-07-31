@@ -1,4 +1,4 @@
-r"""Base code for :class:`~.Packet`\s."""
+r"""Base code for :class:`.Packet`\s."""
 
 import copy
 import inspect
@@ -49,10 +49,10 @@ class DuplicateFieldError(Exception):
 
 class Packet:
     r"""A collection of values that can be marshaled to and from
-    raw data using :class:`~.Type`\s.
+    raw data using :class:`.Type`\s.
 
-    The difference between a :class:`Packet` and a :class:`~.Type`
-    is that :class:`~.Type`\s only define how to marshal values
+    The difference between a :class:`Packet` and a :class:`.Type`
+    is that :class:`.Type`\s only define how to marshal values
     to and from raw data, while :class:`Packet`\s actually *contain*
     values themselves.
 
@@ -143,7 +143,7 @@ class Packet:
 
         :class:`Packet.Context`\s are used to pass arbitrary data
         to :class:`Packet` operations, typically just being wrapped
-        in a :class:`.Type.Context` and sent off to :class:`~.Type`
+        in a :class:`.Type.Context` and sent off to :class:`.Type`
         operations, such as unpacking and packing.
 
         You should customize this class to suit your own purposes,
@@ -226,7 +226,7 @@ class Packet:
         meaningful ID.
 
         If the :attr:`id` attribute of a subclass is enrolled
-        in the :class:`~.DynamicValue` machinery, then its dynamic
+        in the :class:`.DynamicValue` machinery, then its dynamic
         value is returned from this function. Otherwise the value
         of the :attr:`id` attribute is returned.
 
@@ -570,7 +570,7 @@ class Packet:
         Returns
         -------
         :class:`.Type.Context`
-            The context for a :class:`~.Type`.
+            The context for a :class:`.Type`.
         """
 
         if ctx is None:
@@ -605,12 +605,12 @@ class Packet:
 
     @classmethod
     def field_types(cls):
-        r"""Gets the :class:`~.Type`\s of each field of the :class:`Packet`.
+        r"""Gets the :class:`.Type`\s of each field of the :class:`Packet`.
 
         Returns
         -------
         iterable
-            Each element is the :class:`~.Type` of a field.
+            Each element is the :class:`.Type` of a field.
 
         Examples
         --------
@@ -655,7 +655,7 @@ class Packet:
             yield getattr(self, field)
 
     def field_types_and_values(self):
-        r"""Gets the :class:`~.Type`\s and values of each field of the :class:`Packet`.
+        r"""Gets the :class:`.Type`\s and values of each field of the :class:`Packet`.
 
         Returns
         -------
@@ -682,7 +682,7 @@ class Packet:
 
     @classmethod
     def enumerate_field_types(cls):
-        r"""Enumerates the :class:`~.Type`\s of the fields of the :class:`Packet`.
+        r"""Enumerates the :class:`.Type`\s of the fields of the :class:`Packet`.
 
         Returns
         -------
@@ -732,7 +732,7 @@ class Packet:
             yield attr, getattr(self, attr)
 
     def enumerate_field_types_and_values(self):
-        r"""Enumerates the :class:`~.Type`\s and values of the fields of the :class:`Packet`.
+        r"""Enumerates the :class:`.Type`\s and values of the fields of the :class:`Packet`.
 
         Returns
         -------

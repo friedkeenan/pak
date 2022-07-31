@@ -10,11 +10,11 @@ __all__ = [
 ]
 
 class Connection(abc.ABC):
-    r"""A connection between two :class:`~.Packet` sources.
+    r"""A connection between two :class:`.Packet` sources.
 
     This class models a protocol structure that is relatively common,
-    where there is a stream of incoming :class:`~.Packet`\s that
-    aren't expected to be any specific type of :class:`~.Packet`.
+    where there is a stream of incoming :class:`.Packet`\s that
+    aren't expected to be any specific type of :class:`.Packet`.
 
     This may not model your protocol structure adequately.
     This in particular may be the case if you are not able
@@ -28,7 +28,7 @@ class Connection(abc.ABC):
     writer : :class:`asyncio.StreamWriter` or ``None``
         The stream for outgoing data.
     ctx : :class:`.Packet.Context`
-        The context for incoming and outgoing :class:`~.Packet`\s.
+        The context for incoming and outgoing :class:`.Packet`\s.
 
     Attributes
     ----------
@@ -37,9 +37,9 @@ class Connection(abc.ABC):
     writer : :class:`asyncio.StreamWriter` or ``None``
         The stream for outgoing data.
     ctx : :class:`.Packet.Context`
-        The context for incoming and outgoing :class:`~.Packet`\s.
+        The context for incoming and outgoing :class:`.Packet`\s.
 
-        This should **always** be passed to :class:`~.Packet`
+        This should **always** be passed to :class:`.Packet`
         operations, such as :meth:`.Packet.unpack` and
         :meth:`.Packet.pack`.
 
@@ -106,22 +106,22 @@ class Connection(abc.ABC):
 
     # TODO: When Python 3.7 support is dropped, make 'packet_cls' positional-only.
     def create_packet(self, packet_cls, **fields):
-        """Creates a :class:`~.Packet` for the :class:`Connection`.
+        """Creates a :class:`.Packet` for the :class:`Connection`.
 
-        The :attr:`ctx` attribute is used to create the :class:`~.Packet`.
+        The :attr:`ctx` attribute is used to create the :class:`.Packet`.
 
         Parameters
         ----------
-        packet_cls : subclass of :class:`~.Packet`
-            The :class:`~.Packet` to create.
+        packet_cls : subclass of :class:`.Packet`
+            The :class:`.Packet` to create.
         **fields
             The names and corresponding values of the
-            :class:`~.Packet` to create.
+            :class:`.Packet` to create.
 
         Returns
         -------
-        :class:`~.Packet`
-            The created :class:`~.Packet`.
+        :class:`.Packet`
+            The created :class:`.Packet`.
         """
 
         return packet_cls(**fields, ctx=self.ctx)
@@ -155,7 +155,7 @@ class Connection(abc.ABC):
 
     @abc.abstractmethod
     async def _read_next_packet(self):
-        """Reads the next incoming :class:`~.Packet`.
+        """Reads the next incoming :class:`.Packet`.
 
         .. note::
 
@@ -168,11 +168,11 @@ class Connection(abc.ABC):
 
         Returns
         -------
-        :class:`~.Packet` or ``None``
-            The next incoming :class:`~.Packet`.
+        :class:`.Packet` or ``None``
+            The next incoming :class:`.Packet`.
 
             If ``None``, then that means that there is no
-            next :class:`~.Packet` and that :meth:`continuously_read_packets`
+            next :class:`.Packet` and that :meth:`continuously_read_packets`
             should end. This should be when EOF is reached
             on the :attr:`reader` attribute, which will be
             when :meth:`read_data` returns ``None``.
@@ -200,13 +200,13 @@ class Connection(abc.ABC):
             self._specific_reads.pop(packet_cls)
 
     async def continuously_read_packets(self):
-        r"""Continuously reads and yields all incoming :class:`~.Packet`\s.
+        r"""Continuously reads and yields all incoming :class:`.Packet`\s.
 
         .. note::
 
             This must be iterated over for :meth:`read_packet` to function.
 
-        This will continue to yield :class:`~.Packet`\s until the
+        This will continue to yield :class:`.Packet`\s until the
         :class:`Connection` is closed or EOF is reached.
 
         .. warning::
@@ -217,8 +217,8 @@ class Connection(abc.ABC):
 
         Yields
         ------
-        :class:`~.Packet`
-            An incoming :class:`~.Packet`.
+        :class:`.Packet`
+            An incoming :class:`.Packet`.
 
         Examples
         --------
@@ -243,19 +243,19 @@ class Connection(abc.ABC):
             yield packet
 
     async def read_packet(self, packet_to_read):
-        r"""Reads a specific type of :class:`~.Packet` from the incoming stream of :class:`~.Packet`\s.
+        r"""Reads a specific type of :class:`.Packet` from the incoming stream of :class:`.Packet`\s.
 
         Requires :meth:`continuously_read_packets` to be iterated over.
 
         Parameters
         ----------
-        packet_to_read : subclass of :class:`~.Packet`
-            The type of :class:`~.Packet` to read.
+        packet_to_read : subclass of :class:`.Packet`
+            The type of :class:`.Packet` to read.
 
         Returns
         -------
-        :class:`~.Packet` or ``None``
-            The specified incoming :class:`~.Packet`.
+        :class:`.Packet` or ``None``
+            The specified incoming :class:`.Packet`.
 
             Returns ``None`` when the :class:`Connection` is closed
             or EOF is reached.
@@ -282,34 +282,34 @@ class Connection(abc.ABC):
 
     # TODO: When Python 3.7 support is dropped, make 'packet_cls' positional-only.
     async def write_packet(self, packet_cls, **fields):
-        """Writes an outgoing :class:`~.Packet`.
+        """Writes an outgoing :class:`.Packet`.
 
         This method uses :meth:`create_packet` to create the
-        :class:`~.Packet` to write. It then passes it to
+        :class:`.Packet` to write. It then passes it to
         :meth:`write_packet_instance`.
 
-        If you have an already created :class:`~.Packet` you
+        If you have an already created :class:`.Packet` you
         wish to write, then you should use :meth:`write_packet_instance`.
 
         Parameters
         ----------
-        packet_cls : subclass of :class:`~.Packet`
-            The type of :class:`~.Packet` to write.
+        packet_cls : subclass of :class:`.Packet`
+            The type of :class:`.Packet` to write.
         **fields
             The names and corresponding values of the
-            :class:`~.Packet` to write.
+            :class:`.Packet` to write.
         """
 
         await self.write_packet_instance(self.create_packet(packet_cls, **fields))
 
     @abc.abstractmethod
     async def write_packet_instance(self, packet):
-        """Writes an outgoing :class:`~.Packet` instance.
+        """Writes an outgoing :class:`.Packet` instance.
 
         .. warning::
 
             In most cases, the :meth:`write_packet` method should be used instead.
-            This method should only be used if you have a pre-existing :class:`~.Packet`
+            This method should only be used if you have a pre-existing :class:`.Packet`
             instance.
 
         .. note::
@@ -324,8 +324,8 @@ class Connection(abc.ABC):
 
         Parameters
         ----------
-        packet : :class:`~.Packet`
-            The :class:`~.Packet` to write.
+        packet : :class:`.Packet`
+            The :class:`.Packet` to write.
         """
 
         raise NotImplementedError

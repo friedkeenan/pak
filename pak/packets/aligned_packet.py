@@ -1,4 +1,4 @@
-r""":class:`~.Packet`\s which align their fields."""
+r""":class:`.Packet`\s which align their fields."""
 
 from .. import util
 from ..types.type import Type
@@ -10,11 +10,11 @@ __all__ = [
 ]
 
 class AlignedPacket(Packet):
-    """A :class:`~.Packet` which aligns its fields.
+    """A :class:`.Packet` which aligns its fields.
 
     .. seealso::
 
-        :class:`~.AlignedCompound`
+        :class:`.AlignedCompound`
 
     The fields of an :class:`AlignedPacket` are aligned in the
     same way the fields of a struct would be in  C or C++, including
@@ -129,7 +129,7 @@ class AlignedHeader(Packet.Header, AlignedPacket):
     This is not the default header of :class:`AlignedPacket`
     since :class:`AlignedPacket`\s may often have headers which
     do not align their fields, nor even have any header at all.
-    Additionally, there are unaligned :class:`~.Packet`\s which
+    Additionally, there are unaligned :class:`.Packet`\s which
     may have headers which align their fields.
 
     This class is nevertheless still provided however as the
@@ -138,7 +138,7 @@ class AlignedHeader(Packet.Header, AlignedPacket):
     .. note::
 
         There is no alignment performed between the header
-        and the :class:`~.Packet` proper.
+        and the :class:`.Packet` proper.
 
     Examples
     --------
