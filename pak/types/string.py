@@ -41,7 +41,7 @@ class PrefixedString(Type):
 
     prefix   = None
     encoding = "utf-8"
-    errors   = "strict"
+    errors   = "replace"
 
     @classmethod
     def _size(cls, value, *, ctx):
@@ -126,8 +126,11 @@ class StaticString(Type):
     _alignment = 1
     _default   = ""
 
+    # NOTE: We need to have 'errors' as "replace"
+    # as there could be garbage data after the null
+    # terminator which we do not want to error on.
     encoding = "utf-8"
-    errors   = "strict"
+    errors   = "replace"
 
     @classmethod
     def _unpack(cls, buf, *, ctx):

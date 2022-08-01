@@ -1,6 +1,26 @@
 import pak
 import pytest
 
+def test_prefixed_string():
+    TestPrefixed = pak.PrefixedString(pak.UInt8)
+
+    pak.test.type_behavior(
+        TestPrefixed,
+
+        ("abc", b"\x03abc"),
+        ("ab",  b"\x02ab"),
+        ("a",   b"\x01a"),
+        ("",    b"\x00"),
+
+        ("\u200B", b"\x03\xE2\x80\x8B"),
+
+        static_size = None,
+        default     = "",
+    )
+
+    # Invalid bytes get replaced.
+    assert TestPrefixed.unpack(b"\x01\xFF") == "\uFFFD"
+
 def test_static_string():
     TestString = pak.StaticString(4)
 
@@ -19,8 +39,8 @@ def test_static_string():
         default     = "",
     )
 
-    with pytest.raises(UnicodeDecodeError, match="0xff"):
-        TestString.unpack(b"\xFF\x00\x00\x00")
+    # Invalid bytes get replaced.
+    assert TestString.unpack(b"\xFF\x00\x00\x00") == "\uFFFD"
 
     with pytest.raises(ValueError, match="null terminator"):
         TestString.unpack(b"abcd")
@@ -33,23 +53,3 @@ def test_static_string():
     # too large.
     with pytest.raises(ValueError, match="too large"):
         TestString.pack("\u200B\u200B")
-
-def test_prefixed_string():
-    TestPrefixed = pak.PrefixedString(pak.UInt8)
-
-    pak.test.type_behavior(
-        TestPrefixed,
-
-        ("abc", b"\x03abc"),
-        ("ab",  b"\x02ab"),
-        ("a",   b"\x01a"),
-        ("",    b"\x00"),
-
-        ("\u200B", b"\x03\xE2\x80\x8B"),
-
-        static_size = None,
-        default     = "",
-    )
-
-    with pytest.raises(UnicodeDecodeError, match="0xff"):
-        TestPrefixed.unpack(b"\x01\xFF")
