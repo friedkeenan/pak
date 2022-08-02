@@ -32,6 +32,15 @@ def test_type_context():
     assert type_ctx.packet     is p
     assert type_ctx.packet_ctx is packet_ctx
 
+    assert type_ctx == p.type_ctx(packet_ctx)
+    assert hash(type_ctx) == hash(p.type_ctx(packet_ctx))
+
+    assert type_ctx != pak.Packet().type_ctx(packet_ctx)
+    assert hash(type_ctx) != hash(pak.Packet().type_ctx(packet_ctx))
+
+    # Make sure we handle objects that aren't instances of 'Type.Context'.
+    assert type_ctx != 1
+
     assert type_ctx.attr == "test"
 
     with pytest.raises(AttributeError):

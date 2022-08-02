@@ -119,11 +119,23 @@ class Type(abc.ABC):
             super().__setattr__(attr, value)
 
         def __hash__(self):
-            # Since Packets are not hashable, hash the identity of it.
-            # This should be perfectly safe since as long as the type
-            # context holds a reference to the packet, it should not be
-            # garbage collected.
+            # We hash the identity of our packet because conceptually
+            # the value of a 'Type.Context' does not depend on the
+            # value of its packet, but rather its identity.
+            #
+            # Furthermore, 'Packet' is not hashable, so it is
+            # necessary anyways.
             return hash((id(self.packet), self.packet_ctx))
+
+        def __eq__(self, other):
+            if not isinstance(other, Type.Context):
+                return NotImplemented
+
+            # We compare packets with identity to align with our
+            # hash semantics, and because conceptually the value
+            # of a 'Type.Context' depends on the identity of the
+            # packet, not the packet's value.
+            return self.packet is other.packet and self.packet_ctx == other.packet_ctx
 
     _typelikes = {}
 
