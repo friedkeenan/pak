@@ -49,6 +49,10 @@ def test_type_context():
     with pytest.raises(AttributeError):
         pak.Type.Context().test
 
+    # Test that 'dir()' works correctly for 'Type.Context'.
+    assert [attr for attr in dir(type_ctx)           if not attr.startswith("__")] == ["_mutable_flag", "attr", "packet", "packet_ctx"]
+    assert [attr for attr in dir(pak.Type.Context()) if not attr.startswith("__")] == ["packet", "packet_ctx"]
+
     with pytest.raises(TypeError, match="immutable"):
         type_ctx.packet = None
 

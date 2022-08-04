@@ -112,6 +112,14 @@ class Type(abc.ABC):
 
             return getattr(self.packet_ctx, attr)
 
+        def __dir__(self):
+            native_attrs = super().__dir__()
+
+            if self.packet_ctx is None:
+                return native_attrs
+
+            return native_attrs + [attr for attr in dir(self.packet_ctx) if attr not in native_attrs]
+
         def __setattr__(self, attr, value):
             if hasattr(self, "packet_ctx"):
                 raise TypeError(f"'{type(self).__qualname__}' is immutable")
