@@ -53,3 +53,16 @@ def test_static_string():
     # too large.
     with pytest.raises(ValueError, match="too large"):
         TestString.pack("\u200B\u200B")
+
+def test_static_string_alignment():
+    SameEncoding = pak.StaticString(4, encoding="utf-8")
+
+    assert SameEncoding.alignment() == 1
+
+    SameEncodingUnspecified = pak.StaticString(4)
+    assert SameEncodingUnspecified.alignment() == 1
+
+    DifferentEncoding = pak.StaticString(4, encoding="utf-16-le")
+
+    with pytest.raises(TypeError, match="no alignment"):
+        DifferentEncoding.alignment()

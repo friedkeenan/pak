@@ -1,4 +1,4 @@
-r"""String :class:`.Type`\s."""
+r""":class:`.Type`\s for strings."""
 
 import codecs
 
@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 class PrefixedString(Type):
-    """A string prefixed by its length.
+    """A string prefixed by the length of its encoded data.
 
     Parameters
     ----------
@@ -24,7 +24,7 @@ class PrefixedString(Type):
 
         .. note::
 
-            This does not include null terminators.
+            This does not include null-terminators.
     encoding : :class:`str` or ``None``
         The encoding to encode/decode the data.
 
@@ -120,6 +120,12 @@ class StaticString(Type):
 
         If ``None``, then the value of the :attr:`errors`
         attribute is used.
+    alignment : :class:`int` or ``None``
+        The alignment of the string data.
+
+        If ``None`` and ``encoding`` is ``None`` or the
+        original encoding, ``alignment`` will be assumed
+        to be the same as the original alignment.
     """
 
     _size      = None
@@ -156,9 +162,14 @@ class StaticString(Type):
         return data + b"\x00" * (cls.size(ctx=ctx) - length)
 
     @classmethod
-    def _call(cls, size, *, encoding=None, errors=None):
+    def _call(cls, size, *, encoding=None, errors=None, alignment=None):
         if encoding is None:
             encoding = cls.encoding
+
+        if alignment is None and encoding == cls.encoding:
+            # If the encoding is the same, we can assume
+            # the alignment is the same as well.
+            alignment = cls._alignment
 
         if errors is None:
             errors = cls.errors
@@ -166,6 +177,7 @@ class StaticString(Type):
         return cls.make_type(
             f"StaticString({size})",
 
-            _size    = size,
-            encoding = encoding,
+            _size      = size,
+            _alignment = alignment,
+            encoding   = encoding,
         )
