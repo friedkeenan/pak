@@ -165,7 +165,7 @@ class Packet:
 
         When no :class:`Packet.Context` is provided to :class:`Packet`
         operations that may accept one, then your subclass is attempted
-        to be defaultl constructed and used instead.
+        to be default constructed and used instead.
 
         .. warning::
 
@@ -192,7 +192,7 @@ class Packet:
 
         def __hash__(self):
             # A default 'Packet.Context' has no unique information.
-            return hash(tuple())
+            return 0
 
         def __eq__(self, other):
             # All objects of type 'Packet.Context' are equal.

@@ -13,6 +13,9 @@ class DummyPacket(pak.Packet):
             return hash(self.value)
 
         def __eq__(self, other):
+            if not isinstance(other, type(self)):
+                return NotImplemented
+
             return self.value == other.value
 
     class Header(pak.Packet.Header):
