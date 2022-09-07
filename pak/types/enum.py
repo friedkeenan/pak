@@ -56,7 +56,7 @@ class Enum(Type):
     #   e.g. log the offending value. That may be part of a larger
     #   todo of logging generally though.
     #
-    # - Also by collpasing every invalid enum value down to a
+    # - Also by collapsing every invalid enum value down to a
     #   single object, we rob the ability to pack invalid enum
     #   values. Users should not be trying to pack invalid enum
     #   values, and this matches with other Types which cannot
