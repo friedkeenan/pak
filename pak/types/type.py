@@ -159,7 +159,7 @@ class Type(abc.ABC):
             if isinstance(typelike, typelike_cls):
                 return converter(typelike)
 
-        raise TypeError(f"Object {typelike} is not typelike")
+        raise TypeError(f"Object {repr(typelike)} is not typelike")
 
     @classmethod
     def register_typelike(cls, typelike_cls, converter):
@@ -272,6 +272,14 @@ class Type(abc.ABC):
 
         return Array(cls, index)
 
+    @staticmethod
+    def _not_implemented_call(cls):
+        # This is used as any Type's '__new__' function if they don't provide their own.
+        # We don't just let them use 'Type._call' as its documentation would then show up
+        # for the subclass's '__new__' function.
+
+        raise NotImplementedError
+
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -293,6 +301,9 @@ class Type(abc.ABC):
         # but that will raise an error in '__init__' and
         # shouldn't happen anyways.
         cls.__new__ = cls._call.__func__
+
+        if cls.__new__ is Type._call.__func__:
+            cls.__new__ = Type._not_implemented_call
 
     def __init__(self):
         raise TypeError("Types do not get initialized normally.")
@@ -878,9 +889,10 @@ class Type(abc.ABC):
         ----------
         name : :class:`str`
             The generated type's name.
-        bases : :class:`tuple`
-            The generated type's base classes. If unspecified, the
-            origin type is the sole base class.
+        bases : :class:`tuple` or ``None``
+            The generated type's base classes.
+
+            If ``None``, the origin type is the sole base class.
         **namespace
             The attributes and corresponding values of the generated
             type.
@@ -900,10 +912,11 @@ class Type(abc.ABC):
 
     @classmethod
     def _call(cls):
-        # Called when the type's constructor is called.
-        #
-        # The arguments passed to the constructor get forwarded
-        # to this method. typically overridden to enable
-        # generating new types.
+        """Called when the :class:`Type` is called.
+
+        The arguments passed to the :class:`Type` will be forwarded
+        to this method, which may be overridden to generate a new
+        :class:`Type` based on the called :class:`Type`.
+        """
 
         raise NotImplementedError

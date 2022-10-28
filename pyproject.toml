@@ -1,0 +1,28 @@
+[project]
+name            = "pak"
+version         = "0.1.0" # TODO: Upgrade.
+description     = "A library for packet marshaling"
+# TODO: readme  = "README.md"
+requires-python = ">=3.7"
+license         = {file = "LICENSE"}
+
+authors = [
+    {name = "friedkeenan"},
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: ISC License (ISCL)",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "importlib_metadata; python_version < '3.8'"
+]
+
+[project.urls]
+repository = "https://github.com/friedkeenan/pak.py"
+
+[tool.pytest.ini_options]
+# Run doctests in modules and unit tests and check code coverage.
+addopts = "--cov=pak --doctest-modules pak tests --cov-report=term-missing"

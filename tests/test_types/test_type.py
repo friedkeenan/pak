@@ -207,3 +207,9 @@ def test_not_implemented_methods():
 
     with pytest.raises(NotImplementedError):
         pak.Type._call()
+
+    class TestNotImplementedInheritedCall(pak.Type):
+        pass
+
+    with pytest.raises(NotImplementedError):
+        TestNotImplementedInheritedCall()

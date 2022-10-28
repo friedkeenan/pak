@@ -57,7 +57,7 @@ jobs:
           pip install .
 
       - name: Run tests (checking code coverage)
-        run: pytest --cov=pak --doctest-modules pak tests --cov-report=term-missing
+        run: pytest
 
       - name: Upload code coverage
         uses: codecov/codecov-action@v3

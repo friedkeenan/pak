@@ -28,6 +28,22 @@ class Bool(StructType):
 
     fmt = "?"
 
+# NOTE: We could change the integer types over to using
+# 'int.from_bytes' and 'int.to_bytes' in the future
+# with the only breaking change being from inheritance.
+#
+# However, from some rudimentary benchmarks, it seems
+# that using 'StructType' gives marginally better
+# performance than using the 'int' methods (I believe
+# this is due to having to check that we read an
+# adequate amount of data from the buffer when using
+# the 'int' methods), so for now at least we will keep
+# the integer types inheriting from 'StructType'.
+#
+# Additionally this prevents asymmetry from occurring
+# between the integer types and the floating point types,
+# as there is no 'float.from_bytes'.
+
 class Int8(StructType):
     """A signed 8-bit integer."""
 
