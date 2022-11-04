@@ -321,19 +321,19 @@ class Type(abc.ABC):
         return object.__new__(cls)
 
     def __set_name__(self, owner, name):
-        self.attr_name = f"_{name}_type_value"
+        self.mangled_name = f"_{name}_type_value"
 
     def __get__(self, instance, owner=None):
         if instance is None:
             return self
 
-        return getattr(instance, self.attr_name)
+        return getattr(instance, self.mangled_name)
 
     def __set__(self, instance, value):
-        setattr(instance, self.attr_name, value)
+        setattr(instance, self.mangled_name, value)
 
     def __delete__(self, instance):
-        delattr(instance, self.attr_name)
+        delattr(instance, self.mangled_name)
 
     STATIC_SIZE = util.UniqueSentinel("STATIC_SIZE")
 

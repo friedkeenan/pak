@@ -230,6 +230,37 @@ def test_packet_multiple_inheritance():
         class TestDuplicateFieldFromParents(DuplicateFirstParent, DuplicateSecondParent):
             pass
 
+def test_packet_equality():
+    class FooPacket(pak.Packet):
+        foo: pak.Int8
+
+    # Only technically related through 'pak.Packet'.
+    class UnrelatedFooPacket(pak.Packet):
+        foo: pak.Int8
+
+    assert FooPacket(foo=0) != 1
+    assert FooPacket(foo=0) == FooPacket(foo=0)
+    assert FooPacket(foo=0) != FooPacket(foo=1)
+    assert FooPacket(foo=0) == UnrelatedFooPacket(foo=0)
+    assert FooPacket(foo=0) != UnrelatedFooPacket(foo=1)
+
+    class FooDifferentTypePacket(pak.Packet):
+        foo: pak.Int16
+
+    assert FooPacket(foo=0) != FooDifferentTypePacket(foo=0)
+
+    class FooBarPacket(FooPacket):
+        bar: pak.Int8
+
+    class UnrelatedFooBarPacket(pak.Packet):
+        foo: pak.Int8
+        bar: pak.Int8
+
+    assert FooBarPacket(foo=0, bar=0) == FooBarPacket(foo=0, bar=0)
+    assert FooBarPacket(foo=0, bar=0) != FooBarPacket(foo=0, bar=1)
+    assert FooBarPacket(foo=0, bar=0) == UnrelatedFooBarPacket(foo=0, bar=0)
+    assert FooBarPacket(foo=0, bar=0) != UnrelatedFooBarPacket(foo=0, bar=1)
+
 def test_header():
     class Test(pak.Packet):
         class Header(pak.Packet.Header):
@@ -283,6 +314,11 @@ def test_id():
 
     assert TestEmpty.Header.unpack(b"test") == pak.Packet.Header()
 
+    class TestOverrideEmpty(TestEmpty):
+        id = 1
+
+    assert TestOverrideEmpty.id() == 1
+
     class TestStaticId(pak.Packet):
         class Header(pak.Packet.Header):
             id: pak.Int8
@@ -305,6 +341,31 @@ def test_id():
         assert TestDynamicId().pack() == b"\x01"
 
         assert TestDynamicId.Header.unpack(b"\x02") == TestDynamicId.Header(id=2)
+
+    class TestClassmethodId(pak.Packet):
+        class Header(pak.Packet.Header):
+            id: pak.Int8
+
+        @classmethod
+        def id(cls, *, ctx=None):
+            assert ctx == pak.Packet.Context()
+
+            return 1
+
+    assert TestClassmethodId.id()     == 1
+    assert TestClassmethodId().pack() == b"\x01"
+
+    assert TestClassmethodId.Header.unpack(b"\x02") == TestClassmethodId.Header(id=2)
+
+    class TestIdNoOverride(TestStaticId):
+        pass
+
+    assert TestIdNoOverride.id() == 1
+
+    class TestIdOverride(TestStaticId):
+        id = 2
+
+    assert TestIdOverride.id() == 2
 
 def test_packet_size():
     class StaticPacket(pak.Packet):
