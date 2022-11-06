@@ -357,6 +357,40 @@ def test_id():
 
     assert TestClassmethodId.Header.unpack(b"\x02") == TestClassmethodId.Header(id=2)
 
+    class DummyDescriptor:
+        def __get__(self, instance, owner=None):
+            return 1
+
+    class TestPlainDescriptorId(pak.Packet):
+        class Header(pak.Packet.Header):
+            id: pak.Int8
+
+        id = DummyDescriptor()
+
+    assert TestPlainDescriptorId.id()     == 1
+    assert TestPlainDescriptorId().pack() == b"\x01"
+
+    assert TestPlainDescriptorId.Header.unpack(b"\x02") == TestPlainDescriptorId.Header(id=2)
+
+    class TestClassPropertyId(pak.Packet):
+        class Header(pak.Packet.Header):
+            id: pak.Int8
+
+        @classmethod
+        @property
+        def id(self):
+            return 1
+
+    assert TestClassPropertyId.id()     == 1
+    assert TestClassPropertyId().pack() == b"\x01"
+
+    assert TestClassPropertyId.Header.unpack(b"\x02") == TestClassPropertyId.Header(id=2)
+
+    class TestPathologicalMethodId(pak.Packet):
+        id = pak.Packet.unpack
+
+    assert TestPathologicalMethodId.id() == pak.Packet.unpack
+
     class TestIdNoOverride(TestStaticId):
         pass
 

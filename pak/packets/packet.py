@@ -48,8 +48,8 @@ class DuplicateFieldError(Exception):
         super().__init__(f"Duplicate definition of '{field}' in packet '{packet_cls.__qualname__}'")
 
 # The following are classmethods that will be
-# installed my '_PacketMeta' depending on the
-# sort of ID set in the packet definition.
+# installed by 'Packet._init_id' depending on
+# the sort of ID set in the packet definition.
 
 @classmethod
 def _id_wrapper_classmethod(cls, *, ctx=None):
@@ -69,63 +69,7 @@ def _id_wrapper_dynamic_value(cls, *, ctx=None):
 def _id_wrapper_static_value(cls, *, ctx=None):
     return cls._wrapped_id
 
-class _PacketMeta(type):
-    # This metaclass is used to make our
-    # packet ID shenanigans work without
-    # mucking up the documentation of derived
-    # classes.
-    #
-    # This could technically also be used to
-    # initialize the packet fields, but that
-    # would require manually calculating the
-    # MRO, so it is best left to '__init_subclass__'.
-    #
-    # We could however make added fields into
-    # slot attributes here relatively simply, and
-    # in fact cannot do so without a metaclass,
-    # After implementing this however, it became
-    # clear that slots run counter towards several
-    # properties of packets, most notably being
-    # packet headers and properties on top of
-    # packet fields. So unless there is a *very*
-    # compelling reason to remove or fundamentally
-    # alter these things, packet fields being slots
-    # will remain unimplemented.
-
-    @staticmethod
-    def _transform_id(namespace):
-        # Here we take the ID that was set through
-        # the 'id' attribute and wrap it sufficiently
-        # that packet IDs can still be uniformly accessed
-        # through the normal 'Packet.id' classmethod.
-
-        id = namespace["id"]
-        del namespace["id"]
-
-        if isinstance(id, classmethod):
-            namespace["_wrapped_id"] = id
-            namespace["_id_wrapper"] = _id_wrapper_classmethod
-
-        else:
-            id = DynamicValue(id)
-            namespace["_wrapped_id"] = id
-
-            if isinstance(id, DynamicValue):
-                namespace["_id_wrapper"] = _id_wrapper_dynamic_value
-            else:
-                namespace["_id_wrapper"] = _id_wrapper_static_value
-
-    created_main_class = False
-
-    def __new__(cls, name, bases, namespace):
-        # Do not transform the base 'Packet' class.
-        if cls.created_main_class and "id" in namespace:
-            cls._transform_id(namespace)
-
-        cls.created_main_class = True
-        return super().__new__(cls, name, bases, namespace)
-
-class Packet(metaclass=_PacketMeta):
+class Packet:
     r"""A collection of values that can be marshaled to and from
     raw data using :class:`.Type`\s.
 
@@ -357,6 +301,45 @@ class Packet(metaclass=_PacketMeta):
         return cls._id_wrapper(ctx=ctx)
 
     @classmethod
+    def _init_id(cls):
+        # Here we take the ID that was set through
+        # the 'id' attribute and wrap it sufficiently
+        # that packet IDs can still be uniformly accessed
+        # through the normal 'Packet.id' classmethod.
+        #
+        # We delete the 'id' attribute primarily to
+        # stop the classmethod from appearing in
+        # autodoc'ed subclasses.
+
+        id = cls.id
+
+        if inspect.ismethod(id):
+            # Don't do anything if the ID hasn't been set.
+            if id.__func__ is Packet.id.__func__:
+                return
+
+            # Make sure that we are handling a classmethod
+            # bound to our class.
+            if id.__self__ is cls:
+                # Set the actual 'classmethod' object and not
+                # the bound method.
+                cls._wrapped_id = inspect.getattr_static(cls, "id")
+                cls._id_wrapper = _id_wrapper_classmethod
+
+                del cls.id
+                return
+
+        del cls.id
+
+        id = DynamicValue(id)
+        cls._wrapped_id = id
+
+        if isinstance(id, DynamicValue):
+            cls._id_wrapper = _id_wrapper_dynamic_value
+        else:
+            cls._id_wrapper = _id_wrapper_static_value
+
+    @classmethod
     def _init_fields_from_annotations(cls):
         # NOTE: It may be beneficial to make packet fields into
         # "slots" attributes, that would however disallow having
@@ -406,6 +389,7 @@ class Packet(metaclass=_PacketMeta):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
+        cls._init_id()
         cls._init_fields_from_annotations()
 
     def __init__(self, *, ctx=None, **fields):
