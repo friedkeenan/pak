@@ -410,10 +410,10 @@ def test_id():
             def id(self):
                 return 1
 
-    assert TestClassPropertyId.id()     == 1
-    assert TestClassPropertyId().pack() == b"\x01"
+        assert TestClassPropertyId.id()     == 1
+        assert TestClassPropertyId().pack() == b"\x01"
 
-    assert TestClassPropertyId.Header.unpack(b"\x02") == TestClassPropertyId.Header(id=2)
+        assert TestClassPropertyId.Header.unpack(b"\x02") == TestClassPropertyId.Header(id=2)
 
     class TestPathologicalMethodId(pak.Packet):
         id = pak.Packet.unpack
