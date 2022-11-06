@@ -341,12 +341,17 @@ class Packet:
 
     @classmethod
     def _init_fields_from_annotations(cls):
-        # NOTE: It may be beneficial to make packet fields into
-        # "slots" attributes, that would however disallow having
-        # non-predetermined attributes (though slots could be
-        # disabled), and would necessitate a metaclass. Perhaps
-        # benchmarking could be performed in the future to see if
-        # they are beneficial enough.
+        # It may be beneficial to have packet fields be
+        # slot attributes. It would however require a
+        # metaclass as slot attributes can't be added
+        # after class initialization. I in fact implemented
+        # this, but found that slot attributes and certain
+        # aspects of packets do not (and mayhaps *cannot*)
+        # interact well, namely overlaying packet fields
+        # on top of properties and packet headers. So
+        # unless there is a highly compelling reason to
+        # remove or fundamentally alter these things,
+        # packet fields being slots will remain unimplemented.
 
         annotations = util.annotations(cls)
 
