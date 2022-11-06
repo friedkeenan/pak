@@ -8,29 +8,32 @@ __all__ = [
     "bind_annotations",
 ]
 
-def subclasses(*classes):
-    """Gets the recursive subclasses of the arguments.
+def subclasses(parent_class):
+    """Gets the recursive subclasses of a type.
 
     Parameters
     ----------
-    *classes : :class:`type`
-        The types to get the subclasses of.
+    *parent_class : :class:`type`
+        The type to get the subclasses of.
 
     Returns
     -------
     :class:`frozenset`
-        The recursive subclasses of the arguments.
+        The recursive subclasses of ``parent_class``.
     """
 
-    recursive_subclasses = frozenset()
+    remaining_classes = [parent_class]
 
-    for cls in classes:
-        direct_subclasses = cls.__subclasses__()
+    subclasses = set()
 
-        recursive_subclasses |= frozenset(direct_subclasses)
-        recursive_subclasses |= subclasses(*direct_subclasses)
+    while len(remaining_classes) != 0:
+        parent_class = remaining_classes.pop(0)
 
-    return recursive_subclasses
+        direct_subclasses = parent_class.__subclasses__()
+        subclasses.update(direct_subclasses)
+        remaining_classes.extend(direct_subclasses)
+
+    return frozenset(subclasses)
 
 def annotations(obj):
     """Gets the annotations of a callable, :class:`type`, or module.

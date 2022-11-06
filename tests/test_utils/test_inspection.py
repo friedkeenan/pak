@@ -15,7 +15,10 @@ def test_subclasses():
     class GrandChild1(Child1):
         pass
 
-    assert pak.util.subclasses(Root) == {Child1, Child2, GrandChild1}
+    subclasses = pak.util.subclasses(Root)
+
+    assert subclasses == {Child1, Child2, GrandChild1}
+    assert isinstance(subclasses, frozenset)
 
 def test_annotations():
     def test_empty_callable(x):
