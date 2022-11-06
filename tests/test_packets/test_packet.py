@@ -1,3 +1,6 @@
+import sys
+import types
+
 import pak
 import pytest
 
@@ -372,14 +375,40 @@ def test_id():
 
     assert TestPlainDescriptorId.Header.unpack(b"\x02") == TestPlainDescriptorId.Header(id=2)
 
-    class TestClassPropertyId(pak.Packet):
+    class FakeClassmethodDescriptor:
+        @staticmethod
+        def id_func(cls, *, ctx=None):
+            assert ctx == pak.Packet.Context()
+
+            return 1
+
+        def __get__(self, instance, owner=None):
+            return types.MethodType(self.id_func, owner)
+
+    class TestFakeClassmethodId(pak.Packet):
         class Header(pak.Packet.Header):
             id: pak.Int8
 
-        @classmethod
-        @property
-        def id(self):
-            return 1
+        id = FakeClassmethodDescriptor()
+
+    assert TestFakeClassmethodId.id()     == 1
+    assert TestFakeClassmethodId().pack() == b"\x01"
+
+    assert TestFakeClassmethodId.Header.unpack(b"\x02") == TestFakeClassmethodId.Header(id=2)
+
+    # Classmethods only propagate the descriptor
+    # protocol in Python 3.9+.
+    #
+    # TODO: Remove this when Python 3.8 support is dropped.
+    if sys.version_info.minor >= 9:
+        class TestClassPropertyId(pak.Packet):
+            class Header(pak.Packet.Header):
+                id: pak.Int8
+
+            @classmethod
+            @property
+            def id(self):
+                return 1
 
     assert TestClassPropertyId.id()     == 1
     assert TestClassPropertyId().pack() == b"\x01"
