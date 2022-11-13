@@ -350,7 +350,7 @@ def test_id():
             id: pak.Int8
 
         @classmethod
-        def id(cls, *, ctx=None):
+        def id(cls, *, ctx):
             assert ctx == pak.Packet.Context()
 
             return 1
@@ -377,7 +377,7 @@ def test_id():
 
     class FakeClassmethodDescriptor:
         @staticmethod
-        def id_func(cls, *, ctx=None):
+        def id_func(cls, *, ctx):
             assert ctx == pak.Packet.Context()
 
             return 1

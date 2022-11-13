@@ -424,6 +424,7 @@ class AsyncPacketHandler(PacketHandler):
         ...     async def slow_listener(self, packet):
         ...         await asyncio.sleep(1)
         ...         print("slow_listener")
+        ...
         ...     @pak.packet_listener(pak.Packet)
         ...     async def fast_listener(self, packet):
         ...         print("fast_listener")

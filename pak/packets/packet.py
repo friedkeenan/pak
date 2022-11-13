@@ -254,6 +254,18 @@ class Packet:
         be read. Unless overridden, :class:`Packet` has no
         meaningful ID.
 
+        When overriding this method with a classmethod, you do
+        not need to default the ``ctx`` parameter, you can just
+        have it like so::
+
+            class MyPacket(pak.Packet):
+                @classmethod
+                def id(cls, *, ctx):
+                    ...
+
+        The case where no ``ctx`` is specified when calling this
+        method will be handled for you.
+
         If the :attr:`id` attribute of a subclass is enrolled
         in the :class:`.DynamicValue` machinery, then its dynamic
         value is returned from this function. Otherwise the value

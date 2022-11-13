@@ -7,7 +7,7 @@ def test_static_compound():
 
         first  = pak.Int8,
         second = pak.Int16,
-        third  = pak.StaticString(3),
+        third  = pak.StaticTerminatedString(3),
     )
 
     pak.test.type_behavior(
@@ -40,7 +40,7 @@ def test_dynamic_compound():
 
         first  = pak.Int8,
         second = pak.ULEB128,
-        third  = pak.StaticString(3),
+        third  = pak.StaticTerminatedString(3),
     )
 
     pak.test.type_behavior(
