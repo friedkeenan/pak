@@ -49,7 +49,7 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Install pak.py
-        run: pip install .[tests, docs]
+        run: pip install .[tests,docs]
 
       - name: Run tests (checking code coverage)
         run: pytest
