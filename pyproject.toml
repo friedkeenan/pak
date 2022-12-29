@@ -23,6 +23,19 @@ dependencies = [
 [project.urls]
 repository = "https://github.com/friedkeenan/pak.py"
 
+[project.optional-dependencies]
+tests = [
+    "pytest",
+    "pytest-cov",
+    "pytest-asyncio",
+]
+
+docs = [
+    "sphinx==5.0.2",
+    "furo",
+    "sphinx-copybutton",
+]
+
 [tool.pytest.ini_options]
 # Run doctests in modules and unit tests and check code coverage.
 addopts = "--cov=pak --doctest-modules pak tests --cov-report=term-missing:skip-covered"
