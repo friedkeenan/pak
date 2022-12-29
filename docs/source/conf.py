@@ -53,13 +53,15 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
 html_theme = "furo"
+
+html_static_path = ["_static"]
+html_css_files   = ["css/uniform_tables.css"]
 
 def process_docstring(app, what, name, obj, options, lines):
     # If an object's docstring has :meta no-undoc-members:,
