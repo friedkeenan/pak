@@ -25,4 +25,4 @@ repository = "https://github.com/friedkeenan/pak.py"
 
 [tool.pytest.ini_options]
 # Run doctests in modules and unit tests and check code coverage.
-addopts = "--cov=pak --doctest-modules pak tests --cov-report=term-missing"
+addopts = "--cov=pak --doctest-modules pak tests --cov-report=term-missing:skip-covered"

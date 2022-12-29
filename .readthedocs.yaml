@@ -1,0 +1,7 @@
+version: 2
+
+build:
+  jobs:
+    pre_build:
+      # RTD doesn't know how to install from pyproject.toml.
+      - pip install .
