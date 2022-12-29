@@ -49,7 +49,7 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Install pak.py
-        run: pip install .[tests]
+        run: pip install .[tests, docs]
 
       - name: Run tests (checking code coverage)
         run: pytest
@@ -58,7 +58,4 @@ jobs:
         uses: codecov/codecov-action@v3
 
       - name: Run doctests in rst files
-        run: |
-          cd docs
-          pip install -r requirements.txt
-          make doctest
+        run: make -C docs doctest
