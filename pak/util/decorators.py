@@ -59,8 +59,8 @@ def cache(func=None, *, force_hashable=True, max_size=None, **kwargs):
 class class_or_instance_method:
     """A decorator to call either a class method or an instance method.
 
-    The :attr:`__doc__` method is set to the :attr:`__doc__` attribute of
-    the associated class method.
+    The :attr:`__doc__` attribute is set to the :attr:`__doc__` attribute
+    of the associated class method.
 
     This, similarly to :class:`classmethod`, propagates other descriptors
     as well, allowing combinations of :class:`class_or_instance_method` with
