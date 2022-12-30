@@ -106,19 +106,10 @@ In order to get the corresponding listeners for a packet, one can use the :meth:
     handler = FelinePacketHandler()
 
     ids_request_listeners = handler.listeners_for_packet(CatIDsRequest())
-    ids_request_listeners = [listener.__qualname__ for listener in ids_request_listeners]
-    print("CatIDsRequest listeners:", ids_request_listeners)
+    assert ids_request_listeners == [handler.on_ids_request]
 
     info_request_listeners = handler.listeners_for_packet(CatInfoRequest())
-    info_request_listeners = [listener.__qualname__ for listener in info_request_listeners]
-    print("CatInfoRequest listeners:", info_request_listeners)
-
-This should give the following output:
-
-.. testoutput::
-
-    CatIDsRequest listeners: ['FelinePacketHandler.on_ids_request']
-    CatInfoRequest listeners: ['FelinePacketHandler.on_info_request']
+    assert info_request_listeners == [handler.on_info_request]
 
 After getting the appropriate listeners for a packet, you can use it however you want; in our case we would want to call it, passing the packet to it. Code to read and listen to our packets might end up looking something like this::
 

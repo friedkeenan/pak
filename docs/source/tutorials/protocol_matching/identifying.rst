@@ -67,7 +67,7 @@ Let's mock these packets up::
 
 It's unknown which packet will be received ahead of time, as the client can send a ``CatIDsRequest`` or ``CatInfoRequest`` packet at any time, and the server can similarly send a ``CatIDsResponse`` or ``CatInfoResponse`` packet at any time. Therefore, each packet will have a :class:`.UInt8` in its header, situated before the packet size, which will correspond to which packet is being received. This number is called the "packet ID". The packet IDs for ``CatIDsRequest`` and ``CatInfoRequest`` will be ``0`` and ``1`` respectively, and ``CatIDsResponse`` and ``CatInfoResponse`` will similarly have IDs of ``0`` and ``1`` respectively.
 
-So how would we use Pak to implement this protocol? First, we should look at the classmethod :meth:`.Packet.id`. This method can optionally take in a :class:`.Packet.Context` parameter, and returns the ID of the packet. If there is no ID, then the method returns ``None``; by default, :class:`.Packet`\s have no ID. We can override this method to set the packet IDs, like so:
+So how would we use Pak to implement this protocol? First, we should look at the :meth:`.Packet.id` classmethod. This method can optionally take in a :class:`.Packet.Context` parameter, and returns the ID of the packet. If there is no ID, then the method returns ``None``; by default, :class:`.Packet`\s have no ID. We can override this method to set the packet IDs, like so:
 
 .. testcode::
     :hide:
@@ -113,17 +113,11 @@ So how would we use Pak to implement this protocol? First, we should look at the
         def id(cls, *, ctx):
             return 0
 
-We can then test it out:
+We can then use it like so:
 
 .. testcode::
 
-    print("Packet ID:", CatIDsRequest.id())
-
-This will spit out ``0``:
-
-.. testoutput::
-
-    Packet ID: 0
+    assert CatIDsRequest.id() == 0
 
 Note that we did not need to specify the ``ctx`` parameter despite not defaulting it in our overriding of the ``id`` method. This is because Pak will handle the ``ctx`` parameter being unspecified for you, always passing you a proper :class:`.Packet.Context`.
 
@@ -143,17 +137,18 @@ We added the ``id`` field to our packet header, before the ``size`` field as des
 
     packet = CatIDsRequest(fur_type=FurType.MediumHaired)
 
-    print("Packet header:", packet.header())
-    print("Raw data:",      packet.pack())
+    assert packet.header() == FelinePacket.Header(id=0, size=1)
 
-This will give us the following output:
+    assert packet.pack() == (
+        # Packet ID of '0'.
+        b"\x00" +
 
-.. testoutput::
+        # Packet data size of '1'.
+        b"\x01" +
 
-    Packet header: FelinePacket.Header(id=0, size=1)
-    Raw data: b'\x00\x01\x02'
-
-In the raw data, the ``\x00`` represents the packet ID, the ``\x01`` represents the size of the packet body, and ``\x02`` represents the fur type ``FurType.MediumHaired``.
+        # Fur type of 'FurType.MediumHaired'.
+        b"\x02"
+    )
 
 Cool, so now we know how to add packet IDs. But it is a bit *much* that we have to define a whole classmethod to simply have an ID of ``0``. It's not too much for one or a few packets, but it would add up for a full fledged protocol. We're not even touching the ``ctx`` parameter; we're not doing any real work at all. Luckily for us though, Pak alleviates this concern. We can simply set the ID like so:
 
@@ -168,13 +163,9 @@ Pak will transform our simply setting the ``id`` attribute so that you still cal
 
 .. testcode::
 
-    print("CatIDsRequest ID:", CatIDsRequest.id())
+    assert CatIDsRequest.id() == 0
 
-This will work the same as it did with our classmethod:
-
-.. testoutput::
-
-    CatIDsRequest ID: 0
+We still call the :meth:`.Packet.id` classmethod, working the same as before.
 
 Sending and Receiving Unknown Packets
 *************************************
@@ -326,13 +317,9 @@ Now every ``ServerboundFelinePacket`` and every ``ClientboundFelinePacket`` have
 
 .. testcode::
 
-    print("Serverbound ID 0:", ServerboundFelinePacket.subclass_with_id(0).__qualname__)
+    assert ServerboundFelinePacket.subclass_with_id(0) is CatIDsRequest
 
-Since ``CatIDsRequest`` is the serverbound packet with ID ``0``, we should get the following output:
-
-.. testoutput::
-
-    Serverbound ID 0: CatIDsRequest
+Since ``CatIDsRequest`` is the serverbound packet with ID ``0``, it is returned from our call to :meth:`.Packet.subclass_with_id`.
 
 Cool. But what if we were to pass an ID that doesn't correspond to any packet? In that case, :meth:`.Packet.subclass_with_id` will return ``None``. So, armed with this new tool, let's rewrite our ``read_packet`` function::
 
@@ -485,7 +472,7 @@ Now we add an ``__init__`` method which accepts an ``initial_value`` parameter w
 
 Finally we add the ``get`` method, which accepts a ``ctx`` parameter that will name either an appropriate :class:`.Packet.Context` or an appropriate :class:`.Type.Context`, or ``None``. In this method we return the appropriate value based on the protocol version stored within the ``ctx`` parameter.
 
-So let's try this puppy out:
+If we did everything right, we should be able to do the following:
 
 .. testcode::
 
@@ -500,15 +487,8 @@ So let's try this puppy out:
     ctx_version_0 = FelinePacket.Context(version=0)
     ctx_version_1 = FelinePacket.Context(version=1)
 
-    print("Version 0 ID:", CatIDsRequest.id(ctx=ctx_version_0))
-    print("Version 1 ID:", CatIDsRequest.id(ctx=ctx_version_1))
-
-If we did everything right, we should get the following output:
-
-.. testoutput::
-
-    Version 0 ID: 0
-    Version 1 ID: 1
+    assert CatIDsRequest.id(ctx=ctx_version_0) == 0
+    assert CatIDsRequest.id(ctx=ctx_version_1) == 1
 
 ----
 

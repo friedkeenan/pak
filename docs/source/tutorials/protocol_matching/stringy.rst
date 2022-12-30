@@ -138,18 +138,9 @@ Now we need to figure out how we're gonna use our ``String`` type in a packet. W
     # Two unsigned bytes with values '1' and '2'.
     raw_data = b"\x01\x02"
 
-    value = MyArray.unpack(raw_data)
-    print("Value:", value)
+    assert MyArray.unpack(raw_data) == [1, 2]
 
-    data = MyArray.pack([1, 2])
-    print("Raw data:", data)
-
-This will output:
-
-.. testoutput::
-
-    Value: [1, 2]
-    Raw data: b'\x01\x02'
+    assert MyArray.pack([1, 2]) == raw_data
 
 However this does not use the more idiomatic syntax for making an :class:`.Array`, using the index operator. For instance, our example of ``pak.Array(pak.UInt8, 2)`` is equivalent to ``pak.UInt8[2]``, and in general ``MyType[size]`` is equivalent to ``pak.Array(MyType, size)``.
 
@@ -166,18 +157,9 @@ But just having a static :class:`int` as the size of the array won't work for us
     # bytes with values '0' and '1'.
     raw_data = b"\x02" + b"\x00\x01"
 
-    value = MyPrefixedArray.unpack(raw_data)
-    print("Value:", value)
+    assert MyPrefixedArray.unpack(raw_data) == [0, 1]
 
-    data = MyPrefixedArray.pack([0, 1])
-    print("Raw data:", data)
-
-This will have the following output:
-
-.. testoutput::
-
-    Value: [0, 1]
-    Raw data: b'\x02\x00\x01'
+    assert MyPrefixedArray.pack([0, 1]) == raw_data
 
 So now we can redefine our ``CatPicturesResponse`` packet to be
 
@@ -211,14 +193,7 @@ We can however still get the size of an *instance* of ``CatPicturesResponse``:
 
     packet = CatPicturesResponse(cat_pictures=["https://cdn.<...>.com/54028.png"])
 
-    size = packet.size()
-    print("Size:", size)
-
-This gives us the output:
-
-.. testoutput::
-
-    Size: 34
+    assert packet.size() == 34
 
 ----
 
@@ -298,14 +273,11 @@ Our ``cat_pictures`` field is now a ``String[None]``, which means it is a ``Stri
         ]
     )
 
-    data = packet.pack()
-    print("Raw data:", data)
-
-This should give us just two ``String``\s squished up against each other:
-
-.. testoutput::
-
-    Raw data: b'\x1fhttps://cdn.<...>.com/54028.png\x1fhttps://cdn.<...>.com/28904.png'
+    # Our strings should just be squished up against each other.
+    assert packet.pack() == (
+        b"\x1fhttps://cdn.<...>.com/54028.png" +
+        b"\x1fhttps://cdn.<...>.com/28904.png"
+    )
 
 Doing Better: Packet Headers
 ****************************
@@ -359,21 +331,12 @@ Now let's see what the header for these packets would look like, using the :meth
 .. testcode::
 
     request = CatPicturesRequest(fur_type=FurType.LongHaired)
-
-    request_header = request.header()
-    print("Request header:", request_header)
+    assert request.header() == FelinePacket.Header(size=1)
 
     response = CatPicturesResponse(cat_pictures=["https://cdn.<...>.com/54028.png"])
+    assert response.header() == FelinePacket.Header(size=32)
 
-    response_header = response.header()
-    print("Response header:", response_header)
-
-We should expect the request to have a size of ``1`` and the response to have a size of ``32``:
-
-.. testoutput::
-
-    Request header: FelinePacket.Header(size=1)
-    Response header: FelinePacket.Header(size=32)
+We should expect the request to have a size of ``1`` and the response to have a size of ``32``.
 
 Now that our packets have a header, their headers automatically get packed together with the normal packet data when using the :meth:`.Packet.pack` method:
 
@@ -381,14 +344,9 @@ Now that our packets have a header, their headers automatically get packed toget
 
     packet = CatPicturesRequest(fur_type=FurType.MediumHaired)
 
-    data = packet.pack()
-    print("Raw data:", data)
+    assert packet.pack() == b"\x01\x02"
 
-The result of calling ``packet.pack()`` should gives us the header data of ``b"\x01\x00\x00\x00"`` for the size of the packet, packed using a :class:`.UInt8`, squished up next to the normal packet data of ``b"\x02"``:
-
-.. testoutput::
-
-    Raw data: b'\x01\x02'
+The result of calling ``packet.pack()`` should gives us the header data of ``b"\x01"`` for the size of the packet, packed using a :class:`.UInt8`, squished up next to the normal packet data of ``b"\x02"``.
 
 If you wish to pack a packet without the header, the :meth:`.Packet.pack_without_header` method is available:
 
@@ -396,29 +354,19 @@ If you wish to pack a packet without the header, the :meth:`.Packet.pack_without
 
     packet = CatPicturesRequest(fur_type=FurType.MediumHaired)
 
-    data = packet.pack_without_header()
-    print("Raw data:", data)
+    assert packet.pack_without_header() == b"\x02"
 
-Calling ``packet.pack_without_header()`` should just give us the normal packet data of ``b"\x02"``:
-
-.. testoutput::
-
-    Raw data: b'\x02'
+Calling ``packet.pack_without_header()`` should just give us the normal packet data of ``b"\x02"``.
 
 The behavior of :meth:`.Packet.unpack` however remains unchanged, just unpacking the normal packet data, **not** the header data. This is because the header usually contains the knowledge needed to know how much data to unpack or even what packet should be unpacked in the first place. For unpacking the packet header, you can just unpack it like a normal packet:
 
 .. testcode::
 
-    header_data = b"\x01\x00\x00\x00"
+    header_data = b"\x01"
 
-    header = FelinePacket.Header.unpack(header_data)
-    print("Header:", header)
+    assert FelinePacket.Header.unpack(header_data) == FelinePacket.Header(size=1)
 
-This should give us a header with its ``size`` field set to ``1``:
-
-.. testoutput::
-
-    Header: FelinePacket.Header(size=1)
+The header data ``b"\x01"`` should give us a header with its ``size`` field set to ``1``.
 
 ----
 

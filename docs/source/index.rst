@@ -31,19 +31,18 @@ An example of simple usage:
     # Unpack a packet from the raw data.
     packet = MyPacket.unpack(raw_data)
 
-    print("Packet:", packet)
+    # Each field will have the appropriate value unpacked from the raw data.
+    assert packet == MyPacket(
+        byte   = 0,
+        string = "abcd",
+        array  = [1, 2],
+    )
 
     # Pack the packet into raw data.
     packet_data = packet.pack()
 
-    print("Packet data:", packet_data)
-
-Output:
-
-.. testoutput::
-
-    Packet: MyPacket(byte=0, string='abcd', array=[1, 2])
-    Packet data: b'\x00\x04abcd\x01\x00\x02\x00'
+    # The packed data will be the same as the initial raw data.
+    assert packet_data == raw_data
 
 Features
 ********

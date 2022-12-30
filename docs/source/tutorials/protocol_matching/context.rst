@@ -93,13 +93,8 @@ But how do we pass this information to our ``String`` type? This is where :class
 
     type_ctx = pak.Type.Context(ctx=packet_ctx)
 
-    print("Version through type_ctx:", type_ctx.version)
-
-The ``version`` attribute should propagate through ``type_ctx``:
-
-.. testoutput::
-
-    Version through type_ctx: 0
+    # The 'version' attribute should propagate through 'type_ctx'.
+    assert type_ctx.version == 0
 
 :class:`.Type.Context`\s can also be acquired through the :meth:`.Packet.type_ctx` method which will handle supplying the relevant :class:`.Packet` instance for you. Additionally, if you use a :class:`.Type` facility without supplying a :class:`.Type.Context`, a default-constructed :class:`.Type.Context` will be used, containing no real information.
 
@@ -165,7 +160,7 @@ We'll be able to access the ``version`` attribute through the ``ctx`` parameter,
             # Prefix the string data with its length data and return the result.
             return packed_length + data
 
-And that should be it; let's test it out:
+And that should be it; let's see it in action:
 
 .. testcode::
 
@@ -182,25 +177,10 @@ And that should be it; let's test it out:
     packet_version_0 = CatPicturesResponse.unpack(raw_data_version_0, ctx=ctx_version_0)
     packet_version_1 = CatPicturesResponse.unpack(raw_data_version_1, ctx=ctx_version_1)
 
-    print("Packet version 0:", packet_version_0)
-    print("Packet version 1:", packet_version_1)
+    assert packet_version_0 == packet_version_1 == CatPicturesResponse(cat_pictures=["Hello"])
 
-    # Print newline.
-    print()
-
-    print("Raw data version 0:", packet_version_0.pack(ctx=ctx_version_0))
-    print("Raw data version 1:", packet_version_1.pack(ctx=ctx_version_1))
-
-This will give the output:
-
-.. testoutput::
-
-    Packet version 0: CatPicturesResponse(cat_pictures=['Hello'])
-    Packet version 1: CatPicturesResponse(cat_pictures=['Hello'])
-
-    Raw data version 0: b'\x06\x05Hello'
-    Raw data version 1: b'\x07\x05\x00Hello'
-
+    assert packet_version_0.pack(ctx=ctx_version_0) == b"\x06\x05Hello"
+    assert packet_version_1.pack(ctx=ctx_version_1) == b"\x07\x05\x00Hello"
 
 So there we go, now we have a ``String`` type which packs and unpacks differently based on the version of our protocol.
 
@@ -253,7 +233,7 @@ Pretty simple, right? Let's put it to use now:
             # string data with it, and return the result.
             return StringDataLength.pack(data_length, ctx=ctx) + data
 
-We've now basically come back to our original ``String`` code, substituting :class:`.UInt8` for our ``StringDataLength`` type. Let's make sure it works as expected:
+We've now basically come back to our original ``String`` code, substituting :class:`.UInt8` for our ``StringDataLength`` type. It should work exactly the same as before:
 
 .. testcode::
     :hide:
@@ -272,24 +252,10 @@ We've now basically come back to our original ``String`` code, substituting :cla
     packet_version_0 = CatPicturesResponse.unpack(raw_data_version_0, ctx=ctx_version_0)
     packet_version_1 = CatPicturesResponse.unpack(raw_data_version_1, ctx=ctx_version_1)
 
-    print("Packet version 0:", packet_version_0)
-    print("Packet version 1:", packet_version_1)
+    assert packet_version_0 == packet_version_1 == CatPicturesResponse(cat_pictures=["Hello"])
 
-    # Print newline.
-    print()
-
-    print("Raw data version 0:", packet_version_0.pack(ctx=ctx_version_0))
-    print("Raw data version 1:", packet_version_1.pack(ctx=ctx_version_1))
-
-This should give us the same output as before:
-
-.. testoutput::
-
-    Packet version 0: CatPicturesResponse(cat_pictures=['Hello'])
-    Packet version 1: CatPicturesResponse(cat_pictures=['Hello'])
-
-    Raw data version 0: b'\x06\x05Hello'
-    Raw data version 1: b'\x07\x05\x00Hello'
+    assert packet_version_0.pack(ctx=ctx_version_0) == b"\x06\x05Hello"
+    assert packet_version_1.pack(ctx=ctx_version_1) == b"\x07\x05\x00Hello"
 
 We can actually at this point throw out all our custom ``String`` code and just use a :class:`.Type` provided by Pak: :class:`.PrefixedString`. We can simply do
 
@@ -308,14 +274,7 @@ This is where the concept of a "typelike" comes in. A typelike is an object that
 
 .. testcode::
 
-    converted = pak.Type(None)
-    print(converted is pak.EmptyType)
-
-This should give the following result:
-
-.. testoutput::
-
-    True
+    assert pak.Type(None) is pak.EmptyType
 
 ----
 
@@ -390,7 +349,7 @@ Well, when :class:`.Type`\s get called, the :meth:`.Type._call` classmethod gets
                 version_types = version_types
             )
 
-Let's test it out:
+We should now be able to use it like so:
 
 .. testcode::
 
@@ -408,24 +367,10 @@ Let's test it out:
     value_version_0 = StringDataLength.unpack(raw_data_version_0, ctx=ctx_version_0)
     value_version_1 = StringDataLength.unpack(raw_data_version_1, ctx=ctx_version_1)
 
-    print("Value version 0:", value_version_0)
-    print("Value version 1:", value_version_1)
+    assert value_version_0 == value_version_1 == 2
 
-    # Print newline.
-    print()
-
-    print("Raw data version 0:", StringDataLength.pack(2, ctx=ctx_version_0))
-    print("Raw data version 1:", StringDataLength.pack(2, ctx=ctx_version_1))
-
-If we did everything right, we should get this:
-
-.. testoutput::
-
-    Value version 0: 2
-    Value version 1: 2
-
-    Raw data version 0: b'\x02'
-    Raw data version 1: b'\x02\x00'
+    assert StringDataLength.pack(2, ctx=ctx_version_0) == raw_data_version_0
+    assert StringDataLength.pack(2, ctx=ctx_version_1) == raw_data_version_1
 
 And that's great, but we still haven't gotten to the API we set out for. To get there, we'll need to make :class:`dict`\s into typelikes that convert into a ``VersionedType``. To do this, we can use :meth:`.Type.register_typelike`, passing it the class of objects we want to be typelike (:class:`dict`), and a callable that will convert a :class:`dict` into a ``VersionedType``. Luckily, we just turned ``VersionedType`` into just that::
 

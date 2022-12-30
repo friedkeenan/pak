@@ -121,13 +121,9 @@ Thus, in our new ``CatPicturesRequest`` definition, the ``fur_type`` field will 
     raw_data = b"\x01"
 
     packet = CatPicturesRequest.unpack(raw_data)
-    print(packet)
+    assert packet == CatPicturesRequest(fur_type=FurType.ShortHaired)
 
-This should have the following output:
-
-.. testoutput::
-
-    CatPicturesRequest(fur_type=<FurType.ShortHaired: 1>)
+Here, the raw data of ``b"\x01"`` is unpacked according to :class:`.UInt8`, and then the resulting value of ``1`` is converted to a ``FurType`` value, in this case ``FurType.ShortHaired``.
 
 So now with our new definition of ``CatPicturesRequest``, we can rewrite our serverside handling code::
 
