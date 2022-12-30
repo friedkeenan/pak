@@ -342,48 +342,32 @@ class AsyncPacketHandler(PacketHandler):
     but it has extra facilities for asynchronously handling :class:`.Packet`\s.
     """
 
+    class _TaskGroup:
+        def __init__(self, handler):
+            self.handler = handler
+
+        def create_task(self, coroutine):
+            async def coroutine_wrapper():
+                try:
+                    await coroutine
+
+                finally:
+                    # 'wrapper_task' is defined later, and has to be
+                    # since it's the task for this coroutine function.
+                    self.handler._listener_tasks.remove(wrapper_task)
+
+            wrapper_task = asyncio.create_task(coroutine_wrapper())
+            self.handler._listener_tasks.append(wrapper_task)
+
+            return wrapper_task
+
     def __init__(self):
         self._listener_tasks = []
 
         super().__init__()
 
-    def create_listener_task(self, coroutine):
-        """Creates an asynchronous task for a :class:`.Packet` listener.
-
-        This method should be called when creating tasks for :class:`.Packet`
-        listeners, and :meth:`end_listener_tasks` called when **all** listening
-        should end.
-
-        Tasks should only be created in a :meth:`listener_task_context` managed
-        context.
-
-        Parameters
-        ----------
-        coroutine : coroutine object
-            The coroutine to create the task for.
-
-        Returns
-        -------
-        :class:`asyncio.Task`
-            The created task.
-        """
-
-        async def coroutine_wrapper():
-            try:
-                await coroutine
-
-            finally:
-                # 'wrapper_task' is defined later, and has to be
-                # since it's the task for this coroutine function.
-                self._listener_tasks.remove(wrapper_task)
-
-        wrapper_task = asyncio.create_task(coroutine_wrapper())
-        self._listener_tasks.append(wrapper_task)
-
-        return wrapper_task
-
     async def end_listener_tasks(self, *, timeout=1):
-        """Ends any outstanding listener tasks created with :meth:`create_listener_task`.
+        """Ends any outstanding listener tasks created with :meth:`listener_task_group`.
 
         Parameters
         ----------
@@ -401,8 +385,29 @@ class AsyncPacketHandler(PacketHandler):
             pass
 
     @asynccontextmanager
-    async def listener_task_context(self, *, listen_sequentially):
-        """A context manager in which listener tasks should be created.
+    async def listener_task_group(self, *, listen_sequentially):
+        """Creates an asynchronous context manager in which listener tasks should be created.
+
+        The manager has a ``create_task`` method that takes a coroutine, like so::
+
+            handler = pak.AsyncPacketHandler()
+            packet  = ...
+
+            async with handler.listener_task_group(listen_sequentially=False) as group:
+                for listener in handler.listeners_for_packet(packet):
+                    group.create_task(packet)
+
+            await handler.end_listener_tasks()
+
+        .. note::
+
+            This interface is similar to the :class:`asyncio.TaskGroup` class in
+            Python 3.11+.
+
+        .. warning::
+
+            The :meth:`end_listener_tasks` method should be called
+            when **all** listening should end.
 
         Parameters
         ----------
@@ -432,9 +437,9 @@ class AsyncPacketHandler(PacketHandler):
         >>> async def main():
         ...     handler = ExampleHandler()
         ...     packet  = pak.Packet()
-        ...     async with handler.listener_task_context(listen_sequentially=False):
+        ...     async with handler.listener_task_group(listen_sequentially=False) as group:
         ...         for listener in handler.listeners_for_packet(packet):
-        ...             handler.create_listener_task(listener(packet))
+        ...             group.create_task(listener(packet))
         ...
         ...     await handler.end_listener_tasks(timeout=2)
         ...
@@ -447,7 +452,7 @@ class AsyncPacketHandler(PacketHandler):
         # become problematic if it becomes more common throughout our tests.
 
         try:
-            yield
+            yield self._TaskGroup(self)
         finally:
             if listen_sequentially:
                 # Awaiting all tasks will clear '_listener_tasks'.

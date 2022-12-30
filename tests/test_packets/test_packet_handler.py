@@ -166,15 +166,6 @@ def test_most_derived_packet_listener_copies():
     # interface that ultimately depends on the alphabetical order of the listeners.
     assert {listener() for listener in derived_listeners} == {GeneralPacket, DerivedPacket}
 
-def test_async_register():
-    handler = pak.AsyncPacketHandler()
-
-    async def async_listener(packet):
-        pass
-
-    handler.register_packet_listener(async_listener, pak.Packet)
-    assert handler.is_listener_registered(async_listener)
-
 @pytest.mark.asyncio
 async def test_async_listener_tasks():
     handler = pak.AsyncPacketHandler()
@@ -184,9 +175,9 @@ async def test_async_listener_tasks():
             await pak.util.yield_exec()
 
     handler.register_packet_listener(unending_listener, pak.Packet)
-    async with handler.listener_task_context(listen_sequentially=False):
+    async with handler.listener_task_group(listen_sequentially=False) as group:
         for listener in handler.listeners_for_packet(pak.Packet()):
-            unending_listener_task = handler.create_listener_task(listener())
+            unending_listener_task = group.create_task(listener())
 
     assert not unending_listener_task.done()
 
@@ -207,9 +198,9 @@ async def test_async_listener_tasks_sequential():
         await pak.util.yield_exec()
 
     handler.register_packet_listener(yielding_listener, pak.Packet)
-    async with handler.listener_task_context(listen_sequentially=True):
+    async with handler.listener_task_group(listen_sequentially=True) as group:
         for listener in handler.listeners_for_packet(pak.Packet()):
-            yielding_listener_task = handler.create_listener_task(listener())
+            yielding_listener_task = group.create_task(listener())
 
     assert yielding_listener_task.done()
     assert not yielding_listener_task.cancelled()
