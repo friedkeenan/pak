@@ -316,7 +316,7 @@ class Connection(abc.ABC):
 
             In your implementation, writes should be atomic.
 
-            It is thus recommended to only write once.
+            It is thus recommended to only write data in one fell swoop.
 
         .. seealso::
 

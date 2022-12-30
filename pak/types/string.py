@@ -165,6 +165,14 @@ class TerminatedString(Type):
 
         return value.encode(cls.encoding, errors=cls.errors)
 
+    # NOTE: There could be potential optimizations we could make
+    # for when terminated strings are used in an array, namely
+    # for unsized arrays, where we could read the whole buffer,
+    # decode it, and then split the string on the terminator.
+    #
+    # I would want measurements to ensure that it would actually
+    # be an optimization though.
+
     @classmethod
     def _call(cls, *, encoding=None, terminator=None, errors=None):
         if encoding is None:

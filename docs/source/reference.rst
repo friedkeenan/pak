@@ -1,5 +1,7 @@
-Reference
-=========
+Reference Manual
+================
+
+This document details functions, classes, and variables included in Pak, describing their functionality. To learn how to use Pak, see :doc:`tutorials`.
 
 .. currentmodule:: pak
 
@@ -12,6 +14,8 @@ Packets
     ~packets.aligned_packet
     ~packets.packet
     ~packets.packet_handler
+
+.. _reference-types:
 
 Types
 #####
@@ -45,6 +49,7 @@ Utilities
     :toctree: reference
     :nosignatures:
 
+    ~util.aio
     ~util.bits
     ~util.decorators
     ~util.exceptions

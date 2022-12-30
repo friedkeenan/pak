@@ -203,6 +203,18 @@ class Packet:
             ``__eq__`` implementation, then a :exc:`TypeError` is raised as well.
         """
 
+        # NOTE: It may be beneficial to allow the user to specify
+        # a certain mode for handling unspecified contexts. The default
+        # could be that a context is not necessary to specify, and
+        # another could be that if a context is not specified, an error
+        # is raised. The former would retain the ease of use with not
+        # needing to specify a context all the time, and the latter would
+        # allow more complex projects to verify their correctness (that
+        # they forward contexts properly) more easily. Before doing this
+        # however I would want to verify that it is indeed a severe enough
+        # problem, and think of the best API for it, which would require
+        # users who are not me to chime in.
+
         def __init__(self):
             self._mutable_flag = True
 
@@ -234,6 +246,10 @@ class Packet:
     #
     # This dummy class is defined here to have the
     # docs properly ordered.
+    #
+    # 'Packet.Header' needs to be defined after
+    # 'Packet' because 'Packet.Header' inherits
+    # from it.
     class Header:
         pass
 
@@ -322,6 +338,13 @@ class Packet:
         # We delete the 'id' attribute primarily to
         # stop the classmethod from appearing in
         # autodoc'ed subclasses.
+        #
+        # We could use a metaclass and just look in
+        # the supplied namespace to see if the ID was
+        # set in the class definition and then just
+        # never pass that on when we really construct
+        # the type, but I feel that this is the cleaner
+        # option.
 
         id = cls.id
 
