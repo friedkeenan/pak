@@ -67,7 +67,7 @@ Table of Contents
     reference
 
 
-Indices and tables
+Indices and Tables
 ******************
 
 - :ref:`genindex`
