@@ -84,7 +84,7 @@ The impetus for creating this library was that I was making a library for the Mi
 - Be easily extendable to account for all the quirks a particular protocol might have.
 - Be a venue for me to learn about API design and project maintenance.
 
-In particular Pak's goals do not contain performance. I have not benchmarked the library, and I don't currently intend to go through and make sure all code is optimized, though I of course make no effort to pessimize code either. I may in the future go through and improve the performance of particular features, but in general performance is not something in particular that I strive for.
+In particular Pak's goals do not include performance. I have not benchmarked the library, and I don't currently intend to go through and make sure all code is optimized, though I of course make no conscious effort to pessimize code either. I may in the future go through and improve the performance of particular features, but in general performance is not something in particular that I strive for.
 
 ## Credits
 
