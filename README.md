@@ -90,5 +90,5 @@ In particular Pak's goals do not include performance. I have not benchmarked the
 
 - [ammaraskar/pyCraft](https://github.com/ammaraskar/pyCraft) for my initial inspiration to embark on creating this library and its API, even though it did not result in much resemblance.
 - [ManimCommunity/manim](https://github.com/ManimCommunity/manim/) for giving me experience in writing tests and docs and maintaining a serious project.
-- [The beginner guide from Write the Docs](https://www.writethedocs.org/guide/writing/beginners-guide-to-docs/) for an excellent walkthrough of good documentation practices.
+- [The beginner's guide from Write the Docs](https://www.writethedocs.org/guide/writing/beginners-guide-to-docs/) for an excellent walkthrough of good documentation practices.
 - The various protocols I stress-tested Pak with to ensure that it is sufficiently generic and easy to use with a wide range of formats. These protocols include but are not limited to [Minecraft](https://www.minecraft.net/), [Transformice](https://www.transformice.com/), and [Super Mario Odyssey Online](https://github.com/CraftyBoss/SuperMarioOdysseyOnline).
