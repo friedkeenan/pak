@@ -204,3 +204,55 @@ async def test_async_listener_tasks_sequential():
 
     assert yielding_listener_task.done()
     assert not yielding_listener_task.cancelled()
+
+@pytest.mark.asyncio
+async def test_async_listener_tasks_sequential_independent():
+    # NOTE: Unfortunately if this test fails, it will just
+    # loop infinitely. I'm sorry. The only other way to test
+    # this would be to access the private '_listener_tasks'
+    # attribute and make sure it's empty when listening
+    # sequentially. That seemed worse than this.
+
+    handler = pak.AsyncPacketHandler()
+
+    async def non_sequential_listener():
+        while True:
+            await pak.util.yield_exec()
+
+    class NonSequentialPacket(pak.Packet):
+        pass
+
+    handler.register_packet_listener(non_sequential_listener, NonSequentialPacket)
+
+    async def sequential_listener():
+        await pak.util.yield_exec()
+
+    class SequentialPacket(pak.Packet):
+        pass
+
+    handler.register_packet_listener(sequential_listener, SequentialPacket)
+
+    async with handler.listener_task_group(listen_sequentially=False) as group:
+        for listener in handler.listeners_for_packet(NonSequentialPacket()):
+            non_sequential_task = group.create_task(listener())
+
+    async with handler.listener_task_group(listen_sequentially=True) as group:
+        for listener in handler.listeners_for_packet(SequentialPacket()):
+            sequential_task = group.create_task(listener())
+
+    assert sequential_task.done()
+    assert not sequential_task.cancelled()
+
+    # Even though the sequentially-listened task is done,
+    # the non-sequentially-listened one is not, because
+    # the sequential group had an independent list of tasks.
+    assert not non_sequential_task.done()
+
+    try:
+        await asyncio.wait_for(handler.end_listener_tasks(timeout=0), timeout=1)
+
+    except asyncio.TimeoutError:
+        # This should never happen since the listener tasks should be canceled.
+        assert False
+
+    assert non_sequential_task.done()

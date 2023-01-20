@@ -3,7 +3,6 @@ r"""Tools for handling :class:`.Packet`\s."""
 import asyncio
 import inspect
 import types
-from contextlib import asynccontextmanager
 
 __all__ = [
     "packet_listener",
@@ -343,10 +342,31 @@ class AsyncPacketHandler(PacketHandler):
     """
 
     class _TaskGroup:
-        def __init__(self, handler):
-            self.handler = handler
+        def __init__(self, handler, listen_sequentially):
+            self.handler             = handler
+            self.listen_sequentially = listen_sequentially
+
+            # If we're listening sequentially, use our own
+            # list of tasks to await separately from the
+            # rest of the handler's tasks.
+            #
+            # This avoids an issue where if a listener task
+            # itself listens sequentially to a packet, the
+            # program will lock up because when leaving the
+            # context manager, it will try to await its own
+            # parent task.
+            if listen_sequentially:
+                self.listener_tasks = []
+            else:
+                self.listener_tasks = handler._listener_tasks
 
         def create_task(self, coroutine):
+            if self.listen_sequentially:
+                task = asyncio.create_task(coroutine)
+                self.listener_tasks.append(task)
+
+                return task
+
             async def coroutine_wrapper():
                 try:
                     await coroutine
@@ -354,12 +374,19 @@ class AsyncPacketHandler(PacketHandler):
                 finally:
                     # 'wrapper_task' is defined later, and has to be
                     # since it's the task for this coroutine function.
-                    self.handler._listener_tasks.remove(wrapper_task)
+                    self.listener_tasks.remove(wrapper_task)
 
             wrapper_task = asyncio.create_task(coroutine_wrapper())
-            self.handler._listener_tasks.append(wrapper_task)
+            self.listener_tasks.append(wrapper_task)
 
             return wrapper_task
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc_value, exc_tb):
+            if self.listen_sequentially:
+                await asyncio.gather(*self.listener_tasks)
 
     def __init__(self):
         self._listener_tasks = []
@@ -384,8 +411,7 @@ class AsyncPacketHandler(PacketHandler):
             # tasks are also canceled.
             pass
 
-    @asynccontextmanager
-    async def listener_task_group(self, *, listen_sequentially):
+    def listener_task_group(self, *, listen_sequentially):
         """Creates an asynchronous context manager in which listener tasks should be created.
 
         The manager has a ``create_task`` method that takes a coroutine, like so::
@@ -451,9 +477,4 @@ class AsyncPacketHandler(PacketHandler):
         # NOTE: In the above docstring, the example sleeping for 1 second may
         # become problematic if it becomes more common throughout our tests.
 
-        try:
-            yield self._TaskGroup(self)
-        finally:
-            if listen_sequentially:
-                # Awaiting all tasks will clear '_listener_tasks'.
-                await asyncio.gather(*self._listener_tasks)
+        return self._TaskGroup(self, listen_sequentially)
