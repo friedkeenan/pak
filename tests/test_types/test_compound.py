@@ -21,6 +21,9 @@ def test_static_compound():
 
     obj = TestStaticCompound.unpack(b"\x00\x00\x00aa\x00")
 
+    # The value type has equality with its own type.
+    assert obj == obj
+
     # The value type has equality with tuples.
     assert obj == (0, 0, "aa")
 
@@ -28,6 +31,16 @@ def test_static_compound():
     assert obj.first  == 0
     assert obj.second == 0
     assert obj.third  == "aa"
+
+    # The value type is an iterable.
+    # NOTE: We use 'tuple' here to
+    # make sure that it's an iterable
+    # with the appropriate values.
+    assert tuple(obj) == (0, 0, "aa")
+
+    # The object is mutable.
+    obj.third = "bb"
+    obj == (0, 0, "bb")
 
     class TestAttrSet(pak.Packet):
         compound: TestStaticCompound

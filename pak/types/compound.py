@@ -1,6 +1,6 @@
 r""":class:`.Type`\s for combining :class:`.Type`\s."""
 
-from collections import namedtuple
+import dataclasses
 
 from .. import util
 from .type import Type
@@ -14,10 +14,10 @@ class Compound(Type):
     r"""A :class:`.Type` comprised of other :class:`.Type`\s.
 
     The value type of a :class:`Compound` is a
-    :func:`collections.namedtuple`. Setting the
-    value to a :class:`tuple` (or other iterable)
-    will convert the value to the value type of
-    the :class:`Compound`.
+    dataclass (from the :mod:`dataclasses` module).
+    Setting the value to a :class:`tuple` (or other
+    iterable) will convert the value to the value
+    type of the :class:`Compound`.
 
     Parameters
     ----------
@@ -36,12 +36,25 @@ class Compound(Type):
     elems      = None
     value_type = None
 
+    class _ValueBase:
+        # This class is used to allow facilities
+        # similar to 'namedtuple'.
+
+        def __eq__(self, other):
+            if isinstance(other, type(self)):
+                other = dataclasses.astuple(other)
+
+            return dataclasses.astuple(self) == other
+
+        def __iter__(self):
+            yield from dataclasses.astuple(self)
+
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
         if cls.elems is not None:
-            cls.value_type = namedtuple(cls.__qualname__, cls.elems.keys())
+            cls.value_type = dataclasses.make_dataclass(cls.__qualname__, cls.elems.keys(), bases=(cls._ValueBase,), eq=False)
 
     @classmethod
     def types(cls):
