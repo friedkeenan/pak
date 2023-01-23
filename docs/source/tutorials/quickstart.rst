@@ -72,6 +72,8 @@ You can add additional fields by adding more annotations:
 
 With this we have a second field in ``MyPacket`` creatively named ``new_field``. This field will correspond to raw data directly after the raw data of the first field. So then we unpack the raw data ``b"\x01\x02"`` and assert that the resulting packet's fields have the expected values.
 
+----
+
 It is also possible to mutate :class:`.Packet` objects:
 
 .. testcode::
@@ -86,6 +88,27 @@ It is also possible to mutate :class:`.Packet` objects:
     assert packet.pack() == b"\x02"
 
 Here we create ``packet`` with ``field`` initially set to ``1``. We then set ``packet.field`` to ``2`` and pack ``packet`` into raw data, getting ``b"\x02"``.
+
+If it's undesirable for you to have a mutable :class:`.Packet`, then you can make it immutable using the :meth:`.Packet.make_immutable` method:
+
+.. testcode::
+
+    class MyPacket(pak.Packet):
+        field: pak.Int8
+
+    packet = MyPacket(field=1)
+
+    packet.make_immutable()
+
+    packet.field = 2
+
+Since we made ``packet`` immutable, this will raise an error on the last line:
+
+.. testoutput::
+
+    Traceback (most recent call last):
+    ...
+    AttributeError: This 'MyPacket' instance has been made immutable
 
 Field Types
 ***********

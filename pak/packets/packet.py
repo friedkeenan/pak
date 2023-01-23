@@ -216,10 +216,10 @@ class Packet:
         # users who are not me to chime in.
 
         def __init__(self):
-            self._mutable_flag = True
+            self._immutable_flag = True
 
         def __setattr__(self, attr, value):
-            if hasattr(self, "_mutable_flag"):
+            if hasattr(self, "_immutable_flag"):
                 raise TypeError(f"'{type(self).__qualname__}' is immutable")
 
             super().__setattr__(attr, value)
@@ -614,8 +614,67 @@ class Packet:
 
         return packed_header + self.pack_without_header(ctx=ctx)
 
+    def make_immutable(self):
+        """Makes the :class:`Packet` immutable.
+
+        This may be useful for situations where e.g. you pass
+        the same :class:`Packet` instance to several functions
+        and want to make sure that those functions don't change
+        the fields of the :class:`Packet` for the other functions
+        being passed the instance. For example if you had::
+
+            import pak
+
+            class MyPacket(pak.Packet):
+                field: pak.Int8
+
+            def foo(packet):
+                packet.field = 2
+
+            def bar(packet):
+                assert packet.field == 1
+
+            p = MyPacket(field=1)
+
+            foo(p)
+            bar(p)
+
+        Then the assert within ``bar`` would fail, since ``foo``
+        changed ``p.field`` to ``2``. If ``p`` is made immutable
+        however, an error will be raised in ``foo``, preventing
+        any hard-to-track-down errors.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class MyPacket(pak.Packet):
+        ...     field: pak.Int8
+        ...
+        >>> p = MyPacket(field=1)
+        >>> p.field = 2
+        >>> p
+        MyPacket(field=2)
+        >>> p.make_immutable()
+        >>> p.field = 3
+        Traceback (most recent call last):
+        ...
+        AttributeError: This 'MyPacket' instance has been made immutable
+        """
+
+        self._immutable_flag = True
+
+    def __setattr__(self, attr, value):
+        if hasattr(self, "_immutable_flag"):
+            raise AttributeError(f"This '{type(self).__qualname__}' instance has been made immutable")
+
+        super().__setattr__(attr, value)
+
     def copy(self):
-        """Copies the :class:`Packet`.
+        """Makes a mutable copy of the :class:`Packet`.
+
+        .. seealso::
+
+            :meth:`immutable_copy`
 
         Returns
         -------
@@ -643,9 +702,73 @@ class Packet:
         True
         >>> copy.custom_attr
         'custom'
+        >>>
+        >>> # The copy can be mutated:
+        >>> copy.field = 3
+        >>> copy
+        MyPacket(field=3)
         """
 
-        return copy.deepcopy(self)
+        copied = copy.deepcopy(self)
+
+        try:
+            # Try to remove the mutable flag.
+            del copied._immutable_flag
+
+        except AttributeError:
+            # If that fails, we were already mutable.
+            pass
+
+        return copied
+
+    def immutable_copy(self):
+        """Makes an immutable copy of the :class:`Packet`.
+
+        .. seealso::
+
+            :meth:`copy`
+
+        Returns
+        -------
+        :class:`Packet`
+            The copied, immutable :class:`Packet`.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class MyPacket(pak.Packet):
+        ...     field: pak.Int8
+        ...
+        >>> orig = MyPacket(field=1)
+        >>> copy = orig.immutable_copy()
+        >>> copy == orig
+        True
+        >>> copy is not orig
+        True
+        >>>
+        >>> # Attributes that aren't fields will also be copied:
+        >>> orig = MyPacket(field=2)
+        >>> orig.custom_attr = "custom"
+        >>> copy = orig.immutable_copy()
+        >>> copy == orig
+        True
+        >>> copy is not orig
+        True
+        >>> copy.custom_attr
+        'custom'
+        >>>
+        >>> # You cannot modify the copy:
+        >>> copy.field = 3
+        Traceback (most recent call last):
+        ...
+        AttributeError: This 'MyPacket' instance has been made immutable
+        """
+
+        copied = copy.deepcopy(self)
+
+        copied.make_immutable()
+
+        return copied
 
     def type_ctx(self, ctx):
         """Converts a :class:`Packet.Context` to a :class:`.Type.Context`.
@@ -978,7 +1101,7 @@ class Packet:
             zip(self.field_values(), other.field_values())
         )
 
-    # NOTE: We do not implement '__hash__' since Packets are not immutable.
+    # NOTE: We do not implement '__hash__' since Packets are not immutable by default.
     # Technically mutability is contextual and not a fact of a type.
     # However, making Packets hashable would just not line up with proper
     # semantics in any genuine use case that requires 'Packet' itself to be hashable.
