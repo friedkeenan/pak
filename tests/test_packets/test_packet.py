@@ -264,6 +264,15 @@ def test_packet_equality():
     assert FooBarPacket(foo=0, bar=0) == UnrelatedFooBarPacket(foo=0, bar=0)
     assert FooBarPacket(foo=0, bar=0) != UnrelatedFooBarPacket(foo=0, bar=1)
 
+def test_packet_copy_from_immutable():
+    orig = pak.Packet()
+    orig.make_immutable()
+
+    copy = orig.copy()
+
+    # We can mutate the copy even though the original was immutable.
+    copy.foo = 1
+
 def test_header():
     class Test(pak.Packet):
         class Header(pak.Packet.Header):
