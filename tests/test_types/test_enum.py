@@ -16,6 +16,7 @@ def test_static_enum():
         (EnumRaw.B, b"\x02"),
 
         static_size = 1,
+        alignment   = 1,
         default     = EnumRaw.A,
     )
 
@@ -36,8 +37,21 @@ def test_dynamic_enum():
         (EnumRaw.B, b"\x02"),
 
         static_size = None,
+        alignment   = None,
         default     = EnumRaw.A,
     )
 
     with pytest.raises(ValueError, match="invalid value"):
         EnumDynamic.size(pak.Enum.INVALID)
+
+test_enum_or = pak.test.type_behavior_func(
+    pak.EnumOr(pak.Int8, EnumRaw),
+
+    (EnumRaw.A, b"\x01"),
+    (EnumRaw.B, b"\x02"),
+    (3,         b"\x03"),
+
+    static_size = 1,
+    alignment   = 1,
+    default     = EnumRaw.A,
+)
