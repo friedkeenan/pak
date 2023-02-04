@@ -15,11 +15,14 @@ def test_static_compound():
 
         ((1, 2, "hi"), b"\x01\x02\x00hi\x00"),
 
+        (dict(first=1, second=2, third="hi"), b"\x01\x02\x00hi\x00"),
+
         static_size = 6,
         default     = (0, 0, ""),
     )
 
     obj = TestStaticCompound.unpack(b"\x00\x00\x00aa\x00")
+    assert isinstance(obj, TestStaticCompound.value_type)
 
     # The value type has equality with its own type.
     assert obj == obj
@@ -45,7 +48,17 @@ def test_static_compound():
     class TestAttrSet(pak.Packet):
         compound: TestStaticCompound
 
+    # Iterables get converted to the value type.
     assert isinstance(TestAttrSet(compound=(0, 0, "aa")).compound, TestStaticCompound.value_type)
+
+    # Mappings get converted to the value type.
+    assert isinstance(TestAttrSet(compound=dict(first=1, second=2, third="aa")).compound, TestStaticCompound.value_type)
+
+    with pytest.raises(TypeError, match="unexpected keyword argument"):
+        TestAttrSet(compound=dict(first=1, second=2, third="aa", fourth="bb"))
+
+    with pytest.raises(TypeError, match="required positional argument"):
+        TestAttrSet(compound=dict(first=1, third="aa"))
 
 def test_dynamic_compound():
     TestDynamicCompound = pak.Compound(

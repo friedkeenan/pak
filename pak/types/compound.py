@@ -1,5 +1,6 @@
 r""":class:`.Type`\s for combining :class:`.Type`\s."""
 
+import collections
 import dataclasses
 
 from .. import util
@@ -41,6 +42,9 @@ class Compound(Type):
         # similar to 'namedtuple'.
 
         def __eq__(self, other):
+            if isinstance(other, collections.abc.Mapping):
+                return dataclasses.asdict(self) == other
+
             if isinstance(other, type(self)):
                 other = dataclasses.astuple(other)
 
@@ -69,7 +73,9 @@ class Compound(Type):
         return cls.elems.values()
 
     def __set__(self, instance, value):
-        if not isinstance(value, self.value_type):
+        if isinstance(value, collections.abc.Mapping):
+            value = self.value_type(**value)
+        elif not isinstance(value, self.value_type):
             value = self.value_type(*value)
 
         super().__set__(instance, value)
@@ -93,6 +99,9 @@ class Compound(Type):
 
     @classmethod
     def _pack(cls, value, *, ctx):
+        if isinstance(value, collections.abc.Mapping):
+            value = cls.value_type(**value)
+
         return b"".join(
             t.pack(v, ctx=ctx) for v, t in zip(value, cls.types())
         )
