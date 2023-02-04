@@ -216,3 +216,38 @@ test_uleb128 = pak.test.type_behavior_func(
     static_size = None,
     default     = 0,
 )
+
+test_scaled_integer_static = pak.test.type_behavior_func(
+    pak.ScaledInteger(pak.Int8, 2),
+
+    (-0.5, b"\xFF"),
+    (-1.0, b"\xFE"),
+    (-1.5, b"\xFD"),
+
+    (0.0, b"\x00"),
+
+    (0.5, b"\x01"),
+    (1.0, b"\x02"),
+    (1.5, b"\x03"),
+
+    static_size = 1,
+    alignment   = 1,
+    default     = 0.0,
+)
+
+test_scaled_integer_dynamic = pak.test.type_behavior_func(
+    pak.ScaledInteger(pak.LEB128, 2),
+
+    (-0.5, b"\x7F"),
+    (-1.0, b"\x7E"),
+    (-1.5, b"\x7D"),
+
+    (0.0, b"\x00"),
+
+    (0.5, b"\x01"),
+    (1.0, b"\x02"),
+    (1.5, b"\x03"),
+
+    static_size = None,
+    default     = 0.0,
+)

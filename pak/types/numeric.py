@@ -18,6 +18,7 @@ __all__ = [
     "Float64",
     "LEB128",
     "ULEB128",
+    "ScaledInteger",
 ]
 
 class Bool(StructType):
@@ -109,7 +110,7 @@ class UInt64(StructType):
     fmt = "Q"
 
 class Float32(StructType):
-    """A 32-bit floating point value"""
+    """A 32-bit floating point value."""
 
     _alignment = 4
     _default   = 0.0
@@ -117,7 +118,7 @@ class Float32(StructType):
     fmt = "f"
 
 class Float64(StructType):
-    """A 64-bit floating point value"""
+    """A 64-bit floating point value."""
 
     _alignment = 8
     _default   = 0.0
@@ -214,3 +215,61 @@ class ULEB128(Type):
 
             if value == 0:
                 return data
+
+class ScaledInteger(Type):
+    r"""A floating-point value derived from scaling an integer.
+
+    Parameters
+    ----------
+    elem_type : typelike
+        The underlying integer :class:`.Type`.
+    divisor : :class:`int` or :class:`float`
+        The divisor to use for scaling the underlying integer.
+
+    Examples
+    --------
+    >>> import pak
+    >>> # Make a 'ScaledInteger' that will divide the
+    >>> # underlying 'Int8' value by '2'.
+    >>> Scaled = pak.ScaledInteger(pak.Int8, 2)
+    >>> Scaled.unpack(b"\x01") # Underlying value of '1'.
+    0.5
+    >>> Scaled.pack(0.5)
+    b'\x01'
+    """
+
+    elem_type = None
+    divisor   = None
+
+    @classmethod
+    def _size(cls, value, *, ctx):
+        if value is cls.STATIC_SIZE:
+            return cls.elem_type.size(ctx=ctx)
+
+        return cls.elem_type.size(int(value * cls.divisor), ctx=ctx)
+
+    @classmethod
+    def _alignment(cls, *, ctx):
+        return cls.elem_type.alignment(ctx=ctx)
+
+    @classmethod
+    def _default(cls, *, ctx):
+        return cls.elem_type.default(ctx=ctx) / cls.divisor
+
+    @classmethod
+    def _unpack(cls, buf, *, ctx):
+        return cls.elem_type.unpack(buf, ctx=ctx) / cls.divisor
+
+    @classmethod
+    def _pack(cls, value, *, ctx):
+        return cls.elem_type.pack(int(value * cls.divisor), ctx=ctx)
+
+    @classmethod
+    @Type.prepare_types
+    def _call(cls, elem_type: Type, divisor):
+        return cls.make_type(
+            f"{cls.__qualname__}({elem_type.__qualname__}, {divisor})",
+
+            elem_type = elem_type,
+            divisor   = divisor,
+        )
