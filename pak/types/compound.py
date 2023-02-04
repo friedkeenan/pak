@@ -18,7 +18,11 @@ class Compound(Type):
     dataclass (from the :mod:`dataclasses` module).
     Setting the value to a :class:`tuple` (or other
     iterable) will convert the value to the value
-    type of the :class:`Compound`.
+    type of the :class:`Compound`. Similarly, setting
+    the value to a :class:`dict` (or other mapping)
+    will convert the value to the value type of the
+    :class:`Compound`, using the keys as the attribute
+    names and the values as the attribute values.
 
     Parameters
     ----------
