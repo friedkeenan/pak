@@ -669,12 +669,17 @@ class Packet:
 
         super().__setattr__(attr, value)
 
-    def copy(self):
+    def copy(self, **new_attrs):
         """Makes a mutable copy of the :class:`Packet`.
 
         .. seealso::
 
             :meth:`immutable_copy`
+
+        Parameters
+        ----------
+        **new_attrs
+            The new attributes to set on the copy.
 
         Returns
         -------
@@ -707,6 +712,10 @@ class Packet:
         >>> copy.field = 3
         >>> copy
         MyPacket(field=3)
+        >>>
+        >>> # You can set new fields on the copy by passing keyword arguments:
+        >>> orig.copy(field=4)
+        MyPacket(field=4)
         """
 
         copied = copy.deepcopy(self)
@@ -719,14 +728,22 @@ class Packet:
             # If that fails, we were already mutable.
             pass
 
+        for name, value in new_attrs.items():
+            setattr(copied, name, value)
+
         return copied
 
-    def immutable_copy(self):
+    def immutable_copy(self, **new_attrs):
         """Makes an immutable copy of the :class:`Packet`.
 
         .. seealso::
 
             :meth:`copy`
+
+        Parameters
+        ----------
+        **new_attrs
+            The new attributes to set on the copy.
 
         Returns
         -------
@@ -762,9 +779,19 @@ class Packet:
         Traceback (most recent call last):
         ...
         AttributeError: This 'MyPacket' instance has been made immutable
+        >>>
+        >>> # You can however set fields that the immutable copy will have:
+        >>> copy = orig.immutable_copy(field=3)
+        >>> copy
+        MyPacket(field=3)
+        >>> # This copy is still immutable:
+        >>> copy.field = 4
+        Traceback (most recent call last):
+        ...
+        AttributeError: This 'MyPacket' instance has been made immutable
         """
 
-        copied = copy.deepcopy(self)
+        copied = self.copy(**new_attrs)
 
         copied.make_immutable()
 
