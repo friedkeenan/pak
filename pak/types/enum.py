@@ -135,6 +135,10 @@ class EnumOr(Type):
     The default value of the :class:`.Type` is the first
     member of the enum.
 
+    When assigning to fields of this :class:`.Type`, the
+    assigned value will be attempted to be converted to
+    the relevant :class:`enum.Enum`.
+
     Parameters
     ----------
     elem_type : typelike
@@ -163,19 +167,27 @@ class EnumOr(Type):
     b'\x03'
     >>> EnumOrType.unpack(b"\x03")
     3
+    >>>
+    >>> class MyPacket(pak.Packet):
+    ...     field: EnumOrType
+    ...
+    >>> p = MyPacket()
+    >>> p
+    MyPacket(field=<MyEnum.A: 1>)
+    >>>
+    >>> # Assigning '2' to the field will convert it to 'MyEnum.B':
+    >>> p.field = 2
+    >>> p
+    MyPacket(field=<MyEnum.B: 2>)
+    >>>
+    >>> # Assigning '3' to the field will not convert it to anything:
+    >>> p.field = 3
+    >>> p
+    MyPacket(field=3)
     """
 
     elem_type = None
     enum_type = None
-
-    # NOTE: We could add a '__set__' method to change
-    # raw values that are valid enum values into said
-    # enum values, but I feel like that could make user
-    # code potentially confusing, e.g. if the user sets
-    # a packet field to '1' and then later they check if
-    # it equals '1', then that would fail because it would
-    # actually be transformed into say 'MyEnum.One', and
-    # that transformation is not obvious to the user.
 
     @classmethod
     def _raw_value(cls, value):
@@ -183,6 +195,20 @@ class EnumOr(Type):
             return value.value
 
         return value
+
+    @classmethod
+    def _try_to_enum(cls, value):
+        try:
+            return cls.enum_type(value)
+
+        except ValueError:
+            return value
+
+    def __set__(self, instance, value):
+        if not isinstance(value, self.enum_type):
+            value = self._try_to_enum(value)
+
+        super().__set__(instance, value)
 
     @classmethod
     def _size(cls, value, *, ctx):
@@ -201,10 +227,7 @@ class EnumOr(Type):
     def _unpack(cls, buf, *, ctx):
         value = cls.elem_type.unpack(buf, ctx=ctx)
 
-        try:
-            return cls.enum_type(value)
-        except ValueError:
-            return value
+        return cls._try_to_enum(value)
 
     @classmethod
     def _pack(cls, value, *, ctx):
