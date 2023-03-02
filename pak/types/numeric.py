@@ -163,7 +163,7 @@ class LEB128(Type):
                 (value == 0 and (to_write & 0b01000000) == 0) or
 
                 # Value was negative and doesn't need need to write the sign bit.
-                (value == -1 and (to_write * 0b01000000) != 0)
+                (value == -1 and (to_write & 0b01000000) != 0)
             )
 
             if not last_byte:

@@ -198,6 +198,9 @@ test_leb128 = pak.test.type_behavior_func(
     (-2**13, b"\x80\x40"),
     (-2**69, b"\x80\x80\x80\x80\x80\x80\x80\x80\x80\x40"),
 
+    # This is a particular value that I ran into issues with in the wild.
+    (-9998, b"\xF2\xB1\x7F"),
+
     static_size = None,
     default     = 0,
 )
