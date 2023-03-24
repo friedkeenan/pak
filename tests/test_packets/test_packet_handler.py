@@ -191,11 +191,29 @@ async def test_async_listener_tasks():
     assert unending_listener_task.done()
 
 @pytest.mark.asyncio
+async def test_async_listener_nonsequential_tasks_forward_return():
+    handler = pak.AsyncPacketHandler()
+
+    async def returning_listener():
+        return 1
+
+    handler.register_packet_listener(returning_listener, pak.Packet)
+    async with handler.listener_task_group(listen_sequentially=False) as group:
+        for listener in handler.listeners_for_packet(pak.Packet()):
+            returning_listener_task = group.create_task(listener())
+
+    await handler.end_listener_tasks()
+
+    assert returning_listener_task.result() == 1
+
+@pytest.mark.asyncio
 async def test_async_listener_tasks_sequential():
     handler = pak.AsyncPacketHandler()
 
     async def yielding_listener():
         await pak.util.yield_exec()
+
+        return 1
 
     handler.register_packet_listener(yielding_listener, pak.Packet)
     async with handler.listener_task_group(listen_sequentially=True) as group:
@@ -204,6 +222,9 @@ async def test_async_listener_tasks_sequential():
 
     assert yielding_listener_task.done()
     assert not yielding_listener_task.cancelled()
+
+    # Make sure the return value is forwarded.
+    assert yielding_listener_task.result() == 1
 
 @pytest.mark.asyncio
 async def test_async_listener_tasks_sequential_independent():

@@ -369,7 +369,7 @@ class AsyncPacketHandler(PacketHandler):
 
             async def coroutine_wrapper():
                 try:
-                    await coroutine
+                    return await coroutine
 
                 finally:
                     # 'wrapper_task' is defined later, and has to be
