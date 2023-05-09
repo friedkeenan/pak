@@ -99,6 +99,46 @@ def test_reserved_field():
         class TestReservedField(pak.Packet):
             ctx: pak.Int8
 
+def test_user_reserved_field():
+    with pytest.raises(pak.ReservedFieldError, match="user_field"):
+        class UserPacket(pak.Packet):
+            RESERVED_FIELDS = ["user_field"]
+
+            user_field: pak.Int8
+
+    class UserPacket(pak.Packet):
+        RESERVED_FIELDS = ["user_field"]
+
+    with pytest.raises(pak.ReservedFieldError, match="user_field"):
+        class ChildPacket(UserPacket):
+            user_field: pak.Int8
+
+    with pytest.raises(pak.ReservedFieldError, match="ctx"):
+        class ChildPacket(UserPacket):
+            ctx: pak.Int8
+
+    class UnrelatedPacket(pak.Packet):
+        RESERVED_FIELDS = ["unrelated_field"]
+
+    with pytest.raises(pak.ReservedFieldError, match="unrelated_field"):
+        class ChildPacket(UserPacket, UnrelatedPacket):
+            unrelated_field: pak.Int8
+
+    with pytest.raises(pak.ReservedFieldError, match="user_field"):
+        class ChildPacket(UserPacket, UnrelatedPacket):
+            user_field: pak.Int8
+
+    with pytest.raises(pak.ReservedFieldError, match="ctx"):
+        class ChildPacket(UserPacket, UnrelatedPacket):
+            ctx: pak.Int8
+
+    # If two base packets reserve the same field, it's okay.
+    class DoubleUserPacket(pak.Packet):
+        RESERVED_FIELDS = ["user_field"]
+
+    class ChildPacket(UserPacket, DoubleUserPacket):
+        pass
+
 def test_typelike_attr():
     pak.Type.register_typelike(int, lambda x: pak.Int8)
 

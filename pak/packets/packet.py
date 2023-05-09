@@ -253,6 +253,17 @@ class Packet:
     class Header:
         pass
 
+    #: The reserved field names for :class:`Packet`.
+    #:
+    #: Subclasses are able to define their own
+    #: reserved field names, which will be
+    #: combined with the reserved field names
+    #: of their parent classes.
+    #:
+    #: If a :class:`Packet` defines a field whose
+    #: name is reserved by any of its parent
+    #: classes, then a :exc:`ReservedFieldError`
+    #: will be raised.
     RESERVED_FIELDS = [
         "ctx",
     ]
@@ -391,9 +402,12 @@ class Packet:
         annotations = util.annotations(cls)
 
         cls._fields = {}
+        reserved_fields = set(cls.RESERVED_FIELDS)
         for base in cls.mro()[1:]:
             if not issubclass(base, Packet):
                 continue
+
+            reserved_fields.update(base.RESERVED_FIELDS)
 
             for attr, attr_type in base.enumerate_field_types():
                 if attr in cls._fields:
@@ -402,7 +416,7 @@ class Packet:
                 cls._fields[attr] = attr_type
 
         for attr, attr_type in annotations.items():
-            if attr in cls.RESERVED_FIELDS:
+            if attr in reserved_fields:
                 raise ReservedFieldError(cls, attr)
 
             if attr in cls._fields:
