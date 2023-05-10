@@ -831,6 +831,34 @@ class Packet:
         return Type.Context(self, ctx=ctx)
 
     @classmethod
+    def has_field(cls, name):
+        """Gets whether the :class:`Packet` has a certain field.
+
+        Parameters
+        ----------
+        name : :class:`str`
+            The name of the field to check for.
+
+        Returns
+        -------
+        :class:`bool`
+            Whether the :class:`Packet` has a field with the specified name.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class MyPacket(pak.Packet):
+        ...     defined_field: pak.UInt8
+        ...
+        >>> MyPacket.has_field("defined_field")
+        True
+        >>> MyPacket.has_field("undefined_field")
+        False
+        """
+
+        return name in cls._fields
+
+    @classmethod
     def field_names(cls):
         """Gets the names of the fields of the :class:`Packet`.
 
