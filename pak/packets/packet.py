@@ -340,6 +340,102 @@ class Packet:
         return cls._id_wrapper(ctx=ctx)
 
     @classmethod
+    @util.cache
+    def GenericWithID(cls, id):
+        r"""Generates a subclass of the :class:`Packet` class and :class:`GenericPacket` with the specified ID.
+
+        .. note::
+
+            This method is decorated with :func:`util.cache() <.decorators.cache>`.
+
+            This means that when called twice with the same ID,
+            then the exact same class will be returned.
+
+        Parameters
+        ----------
+        id
+            The ID of the generated :class:`GenericPacket`.
+
+        Returns
+        -------
+        :class:`GenericPacket`
+            The generated :class:`GenericPacket`.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class MyPacket(pak.Packet):
+        ...     class Header(pak.Packet.Header):
+        ...         id: pak.Int8
+        ...
+        >>> generic = MyPacket.GenericWithID(1)
+        >>> generic is MyPacket.GenericWithID(1)
+        True
+        >>> issubclass(generic, MyPacket)
+        True
+        >>> issubclass(generic, pak.GenericPacket)
+        True
+        >>> packet = generic.unpack(b"generic data")
+        >>> packet
+        MyPacket.GenericWithID(1)(data=bytearray(b'generic data'))
+        >>> packet.pack()
+        b'\x01generic data'
+        """
+
+        return type(f"{cls.__qualname__}.GenericWithID({repr(id)})", (GenericPacket, cls), dict(
+            id = id,
+
+            __module__ = cls.__module__,
+        ))
+
+    @classmethod
+    @util.cache
+    def EmptyWithID(cls, id):
+        r"""Generates an empty subclass of the :class:`Packet` class with the specified ID.
+
+        .. note::
+
+            This method is decorated with :func:`util.cache() <.decorators.cache>`.
+
+            This means that when called twice with the same ID,
+            then the exact same class will be returned.
+
+        Parameters
+        ----------
+        id
+            The ID of the generated :class:`Packet`.
+
+        Returns
+        -------
+        :class:`Packet`
+            The generated :class:`Packet`.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class MyPacket(pak.Packet):
+        ...     class Header(pak.Packet.Header):
+        ...         id: pak.Int8
+        ...
+        >>> empty = MyPacket.EmptyWithID(1)
+        >>> empty is MyPacket.EmptyWithID(1)
+        True
+        >>> issubclass(empty, MyPacket)
+        True
+        >>> packet = empty.unpack(b"any data")
+        >>> packet
+        MyPacket.EmptyWithID(1)()
+        >>> packet.pack()
+        b'\x01'
+        """
+
+        return type(f"{cls.__qualname__}.EmptyWithID({repr(id)})", (cls,), dict(
+            id = id,
+
+            __module__ = cls.__module__,
+        ))
+
+    @classmethod
     def _init_id(cls):
         # Here we take the ID that was set through
         # the 'id' attribute and wrap it sufficiently
