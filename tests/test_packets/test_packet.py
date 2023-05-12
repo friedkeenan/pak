@@ -338,6 +338,13 @@ def test_header():
                 class Header(pak.Packet.Header):
                     pass
 
+    with pytest.raises(TypeError, match="context"):
+        class TestHeaderWithContext(pak.Packet):
+            class Header(pak.Packet.Header):
+                class Context(pak.Packet.Context):
+                    __hash__ = pak.Packet.Context.__hash__
+                    __eq__   = pak.Packet.Context.__eq__
+
 def test_header_correct_context():
     class Test(pak.Packet):
         class Context(pak.Packet.Context):

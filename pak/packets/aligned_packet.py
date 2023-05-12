@@ -2,6 +2,7 @@ r""":class:`.Packet`\s which align their fields."""
 
 from .. import util
 from ..types.type import Type
+
 from .packet import Packet
 
 __all__ = [
@@ -25,8 +26,29 @@ class AlignedPacket(Packet):
 
     .. warning::
 
-        An :class:`AlignedPacket` must have at least one field to be  used in full.
+        An :class:`AlignedPacket` must have at least one field to be used in full.
     """
+
+    # NOTE: We currently decline to add an 'align_as' feature.
+    #
+    # I think there's too much to think about to justify adding
+    # it presently. Maybe if there is demand for it in the
+    # future it can be added.
+    #
+    # Additionally, the features that 'align_as' would give can
+    # also be accomplished with manually creating 'Padding' fields,
+    # albeit perhaps not as elegantly.
+    #
+    # Things to consider:
+    # - Should an 'align_as' attribute be typelike, getting
+    #   the alignment from the type?
+    # - Should an 'align_as' attribute act like a DynamicValue?
+    #   - If so, then should typelike alignment take priority?
+    # - Should an 'align_as' attribute be able to be a list of
+    #   typelikes and ints and DynamicValues?
+    # - Should other AlignedPackets be able to be set to its
+    #   'align_as' attribute?
+    # - Should individual fields be able to have 'align_as' applied to them?
 
     @classmethod
     @util.cache

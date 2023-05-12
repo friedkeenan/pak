@@ -14,6 +14,7 @@ Packets
     ~packets.aligned_packet
     ~packets.packet
     ~packets.packet_handler
+    ~packets.subpacket
 
 .. _reference-types:
 

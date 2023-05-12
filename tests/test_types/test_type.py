@@ -78,7 +78,7 @@ def test_prepare_types():
         assert all(issubclass(arg, pak.Type) for arg in args)
         assert all(issubclass(value, pak.Type) for value in kwargs.values())
 
-    # Nones will be converted to EmptyType
+    # Nones will be converted to EmptyType.
     test(1, None, None, None, test=None, other_test=None)
 
 def test_static_size():

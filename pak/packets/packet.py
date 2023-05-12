@@ -1177,8 +1177,10 @@ class Packet:
 
         return sum(field_type.size(ctx=type_ctx) for field_type in cls.field_types())
 
-    @size.instance_method
-    def size(self, *, ctx=None):
+    def _size_impl(self, *, ctx=None):
+        # NOTE: We have this separate function so that
+        # we can get the size of a 'Packet.Header' instance.
+
         type_ctx = self.type_ctx(ctx)
 
         return sum(
@@ -1186,6 +1188,10 @@ class Packet:
 
             for attr_type, attr_value in self.field_types_and_values()
         )
+
+    @size.instance_method
+    def size(self, *, ctx=None):
+        return self._size_impl(ctx=ctx)
 
     @classmethod
     @util.cache
@@ -1329,7 +1335,7 @@ class _Header(Packet):
     .. note::
 
         Subclasses of :class:`Packet.Header` (i.e. all :class:`Packet` headers)
-        may not have headers of their own.
+        may not have headers or contexts of their own.
 
     Parameters
     ----------
@@ -1374,6 +1380,10 @@ class _Header(Packet):
         # values are pathological cases which I have no interest in supporting.
         if cls.Header is not Packet.Header:
             raise TypeError(f"'{cls.__qualname__}' may have no header of its own")
+
+        # Headers receive the context of their body packets.
+        if cls.Context is not Packet.Context:
+            raise TypeError(f"'{cls.__qualname__}' may have no context of its own")
 
     # TODO: When Python 3.7 support is dropped, make 'packet' positional-only.
     def __init__(self, packet=None, *, ctx=None, **fields):
