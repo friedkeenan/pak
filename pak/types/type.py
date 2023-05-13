@@ -424,7 +424,7 @@ class Type(abc.ABC):
 
         The alignment of a :class:`Type` is typically ignored, unless
         using something that explicitly utilizes alignment, such as
-        :class:`.AlignedPacket` or :class:`.AlignedCompound`.
+        :class:`.AlignedPacket`.
 
         Furthermore, alignment only makes sense for :class:`Type`\s
         with static sizes.
@@ -487,8 +487,7 @@ class Type(abc.ABC):
         r"""Gets the length of padding after each :class:`Type` for alignment purposes.
 
         Should rarely be used by users. In most cases
-        :class:`.AlignedCompound` or :class:`.AlignedPacket`
-        should be used.
+        :class:`.AlignedPacket` should be used.
 
         Parameters
         ----------

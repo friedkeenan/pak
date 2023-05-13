@@ -17,7 +17,6 @@ from .types.array    import *
 from .types.numeric  import *
 from .types.string   import *
 from .types.bit_mask import *
-from .types.compound import *
 from .types.enum     import *
 from .types.default  import *
 from .types.optional import *

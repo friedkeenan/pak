@@ -13,10 +13,6 @@ __all__ = [
 class AlignedPacket(Packet):
     """A :class:`.Packet` which aligns its fields.
 
-    .. seealso::
-
-        :class:`.AlignedCompound`
-
     The fields of an :class:`AlignedPacket` are aligned in the
     same way the fields of a struct would be in  C or C++, including
     the ending padding.

@@ -26,7 +26,6 @@ Types
 
     ~types.array
     ~types.bit_mask
-    ~types.compound
     ~types.default
     ~types.enum
     ~types.misc
