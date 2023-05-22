@@ -134,7 +134,7 @@ After getting the appropriate listeners for a packet, you can use it however you
     handler = FelinePacketHandler()
     handler.listen_to_incoming_packets()
 
-Such code also provides a nice way to maintain state between listening to different packets, as different things could be kept track of within our `handler` object.
+Such code also provides a nice way to maintain state between listening to different packets, as different things could be kept track of within our ``handler`` object.
 
 ----
 
@@ -190,6 +190,6 @@ This works because upon constructing a :class:`.PacketHandler`, methods that are
 That's All Folks
 ****************
 
-And that's it, that's the end of the :doc:`index` tutorials. There is still more to Pak that has not been covered, but you should now be very well-equipped to look through the :doc:`../../reference` to investigate its other features (in particular I would suggest looking at the :class:`io.Connection <.Connection>` class), and hopefully you now have a strong core of knowledge to put towards your own projects.
+And that's it, that's the end of the :doc:`index` tutorials. There is still more to Pak that has not been covered, but you should now be very well-equipped to look through the :doc:`../../reference` to investigate its other features (in particular :class:`.SubPacket` and :class:`io.Connection <.Connection>` might be good to look at), and hopefully you now have a strong core of knowledge to put towards your own projects.
 
 Thank you, and I wish you well.

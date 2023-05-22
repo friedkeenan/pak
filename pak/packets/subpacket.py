@@ -84,7 +84,7 @@ class SubPacket(Packet, metaclass=_SubPacketMeta):
     .. note::
 
         :class:`SubPacket`\s cannot define their own :class:`.Packet.Context`,
-        as they should receive and use the context of their super :class:`Packet`.
+        as they should receive and use the context of their super :class:`.Packet`.
 
     :class:`SubPacket` headers may only have a ``size`` field and/or an
     ``id`` field.  When a :class:`SubPacket` header contains a ``size``
