@@ -36,6 +36,28 @@ def test_listeners_for_packet():
 
     assert handler.listeners_for_packet(pak.Packet(), flag=True) == [listener]
 
+    assert handler.listeners_for_packet(pak.Packet)             == []
+    assert handler.listeners_for_packet(pak.Packet, flag=False) == []
+
+    assert handler.listeners_for_packet(pak.Packet, flag=True) == [listener]
+
+def test_has_packet_listener():
+    def listener(packet):
+        pass
+
+    handler = pak.PacketHandler()
+    handler.register_packet_listener(listener, pak.Packet, flag=True)
+
+    assert not handler.has_packet_listener(pak.Packet())
+    assert not handler.has_packet_listener(pak.Packet(), flag=False)
+
+    assert handler.has_packet_listener(pak.Packet(), flag=True)
+
+    assert not handler.has_packet_listener(pak.Packet)
+    assert not handler.has_packet_listener(pak.Packet, flag=False)
+
+    assert handler.has_packet_listener(pak.Packet, flag=True)
+
 class GeneralPacket(pak.Packet):
         pass
 

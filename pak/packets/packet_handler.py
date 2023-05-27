@@ -277,6 +277,20 @@ class PacketHandler:
 
         self._packet_listeners.pop(listener)
 
+    @staticmethod
+    def _is_listener_for(packet_types, listener_flags, packet, flags):
+        return (
+            (
+                (isinstance(packet, type) and issubclass(packet, packet_types)) or
+
+                isinstance(packet, packet_types)
+            )
+
+            and
+
+            listener_flags == flags
+        )
+
     def _to_real_listener(self, listener, packet):
         method = getattr(listener, "to_real_listener", None)
         if method is None:
@@ -296,7 +310,7 @@ class PacketHandler:
 
         Parameters
         ----------
-        packet : :class:`.Packet`
+        packet : :class:`.Packet` or subclass of :class:`.Packet`
             The :class:`.Packet` to get listeners for.
         **flags
             The flags which must match the flags a listener was registered
@@ -324,6 +338,10 @@ class PacketHandler:
         >>> ex = Example()
         >>> ex.listeners_for_packet(MyPacket())
         [<bound method Example.listener_example of Example()>]
+        >>>
+        >>> # You can also request listeners for 'Packet' classes:
+        >>> ex.listeners_for_packet(MyPacket)
+        [<bound method Example.listener_example of Example()>]
         """
 
         return [
@@ -331,8 +349,56 @@ class PacketHandler:
 
             for listener, (packet_types, listener_flags) in self._packet_listeners.items()
 
-            if isinstance(packet, packet_types) and listener_flags == flags
+            if self._is_listener_for(packet_types, listener_flags, packet, flags)
         ]
+
+    def has_packet_listener(self, packet, **flags):
+        """Gets whether there is a listener for a certain :class:`.Packet`.
+
+        .. seealso::
+
+            :meth:`listeners_for_packet`
+
+        Parameters
+        ----------
+        packet : :class:`.Packet` or subclass of :class:`.Packet`
+            The :class:`.Packet` to check listeners for.
+        **flags
+            The flags which must match the flags a listener was
+            registered with for it to be an applicable listener.
+
+        Returns
+        -------
+        :class:`bool`
+            Whether there is a listener for ``packet``.
+
+        Examples
+        --------
+        >>> import pak
+        >>> class MyPacket(pak.Packet):
+        ...     pass
+        ...
+        >>> class Example(pak.PacketHandler):
+        ...     @pak.packet_listener(MyPacket)
+        ...     def listener_example(self, packet):
+        ...         pass
+        ...
+        >>> ex = Example()
+        >>> ex.has_packet_listener(MyPacket())
+        True
+        >>> ex.has_packet_listener(pak.Packet)
+        False
+        >>>
+        >>> # You can also get whether a 'Packet' class has a listener:
+        >>> ex.has_packet_listener(MyPacket)
+        True
+        """
+
+        for packet_types, listener_flags in self._packet_listeners.values():
+            if self._is_listener_for(packet_types, listener_flags, packet, flags):
+                return True
+
+        return False
 
 class AsyncPacketHandler(PacketHandler):
     r"""A :class:`PacketHandler` that handles :class:`Packet`\s asynchronously.
