@@ -62,7 +62,7 @@ class Connection(abc.ABC):
 
         self.ctx = ctx
 
-        self._specific_reads = {}
+        self._packet_watch_info = {}
 
     def is_closing(self):
         """Gets whether the :class:`Connection` is closed or in the process of closing.
@@ -82,7 +82,7 @@ class Connection(abc.ABC):
         This method should be used along with the :meth:`wait_closed` method.
         """
 
-        self._cancel_specific_reads()
+        self._cancel_packet_watches()
 
         if self.writer is None:
             return
@@ -180,24 +180,24 @@ class Connection(abc.ABC):
 
         raise NotImplementedError
 
-    def _dispatch_to_specific_reads(self, packet):
+    def _dispatch_to_packet_watches(self, packet):
         # Make a copy of the items so we may modify
-        # 'self._specific_reads' within the same loop.
-        for packet_cls, packet_holder in list(self._specific_reads.items()):
+        # 'self._packet_watch_info' within the same loop.
+        for packet_cls, packet_holder in list(self._packet_watch_info.items()):
             if isinstance(packet, packet_cls):
                 packet_holder.set(packet)
-                self._specific_reads.pop(packet_cls)
+                self._packet_watch_info.pop(packet_cls)
 
                 # Don't break here since there could be other
-                # specific reads that requested a more derived
+                # packet watches that requested a more derived
                 # subclass of 'packet_cls'.
 
-    def _cancel_specific_reads(self):
+    def _cancel_packet_watches(self):
         # Make a copy of the items so we may modify
-        # 'self._specific_reads' within the same loop.
-        for packet_cls, packet_holder in list(self._specific_reads.items()):
+        # 'self._packet_watch_info' within the same loop.
+        for packet_cls, packet_holder in list(self._packet_watch_info.items()):
             packet_holder.set(None)
-            self._specific_reads.pop(packet_cls)
+            self._packet_watch_info.pop(packet_cls)
 
     async def continuously_read_packets(self):
         r"""Continuously reads and yields all incoming :class:`.Packet`\s.
@@ -211,7 +211,7 @@ class Connection(abc.ABC):
 
         .. warning::
 
-            This method should **not** be called twice asynchronously.
+            This method should **not** be called twice concurrently.
 
             Doing so may cause data to be read incorrectly.
 
@@ -238,19 +238,19 @@ class Connection(abc.ABC):
 
                 return
 
-            self._dispatch_to_specific_reads(packet)
+            self._dispatch_to_packet_watches(packet)
 
             yield packet
 
-    async def read_packet(self, packet_to_read):
-        r"""Reads a specific type of :class:`.Packet` from the incoming stream of :class:`.Packet`\s.
+    async def watch_for_packet(self, packet_cls):
+        r"""Watches for a specific type of :class:`.Packet` from the incoming stream of :class:`.Packet`\s.
 
         Requires :meth:`continuously_read_packets` to be iterated over.
 
         Parameters
         ----------
-        packet_to_read : subclass of :class:`.Packet`
-            The type of :class:`.Packet` to read.
+        packet_cls : subclass of :class:`.Packet`
+            The type of :class:`.Packet` to watch for.
 
         Returns
         -------
@@ -261,12 +261,36 @@ class Connection(abc.ABC):
             or EOF is reached.
         """
 
-        packet_holder = self._specific_reads.get(packet_to_read)
+        packet_holder = self._packet_watch_info.get(packet_cls)
         if packet_holder is None:
-            packet_holder                        = util.AsyncValueHolder()
-            self._specific_reads[packet_to_read] = packet_holder
+            packet_holder                       = util.AsyncValueHolder()
+            self._packet_watch_info[packet_cls] = packet_holder
 
         return await packet_holder.get()
+
+    def is_watching_for_packet(self, packet_cls):
+        """Gets whether a specific type of :class:`.Packet` is being watched for.
+
+        .. seealso::
+
+            :meth:`watch_for_packet`
+
+        Parameters
+        ----------
+        packet_cls : subclass of :class:`.Packet`
+            The type of :class:`.Packet` to check.
+
+        Returns
+        -------
+        :class:`bool`
+            Whether ``packet_cls`` is being watched for.
+        """
+
+        for watch_cls in self._packet_watch_info.keys():
+            if issubclass(packet_cls, watch_cls):
+                return True
+
+        return False
 
     async def write_data(self, data):
         """Writes outgoing data to the :attr:`writer` attribute.

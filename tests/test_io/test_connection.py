@@ -219,51 +219,75 @@ async def test_connection_continuously_read_packets_ends_on_close():
     assert iterations == 1
 
 @pytest.mark.asyncio
-async def test_connection_read_packet():
+async def test_connection_watch_for_packet():
     connection = DummyConnection(
         # A single DummyValuePacket(value=2).
         data = b"\x00\x01\x02"
     )
 
-    async def read_specific_packet():
+    async def watch_for_packet():
         assert (
-            await connection.read_packet(DummyValuePacket) == DummyValuePacket(value=2)
+            await connection.watch_for_packet(DummyValuePacket) == DummyValuePacket(value=2)
         )
 
         # There's only one packet in the stream.
-        assert await connection.read_packet(DummyValuePacket) is None
+        assert await connection.watch_for_packet(DummyValuePacket) is None
 
-    async def read_parent_packet():
-        assert await connection.read_packet(DummyPacket) == DummyValuePacket(value=2)
+    async def watch_for_parent_packet():
+        assert await connection.watch_for_packet(DummyPacket) == DummyValuePacket(value=2)
 
-    read_specific_packet_task = asyncio.create_task(read_specific_packet())
-    read_parent_packet_task   = asyncio.create_task(read_parent_packet())
+    watch_for_packet_task        = asyncio.create_task(watch_for_packet())
+    watch_for_parent_packet_task = asyncio.create_task(watch_for_parent_packet())
 
-    # Needed to dispatch packets to 'read_packet'.
+    # Needed to dispatch packets to 'watch_for_packet'.
     async for packet in connection.continuously_read_packets():
         pass
 
-    await read_specific_packet_task
-    await read_parent_packet_task
+    await watch_for_packet_task
+    await watch_for_parent_packet_task
 
 @pytest.mark.asyncio
-async def test_connection_read_packet_on_close():
+async def test_connection_watch_for_packet_on_close():
     connection = DummyConnection(
         # A single DummyValuePacket(value=2).
         data = b"\x00\x01\x02"
     )
 
-    async def read_specific_packet():
-        assert await connection.read_packet(DummyValuePacket) is None
+    async def watch_for_packet():
+        assert await connection.watch_for_packet(DummyValuePacket) is None
 
-    read_specific_packet_task = asyncio.create_task(read_specific_packet())
+    watch_for_packet_task = asyncio.create_task(watch_for_packet())
 
     # Give the task a chance to execute.
     await pak.util.yield_exec()
 
     connection.close()
 
-    await read_specific_packet_task
+    await watch_for_packet_task
+
+@pytest.mark.asyncio
+async def test_connection_is_watching_for_packet():
+    connection = DummyConnection(data=b"")
+
+    async def watch_for_packet():
+        await connection.watch_for_packet(DummyPacket)
+
+    watch_for_packet_task = asyncio.create_task(watch_for_packet())
+
+    # Give the task a chance to execute.
+    await pak.util.yield_exec()
+
+    assert connection.is_watching_for_packet(DummyPacket)
+    assert connection.is_watching_for_packet(DummyValuePacket)
+
+    assert not connection.is_watching_for_packet(pak.Packet)
+
+    # Try to continuously read packets, which will immediately
+    # reach EOF and cancel all the packet watches.
+    async for packet in connection.continuously_read_packets():
+        pass
+
+    await watch_for_packet_task
 
 @pytest.mark.asyncio
 async def test_connection_write_data():
