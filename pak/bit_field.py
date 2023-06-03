@@ -80,8 +80,6 @@ class BitField:
         If there are any superfluous keyword arguments.
     """
 
-    _underlying = None
-
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
