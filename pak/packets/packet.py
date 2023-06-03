@@ -549,18 +549,20 @@ class Packet:
         for attr, attr_type in self.enumerate_field_types():
             if attr in fields:
                 setattr(self, attr, fields.pop(attr))
-            else:
-                if type_ctx is None:
-                    type_ctx = self.type_ctx(ctx)
 
-                default = attr_type.default(ctx=type_ctx)
-                try:
-                    setattr(self, attr, default)
-                except AttributeError:
-                    # If trying to set a default fails
-                    # (like if the attribute is read-only)
-                    # then just move on.
-                    pass
+                continue
+
+            if type_ctx is None:
+                type_ctx = self.type_ctx(ctx)
+
+            default = attr_type.default(ctx=type_ctx)
+            try:
+                setattr(self, attr, default)
+            except AttributeError:
+                # If trying to set a default fails
+                # (like if the attribute is read-only)
+                # then just move on.
+                pass
 
         # All the fields should be used up by the end of the
         # above loop because we pop them out.

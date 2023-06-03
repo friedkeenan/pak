@@ -10,13 +10,13 @@ __version__ = importlib_metadata.version(__name__)
 # Remove import from our exported variables
 del importlib_metadata
 
+from .bit_field import *
 from .dyn_value import *
 
 from .types.type     import *
 from .types.array    import *
 from .types.numeric  import *
 from .types.string   import *
-from .types.bit_mask import *
 from .types.enum     import *
 from .types.default  import *
 from .types.optional import *

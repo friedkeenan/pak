@@ -19,16 +19,14 @@ __all__ = [
 #
 # We could have some sort of 'register_subclasses_as_typelike'
 # function to append a different qualification for
-# something to be typelike, but I don't think there's
-# a genuine use case for such a thing outside of
-# this one situation, and so we have settled for
-# the use of a metaclass.
+# something to be typelike, but I don't think the
+# value of not using a metaclass outweighs the added
+# burden of creating and maintaining such a system.
 class _SubPacketMeta(type):
     pass
 
 class SubPacket(Packet, metaclass=_SubPacketMeta):
     r"""A :class:`.Packet` contained within another :class:`.Packet`.
-
 
     A frequent occurrence in many protocols are :class:`.Packet`\s
     which have certain structures within them which associate data

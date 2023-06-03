@@ -25,7 +25,6 @@ Types
     :nosignatures:
 
     ~types.array
-    ~types.bit_mask
     ~types.default
     ~types.enum
     ~types.misc
@@ -63,5 +62,6 @@ Other Modules
     :toctree: reference
     :nosignatures:
 
+    ~bit_field
     ~dyn_value
     ~test
