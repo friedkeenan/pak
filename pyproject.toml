@@ -25,7 +25,8 @@ dependencies = [
 ]
 
 [project.urls]
-repository = "https://github.com/friedkeenan/pak"
+"Documentation" = "https://pak.readthedocs.io/"
+"Repository"    = "https://github.com/friedkeenan/pak"
 
 [project.optional-dependencies]
 tests = [
