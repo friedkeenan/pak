@@ -1,7 +1,7 @@
 [project]
 name            = "pak"
-version         = "0.1.0"
-description     = "A library for packet marshaling"
+version         = "1.0.0"
+description     = "A general purpose packet marshaling library"
 readme          = "README.md"
 requires-python = ">=3.7"
 license         = {file = "LICENSE"}

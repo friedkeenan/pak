@@ -1,11 +1,10 @@
 # Pak
 
-<!-- TODO: Change repo URL and add Python version support badge. -->
-
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/friedkeenan/pak.py/ci.yml?label=checks)](https://github.com/friedkeenan/pak.py/commit/HEAD)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/friedkeenan/pak/ci.yml?label=checks)](https://github.com/friedkeenan/pak/commit/HEAD)
 [![Read the Docs](https://img.shields.io/readthedocs/pak)](https://pak.readthedocs.io/)
-[![Codecov](https://img.shields.io/codecov/c/github/friedkeenan/pak.py)](https://app.codecov.io/gh/friedkeenan/pak.py)
-[![License](https://img.shields.io/github/license/friedkeenan/pak.py)](https://github.com/friedkeenan/pak.py/blob/main/LICENSE)
+[![Codecov](https://img.shields.io/codecov/c/github/friedkeenan/pak)](https://app.codecov.io/gh/friedkeenan/pak)
+[![License](https://img.shields.io/github/license/friedkeenan/pak)](https://github.com/friedkeenan/pak/blob/main/LICENSE)
+[![Python Version Support](https://img.shields.io/pypi/pyversions/pak)](https://pypi.org/project/pak/)
 
 Pak is a simple, yet powerful and extendable Python library for translating between raw data and usable, meaningful values.
 
@@ -61,10 +60,6 @@ assert packet_data == raw_data
 ## Installation
 
 To install Pak, simply install through pip:
-
-> **Warning**
->
-> This is not actually possible at the moment.
 
 ```
 $ pip install pak

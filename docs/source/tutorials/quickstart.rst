@@ -6,15 +6,7 @@ This document should introduce you to how to get started with Pak, giving you a 
 Installation
 ************
 
-.. TODO: This may need to be changed to 'pak.py' depending on pypi.
-
-To install Pak, simply install through pip:
-
-.. attention::
-
-    This is not actually possible at the moment.
-
-::
+To install Pak, simply install through pip::
 
     $ pip install pak
 
