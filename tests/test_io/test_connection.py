@@ -177,6 +177,20 @@ def test_connection_create_packet():
     assert packet.value == 1
     assert packet.dummy == 2
 
+def test_connection_create_packet_positional_only():
+    class TestPositionalPacket(DummyPacket):
+        packet_cls: pak.UInt8
+
+    # We can use the 'packet_cls' field despite
+    # that it's the name of the initial parameter.
+    packet = DummyConnection().create_packet(
+        TestPositionalPacket,
+
+        packet_cls = 1,
+    )
+
+    assert packet.packet_cls == 1
+
 @pytest.mark.asyncio
 async def test_connection_read_data():
     connection = DummyConnection(data=b"abcd")

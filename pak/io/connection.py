@@ -104,8 +104,7 @@ class Connection(abc.ABC):
         self.close()
         await self.wait_closed()
 
-    # TODO: When Python 3.7 support is dropped, make 'packet_cls' positional-only.
-    def create_packet(self, packet_cls, **fields):
+    def create_packet(self, packet_cls, /, **fields):
         """Creates a :class:`.Packet` for the :class:`Connection`.
 
         The :attr:`ctx` attribute is used to create the :class:`.Packet`.
@@ -304,8 +303,7 @@ class Connection(abc.ABC):
         self.writer.write(data)
         await self.writer.drain()
 
-    # TODO: When Python 3.7 support is dropped, make 'packet_cls' positional-only.
-    async def write_packet(self, packet_cls, **fields):
+    async def write_packet(self, packet_cls, /, **fields):
         """Writes an outgoing :class:`.Packet`.
 
         This method uses :meth:`create_packet` to create the

@@ -1387,8 +1387,7 @@ class _Header(Packet):
         if cls.Context is not Packet.Context:
             raise TypeError(f"'{cls.__qualname__}' may have no context of its own")
 
-    # TODO: When Python 3.7 support is dropped, make 'packet' positional-only.
-    def __init__(self, packet=None, *, ctx=None, **fields):
+    def __init__(self, packet=None, /, *, ctx=None, **fields):
         if packet is not None:
             if len(fields) != 0:
                 raise TypeError("'Packet.Header' cannot be passed both a 'Packet' and normal fields")

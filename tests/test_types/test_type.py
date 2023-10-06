@@ -195,6 +195,14 @@ def test_cached_make_type():
 
     assert TestCall() is TestCall()
 
+def test_make_type_namespace():
+    # 'name' and 'bases' will be included in the namespace
+    # despite being the names of earlier positional parameters.
+    TestType = pak.Type.make_type("TestType", name="name", bases="bases")
+
+    assert TestType.name  == "name"
+    assert TestType.bases == "bases"
+
 def test_not_implemented_methods():
     with pytest.raises(TypeError, match="initialized"):
         pak.Type.__init__(object())

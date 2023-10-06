@@ -1,4 +1,3 @@
-import inspect
 import pak
 import pytest
 
@@ -85,18 +84,8 @@ def test_bind_annotations():
     def test_keyword_required(x, y, *, z):
         pass
 
-    def test_positional_only(x, y, z):
+    def test_positional_only(x, /, y, z):
         pass
-
-    # Python 3.7 can't define positional-only arguments
-    # in pure python, so we manipulate the signature instead.
-    test_positional_only.__signature__ = inspect.Signature(
-        parameters = [
-            inspect.Parameter("x", kind=inspect.Parameter.POSITIONAL_ONLY),
-            inspect.Parameter("y", kind=inspect.Parameter.POSITIONAL_OR_KEYWORD),
-            inspect.Parameter("z", kind=inspect.Parameter.POSITIONAL_OR_KEYWORD),
-        ],
-    )
 
     def test_var_args(x: 1, y: 2, *args: 3, z: 4):
         pass

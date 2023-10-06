@@ -362,6 +362,16 @@ def test_header_correct_context():
 
     assert Test().header().check_ctx
 
+def test_header_positional_only():
+    class TestHeader(pak.Packet.Header):
+        packet: pak.UInt8
+
+    # We can pass the 'packet' field despite
+    # it being the name of the first parameter.
+    header = TestHeader(packet=1)
+
+    assert header.packet == 1
+
 def test_id():
     class TestEmpty(pak.Packet):
         pass
@@ -463,7 +473,7 @@ def test_id():
 
             @classmethod
             @property
-            def id(self):
+            def id(cls):
                 return 1
 
         assert TestClassPropertyId.id()     == 1

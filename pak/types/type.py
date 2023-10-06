@@ -869,10 +869,9 @@ class Type(abc.ABC):
 
         return value
 
-    # TODO: When Python 3.7 support is dropped, make 'name' and 'bases' positional-only.
     @classmethod
     @util.cache(force_hashable=False)
-    def make_type(cls, name, bases=None, **namespace):
+    def make_type(cls, name, bases=None, /, **namespace):
         """Utility for generating new types.
 
         The generated type's :attr:`__module__` attribute is
