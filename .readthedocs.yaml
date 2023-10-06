@@ -6,3 +6,7 @@ python:
       path: .
       extra_requirements:
         - docs
+
+build:
+  tools:
+    python: "3"
