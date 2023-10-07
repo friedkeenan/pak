@@ -830,6 +830,8 @@ class Packet:
         MyPacket(field=4)
         """
 
+        # TODO: Use 'copy.replace' when Python 3.12 support is dropped?
+
         copied = copy.deepcopy(self)
 
         try:
