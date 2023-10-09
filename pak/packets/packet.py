@@ -341,7 +341,7 @@ class Packet:
 
     @classmethod
     @util.cache
-    def GenericWithID(cls, id):
+    def GenericWithID(cls, id, /):
         r"""Generates a subclass of the :class:`Packet` class and :class:`GenericPacket` with the specified ID.
 
         .. note::
@@ -390,7 +390,7 @@ class Packet:
 
     @classmethod
     @util.cache
-    def EmptyWithID(cls, id):
+    def EmptyWithID(cls, id, /):
         r"""Generates an empty subclass of the :class:`Packet` class with the specified ID.
 
         .. note::
@@ -1231,7 +1231,7 @@ class Packet:
 
     @classmethod
     @util.cache
-    def subclass_with_id(cls, id, *, ctx=None):
+    def subclass_with_id(cls, id, /, *, ctx=None):
         """Gets the subclass with the equivalent ID.
 
         Parameters
