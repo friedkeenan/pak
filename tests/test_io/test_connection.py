@@ -56,7 +56,6 @@ class DummyConnection(pak.io.Connection):
     async def write_packet_instance(self, packet):
         await self.write_data(packet.pack(ctx=self.ctx))
 
-@pytest.mark.asyncio
 async def test_connection_abc():
     with pytest.raises(TypeError, match="instantiate abstract"):
         pak.io.Connection()
@@ -67,7 +66,6 @@ async def test_connection_abc():
     with pytest.raises(NotImplementedError):
         await pak.io.Connection.write_packet_instance(object(), pak.Packet())
 
-@pytest.mark.asyncio
 async def test_connection_close():
     connection = DummyConnection()
 
@@ -125,7 +123,6 @@ async def test_connection_close():
     await writer_close_task
     await connection_close_task
 
-@pytest.mark.asyncio
 async def test_connection_context():
     connection = DummyConnection(data=b"")
 
@@ -191,7 +188,6 @@ def test_connection_create_packet_positional_only():
 
     assert packet.packet_cls == 1
 
-@pytest.mark.asyncio
 async def test_connection_read_data():
     connection = DummyConnection(data=b"abcd")
 
@@ -199,7 +195,6 @@ async def test_connection_read_data():
 
     assert await connection.read_data(2) is None
 
-@pytest.mark.asyncio
 async def test_connection_continuously_read_packets():
     connection = DummyConnection(
         # A single DummyValuePacket(value=2).
@@ -217,7 +212,6 @@ async def test_connection_continuously_read_packets():
 
     assert connection.is_closing()
 
-@pytest.mark.asyncio
 async def test_connection_continuously_read_packets_ends_on_close():
     connection = DummyConnection(
         # A single DummyValuePacket(value=2).
@@ -232,7 +226,6 @@ async def test_connection_continuously_read_packets_ends_on_close():
 
     assert iterations == 1
 
-@pytest.mark.asyncio
 async def test_connection_watch_for_packet():
     connection = DummyConnection(
         # A single DummyValuePacket(value=2).
@@ -260,7 +253,6 @@ async def test_connection_watch_for_packet():
     await watch_for_packet_task
     await watch_for_parent_packet_task
 
-@pytest.mark.asyncio
 async def test_connection_watch_for_packet_on_close():
     connection = DummyConnection(
         # A single DummyValuePacket(value=2).
@@ -279,7 +271,6 @@ async def test_connection_watch_for_packet_on_close():
 
     await watch_for_packet_task
 
-@pytest.mark.asyncio
 async def test_connection_is_watching_for_packet():
     connection = DummyConnection(data=b"")
 
@@ -303,7 +294,6 @@ async def test_connection_is_watching_for_packet():
 
     await watch_for_packet_task
 
-@pytest.mark.asyncio
 async def test_connection_write_data():
     connection = DummyConnection(data=b"")
 
@@ -311,7 +301,6 @@ async def test_connection_write_data():
 
     assert connection.writer.written_data == b"abcd"
 
-@pytest.mark.asyncio
 async def test_connection_write_packet_instance():
     # This is technically testing our test code,
     # however it is added so that we can ensure
@@ -324,7 +313,6 @@ async def test_connection_write_packet_instance():
 
     assert connection.writer.written_data == b"\x00\x01\x02"
 
-@pytest.mark.asyncio
 async def test_connection_write_packet():
     class CheckCreatePacket(DummyConnection):
         def __init__(self, **kwargs):
