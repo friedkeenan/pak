@@ -192,7 +192,7 @@ def test_raw_byte_array():
     with pytest.raises(pak.util.BufferOutOfDataError):
         TestAttr.unpack(b"\x01")
 
-def test_struct():
+async def test_struct():
     # StructType also gets tested further
     # with the numeric types which inherit
     # from it.
@@ -201,7 +201,7 @@ def test_struct():
         fmt = "H"
         endian = ">"
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_async(
         TestEndian,
 
         (1, b"\x00\x01"),
@@ -213,7 +213,7 @@ def test_struct():
     class TestMultiple(pak.StructType):
         fmt = "BH"
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_async(
         TestMultiple,
 
         ((1, 1), b"\x01\x01\x00"),

@@ -209,6 +209,15 @@ class StructType(Type):
         return ret
 
     @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        ret = cls._struct.unpack(await reader.readexactly(cls._struct.size))
+
+        if len(ret) == 1:
+            return ret[0]
+
+        return ret
+
+    @classmethod
     def _pack(cls, value, *, ctx):
         if util.is_iterable(value):
             return cls._struct.pack(*value)
