@@ -1,6 +1,5 @@
 r"""Base code for :class:`.Type`\s."""
 
-import abc
 import inspect
 import copy
 import functools
@@ -25,7 +24,7 @@ class NoStaticSizeError(Exception):
     def __init__(self, type_cls):
         super().__init__(f"'{type_cls.__qualname__}' has no static size")
 
-class Type(abc.ABC):
+class Type:
     r"""A definition of how to marshal raw data to and from values.
 
     Typically used for the types of :class:`.Packet` fields.
@@ -637,7 +636,6 @@ class Type(abc.ABC):
         return cls._pack(value, ctx=ctx)
 
     @classmethod
-    @abc.abstractmethod
     def _unpack(cls, buf, *, ctx):
         """Unpacks raw data into its corresponding value.
 
@@ -664,7 +662,6 @@ class Type(abc.ABC):
         raise NotImplementedError
 
     @classmethod
-    @abc.abstractmethod
     def _pack(cls, value, *, ctx):
         """Packs a value into its corresponding raw data.
 
@@ -877,8 +874,7 @@ class Type(abc.ABC):
         The generated type's :attr:`__module__` attribute is
         set to be the same as the origin type's. This is done to
         get around an issue where generated types would have
-        their :attr:`__module__` attribute be ``"abc"`` because
-        :class:`Type` inherits from :class:`abc.ABC`.
+        their :attr:`__module__` attribute be otherwise unintuitve.
 
         This method is cached so a new type is only made if it
         hasn't been made before.

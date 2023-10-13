@@ -4,7 +4,7 @@ import pak
 def test_defaulted():
     DefaultedInt8 = pak.Defaulted(pak.Int8, 1)
 
-    assert DefaultedInt8.mro() == [DefaultedInt8, pak.Int8, pak.StructType, pak.Defaulted, pak.Type, abc.ABC, object]
+    assert DefaultedInt8.mro() == [DefaultedInt8, pak.Int8, pak.StructType, pak.Defaulted, pak.Type, object]
 
     pak.test.type_behavior(
         DefaultedInt8,
