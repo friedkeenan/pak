@@ -66,8 +66,8 @@ def test_class_or_instance_method():
     assert Test.method()   == "class"
     assert Test().method() == "instance"
 
-    # The 'TypeError' we raise gets turned into a 'RuntimeError'.
-    with pytest.raises(RuntimeError):
+    # The 'TypeError' we raise gets turned into a 'RuntimeError' until Python 3.12.
+    with pytest.raises(TypeError if sys.version_info.minor >= 12 else RuntimeError):
         class MissingInstanceMethod:
             @pak.util.class_or_instance_method
             def method(cls):
