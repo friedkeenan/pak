@@ -266,7 +266,7 @@ class PacketHandler:
 
         self._packet_listeners[listener] = (packet_types, flags)
 
-    def unregsiter_packet_listener(self, listener):
+    def unregister_packet_listener(self, listener):
         """Unregisters a :class:`.Packet` listener.
 
         Parameters

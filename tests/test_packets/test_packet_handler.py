@@ -20,7 +20,7 @@ def test_register():
         # 'listener' is already registered.
         handler.register_packet_listener(listener, pak.Packet)
 
-    handler.unregsiter_packet_listener(listener)
+    handler.unregister_packet_listener(listener)
 
     assert not handler.is_listener_registered(listener)
 
