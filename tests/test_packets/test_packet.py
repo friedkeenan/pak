@@ -529,6 +529,15 @@ def test_subclass_id():
     assert Root.subclass_with_id(2) is GrandChild1
     assert Root.subclass_with_id(3) is None
 
+def test_generic_with_id():
+    class TestPacket(pak.Packet):
+        class Header(pak.Packet.Header):
+            id: pak.UInt8
+
+        field: pak.UInt8
+
+    assert list(TestPacket.GenericWithID(1).field_names()) == ["field", "data"]
+
 test_generic = pak.test.packet_behavior_func(
     (pak.GenericPacket(data=b"\xAA\xBB\xCC"), b"\xAA\xBB\xCC"),
 )

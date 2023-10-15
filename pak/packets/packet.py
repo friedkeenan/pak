@@ -351,6 +351,10 @@ class Packet:
             This means that when called twice with the same ID,
             then the exact same class will be returned.
 
+        :class:`GenericPacket` will be inherited from such that
+        its ``data`` field will be after all the fields of the
+        parent :class:`Packet`.
+
         Parameters
         ----------
         id
@@ -368,6 +372,8 @@ class Packet:
         ...     class Header(pak.Packet.Header):
         ...         id: pak.Int8
         ...
+        ...     field: pak.Int16
+        ...
         >>> generic = MyPacket.GenericWithID(1)
         >>> generic is MyPacket.GenericWithID(1)
         True
@@ -375,14 +381,14 @@ class Packet:
         True
         >>> issubclass(generic, pak.GenericPacket)
         True
-        >>> packet = generic.unpack(b"generic data")
+        >>> packet = generic.unpack(b"\x02\x00generic data")
         >>> packet
-        MyPacket.GenericWithID(1)(data=bytearray(b'generic data'))
+        MyPacket.GenericWithID(1)(field=2, data=bytearray(b'generic data'))
         >>> packet.pack()
-        b'\x01generic data'
+        b'\x01\x02\x00generic data'
         """
 
-        return type(f"{cls.__qualname__}.GenericWithID({repr(id)})", (GenericPacket, cls), dict(
+        return type(f"{cls.__qualname__}.GenericWithID({repr(id)})", (cls, GenericPacket), dict(
             id = id,
 
             __module__ = cls.__module__,
