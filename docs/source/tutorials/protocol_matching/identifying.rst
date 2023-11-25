@@ -313,7 +313,7 @@ Here we define two new classes, ``ServerboundFelinePacket`` and ``ClientboundFel
         birth_month: pak.UInt8
         birth_day:   pak.UInt8
 
-Now every ``ServerboundFelinePacket`` and every ``ClientboundFelinePacket`` have a unique ID. So let's test out :meth:`.Packet.subclass_with_id`:
+Now every ``ServerboundFelinePacket`` and every ``ClientboundFelinePacket`` has a unique ID. So let's test out :meth:`.Packet.subclass_with_id`:
 
 .. testcode::
 
