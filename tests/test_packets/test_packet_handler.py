@@ -188,7 +188,6 @@ def test_most_derived_packet_listener_copies():
     # interface that ultimately depends on the alphabetical order of the listeners.
     assert {listener() for listener in derived_listeners} == {GeneralPacket, DerivedPacket}
 
-@pytest.mark.asyncio
 async def test_async_listener_tasks():
     handler = pak.AsyncPacketHandler()
 
@@ -212,7 +211,6 @@ async def test_async_listener_tasks():
 
     assert unending_listener_task.done()
 
-@pytest.mark.asyncio
 async def test_async_listener_nonsequential_tasks_forward_return():
     handler = pak.AsyncPacketHandler()
 
@@ -228,7 +226,6 @@ async def test_async_listener_nonsequential_tasks_forward_return():
 
     assert returning_listener_task.result() == 1
 
-@pytest.mark.asyncio
 async def test_async_listener_tasks_sequential():
     handler = pak.AsyncPacketHandler()
 
@@ -248,7 +245,6 @@ async def test_async_listener_tasks_sequential():
     # Make sure the return value is forwarded.
     assert yielding_listener_task.result() == 1
 
-@pytest.mark.asyncio
 async def test_async_listener_tasks_sequential_independent():
     handler = pak.AsyncPacketHandler()
 

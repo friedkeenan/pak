@@ -1,6 +1,5 @@
 r"""Base code for :class:`.Type`\s."""
 
-import abc
 import inspect
 import copy
 import functools
@@ -25,7 +24,7 @@ class NoStaticSizeError(Exception):
     def __init__(self, type_cls):
         super().__init__(f"'{type_cls.__qualname__}' has no static size")
 
-class Type(abc.ABC):
+class Type:
     r"""A definition of how to marshal raw data to and from values.
 
     Typically used for the types of :class:`.Packet` fields.
@@ -597,7 +596,7 @@ class Type(abc.ABC):
         Returns
         -------
         any
-            The corresponding value of the buffer.
+            The corresponding value of the raw data.
         """
 
         buf = util.file_object(buf)
@@ -606,6 +605,40 @@ class Type(abc.ABC):
             ctx = cls.Context()
 
         return cls._unpack(buf, ctx=ctx)
+
+    @classmethod
+    async def unpack_async(cls, reader, *, ctx=None):
+        """Asynchronously unpacks raw data into its corresponding value.
+
+        .. warning::
+
+            Do **not** override this method. Instead override
+            :meth:`_unpack_async`.
+
+        Parameters
+        ----------
+        reader : :class:`asyncio.StreamReader`
+            The stream of data to unpack from.
+
+            .. warning::
+
+                Nothing else should read from ``reader``
+                until this coroutine finishes executing.
+        ctx : :class:`Type.Context` or ``None``
+            The context for the :class:`Type`.
+
+            If ``None``, then an empty :class:`Type.Context` is used.
+
+        Returns
+        -------
+        any
+            The corresponding value of the raw data.
+        """
+
+        if ctx is None:
+            ctx = cls.Context()
+
+        return await cls._unpack_async(reader, ctx=ctx)
 
     @classmethod
     def pack(cls, value, *, ctx=None):
@@ -637,7 +670,36 @@ class Type(abc.ABC):
         return cls._pack(value, ctx=ctx)
 
     @classmethod
-    @abc.abstractmethod
+    def has_synchronous_unpacking(cls):
+        """Gets whether the :class:`Type` has synchronous unpacking.
+
+        If the :class:`Type` has a custom :meth:`_unpack` method
+        defined, then it is considered to have synchronous unpacking.
+
+        Returns
+        -------
+        :class:`bool`
+            Whether the :class:`Type` has synchronous unpacking.
+        """
+
+        return cls._unpack.__func__ is not Type._unpack.__func__
+
+    @classmethod
+    def has_asynchronous_unpacking(cls):
+        """Gets whether the :class:`Type` has asynchronous unpacking.
+
+        If the :class:`Type` has a custom :meth:`_unpack_async` method
+        defined, then it is considered to have asynchronous unpacking.
+
+        Returns
+        -------
+        :class:`bool`
+            Whether the :class:`Type` has asynchronous unpacking.
+        """
+
+        return cls._unpack_async.__func__ is not Type._unpack_async.__func__
+
+    @classmethod
     def _unpack(cls, buf, *, ctx):
         """Unpacks raw data into its corresponding value.
 
@@ -658,13 +720,37 @@ class Type(abc.ABC):
         Returns
         -------
         any
-            The corresponding value from the buffer.
+            The corresponding value of the raw data.
         """
 
         raise NotImplementedError
 
     @classmethod
-    @abc.abstractmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        """Asynchronously unpacks raw data into its corresponding value.
+
+        To be overridden by subclasses.
+
+        .. warning::
+            Do not use this method directly, **always** use
+            :meth:`unpack_async` instead.
+
+        Parameters
+        ----------
+        reader : :class:`asyncio.StreamReader`
+            The stream of data to unpack from.
+        ctx : :class:`Type.Context`
+            The context for the :class:`Type`.
+
+        Returns
+        -------
+        any
+            The corresponding value of the raw data.
+        """
+
+        raise NotImplementedError
+
+    @classmethod
     def _pack(cls, value, *, ctx):
         """Packs a value into its corresponding raw data.
 
@@ -877,8 +963,7 @@ class Type(abc.ABC):
         The generated type's :attr:`__module__` attribute is
         set to be the same as the origin type's. This is done to
         get around an issue where generated types would have
-        their :attr:`__module__` attribute be ``"abc"`` because
-        :class:`Type` inherits from :class:`abc.ABC`.
+        their :attr:`__module__` attribute be otherwise unintuitve.
 
         This method is cached so a new type is only made if it
         hasn't been made before.
