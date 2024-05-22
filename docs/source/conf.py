@@ -19,7 +19,7 @@ import pak
 # -- Project information -----------------------------------------------------
 
 project   = "Pak"
-copyright = "2021-2023, friedkeenan"
+copyright = "2021-2024, friedkeenan"
 author    = "friedkeenan"
 release   = pak.__version__
 
