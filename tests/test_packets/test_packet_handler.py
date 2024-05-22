@@ -199,11 +199,12 @@ async def test_async_listener_tasks():
     handler.register_packet_listener(unending_listener, pak.Packet)
     async with handler.listener_task_group(listen_sequentially=False) as group:
         for listener in handler.listeners_for_packet(pak.Packet()):
-            unending_listener_task = group.create_task(listener())
+            unending_listener_task = group.create_task(asyncio.shield(listener()))
 
     assert not unending_listener_task.done()
 
     try:
+        # We make sure we don't wait for the tasks to finish.
         await asyncio.wait_for(handler.end_listener_tasks(timeout=0), timeout=1)
 
     except asyncio.TimeoutError:
@@ -211,6 +212,18 @@ async def test_async_listener_tasks():
         assert False
 
     assert unending_listener_task.done()
+
+    try:
+        await unending_listener_task
+
+        # The task should never return because it
+        # was canceled and otherwise never ends.
+        assert False
+
+    except asyncio.CancelledError:
+        # The task should have been canceled by
+        # the call to 'handler.end_listener_tasks'.
+        pass
 
 @pytest.mark.asyncio
 async def test_async_listener_nonsequential_tasks_forward_return():
