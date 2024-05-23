@@ -536,7 +536,7 @@ class Packet:
 
                 # Set the name manually because '__set_name__'
                 # only gets called on type construction, and
-                # furthermore before __init_subclass__ is called.
+                # furthermore before '__init_subclass__' is called.
                 descriptor.__set_name__(cls, attr)
 
                 setattr(cls, attr, descriptor)
@@ -1415,7 +1415,7 @@ class _Header(Packet):
 
         return self.pack_without_header(ctx=ctx)
 
-# Set appropriate naming for 'Packet.Header'.
+# Set the appropriate naming for 'Packet.Header'.
 _Header.__name__     = "Header"
 _Header.__qualname__ = "Packet.Header"
 Packet.Header        = _Header
