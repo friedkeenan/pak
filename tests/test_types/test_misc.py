@@ -90,7 +90,7 @@ def test_padding_array():
     del p.array
 
     ctx_len_2 = TestAttr(test=2).type_ctx(None)
-    pak.Padding["test"].size(ctx=ctx_len_2) == 2
+    pak.Padding["test"].size(None, ctx=ctx_len_2) == 2
 
     assert pak.Padding[2].pack(None)             == b"\x00\x00"
     assert pak.Padding[2].pack("whatever value") == b"\x00\x00"
@@ -174,7 +174,7 @@ def test_raw_byte_array():
 
         (b"\x00\x01", b"\x00\x01"),
 
-        static_size = 2,
+        static_size = None,
         default     = b"\x00\x00",
         ctx         = ctx_len_2,
     )
