@@ -339,7 +339,7 @@ class Type(abc.ABC):
 
     @classmethod
     @util.cache(force_hashable=False)
-    def size(cls, value=STATIC_SIZE, *, ctx=None):
+    def size(cls, value=STATIC_SIZE, /, *, ctx=None):
         r"""Gets the size of the :class:`Type` when packed.
 
         Worst case this will perform as badly as packing the value
