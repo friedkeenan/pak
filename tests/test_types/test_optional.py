@@ -1,6 +1,16 @@
 import pak
 import pytest
 
+def test_optional_specializations():
+    assert issubclass(pak.Optional.PrefixChecked,   pak.Optional)
+    assert issubclass(pak.Optional.Unchecked,       pak.Optional)
+    assert issubclass(pak.Optional.FunctionChecked, pak.Optional)
+
+    assert issubclass(pak.Optional(pak.Int8, pak.Bool),       pak.Optional.PrefixChecked)
+    assert issubclass(pak.Optional(pak.Int8),                 pak.Optional.Unchecked)
+    assert issubclass(pak.Optional(pak.Int8, "attr"),         pak.Optional.FunctionChecked)
+    assert issubclass(pak.Optional(pak.Int8, lambda p: True), pak.Optional.FunctionChecked)
+
 def test_optional():
     TestPrefix = pak.Optional(pak.Int8, pak.Bool)
     pak.test.type_behavior(
@@ -13,9 +23,9 @@ def test_optional():
         default     = None,
     )
 
-    TestEnd = pak.Optional(pak.Int8)
+    TestUnchecked = pak.Optional(pak.Int8)
     pak.test.type_behavior(
-        TestEnd,
+        TestUnchecked,
 
         (None, b""),
         (0,    b"\x00"),
@@ -24,11 +34,9 @@ def test_optional():
         default     = None,
     )
 
+    # NOTE: Conveniently, testing string
+    # sizes will also test function checking.
     TestFunction = pak.Optional(pak.Int8, "test")
-
-    # Conveniently testing strings will
-    # also test functions.
-    assert TestFunction.has_function()
 
     class TestAttr(pak.Packet):
         test:     pak.Bool
