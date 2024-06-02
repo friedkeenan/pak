@@ -1,8 +1,5 @@
 r""":class:`.Type`\s for contiguous data of the same :class:`.Type`."""
 
-import collections
-import inspect
-
 from .type import Type
 
 __all__ = [

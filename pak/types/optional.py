@@ -1,7 +1,5 @@
 r""":class:`.Type`\s for marshaling data which might exist."""
 
-import inspect
-
 from .type import Type
 
 __all__ = [
