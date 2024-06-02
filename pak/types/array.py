@@ -22,7 +22,7 @@ class Array(Type):
         If an :class:`int`, then the :class:`Array` has a fixed size
         of ``size``. This case will be deferred to :class:`Array.FixedSize`.
 
-        If a typelike, then the :class:`Array` is prefixed by ``size``,
+        If a typelike, then the :class:`Array` is prefixed by the typelike,
         and its value determines the number of elements in the :class:`Array`.
         This case will be deferred to :class:`Array.SizePrefixed`.
 
@@ -338,7 +338,7 @@ class _FunctionSized(Array):
             array_size = size,
         )
 
-# Set the appropriate naming for the Array specializations.
+# Set the appropriate naming for the 'Array' specializations.
 
 _FixedSize.__name__     = "FixedSize"
 _FixedSize.__qualname__ = "Array.FixedSize"
@@ -356,8 +356,8 @@ _FunctionSized.__name__     = "FunctionSized"
 _FunctionSized.__qualname__ = "Array.FunctionSized"
 Array.FunctionSized         = _FunctionSized
 
-# Remove access to the array specializations
-# from their underline-prefixed names to stop
+# Remove access to the specializations from
+# their underline-prefixed names to stop
 # them from showing up in the docs.
 
 del _FixedSize

@@ -52,10 +52,10 @@ class EmptyType(Type):
 Type.register_typelike(type(None), lambda x: EmptyType)
 
 class Padding(Type):
-    """A single byte of padding.
+    r"""A single byte of padding.
 
     This :class:`.Type` will marshal one byte to
-    ``None``, and any value to ``b"\\x00"``.
+    ``None``, and any value to ``b"\x00"``.
 
     It is also special-cased in :class:`.Array`
     for padding of larger length.

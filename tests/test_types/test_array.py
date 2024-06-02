@@ -140,7 +140,7 @@ def test_array_size():
         default     = [1],
     )
 
-def test_array_no_static_size():
+def test_normal_array_no_static_size():
     # NOTE: 'pak.ULEB128' has no static size.
 
     # Fixed size.
@@ -158,3 +158,29 @@ def test_array_no_static_size():
     # Unbound size.
     with pytest.raises(pak.NoStaticSizeError):
         pak.ULEB128[None].size()
+
+def test_custom_array_no_static_size():
+    # Test that we will still get a size if the
+    # customized array static size returns 'None'.
+
+    class NoStaticArraySize(pak.Int8):
+        @classmethod
+        def _array_static_size(cls, array_size, *, ctx):
+            return None
+
+    assert NoStaticArraySize[1].size([1])        == 1
+    assert NoStaticArraySize[pak.Int8].size([1]) == 2
+    assert NoStaticArraySize[None].size([1])     == 1
+
+    class TestAttr(pak.Packet):
+        length: pak.Int8
+        array:  NoStaticArraySize["length"]
+
+    ctx = TestAttr(length=1, array=[1]).type_ctx(None)
+
+    assert TestAttr.array.size([1], ctx=ctx) == 1
+
+    class TestFunction(pak.Packet):
+        array: NoStaticArraySize[lambda p: 1]
+
+    assert TestFunction.array.size([1], ctx=ctx) == 1

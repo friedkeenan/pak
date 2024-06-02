@@ -712,13 +712,7 @@ class Type(abc.ABC):
             not length prefixes or anything of that sort.
         """
 
-        try:
-            elem_size = cls.size(ctx=ctx)
-
-        except NoStaticSizeError:
-            return None
-
-        return array_size * elem_size
+        return array_size * cls.size(ctx=ctx)
 
     @classmethod
     def _array_default(cls, array_size, *, ctx):
