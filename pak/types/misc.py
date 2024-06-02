@@ -174,20 +174,21 @@ class RawByte(Type):
 class StructType(Type):
     """A wrapper over :func:`struct.pack` and :func:`struct.unpack`.
 
-    :meta no-undoc-members:
-
     Attributes
     ----------
     fmt : :class:`str`
-        The format string for the structure, not including
-        the endianness prefix.
+        The format string for the structure,
+        not including the endianness prefix.
     endian : :class:`str`
         The endianness prefix used in :mod:`struct`.
 
         By default little endian.
     """
 
-    fmt    = None
+    #: :meta private:
+    fmt = None
+
+    #: :meta private:
     endian = "<"
 
     @classmethod
