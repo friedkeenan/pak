@@ -6,7 +6,7 @@ import inspect
 from .. import util
 from ..dyn_value import DynamicValue
 from ..types.type import Type
-from ..types.misc import RawByte, EmptyType
+from ..types.misc import RawByte
 
 __all__ = [
     "ReservedFieldError",

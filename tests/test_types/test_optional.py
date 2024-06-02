@@ -1,5 +1,4 @@
 import pak
-import pytest
 
 def test_optional_specializations():
     assert issubclass(pak.Optional.PrefixChecked,   pak.Optional)
