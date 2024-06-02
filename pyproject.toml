@@ -42,3 +42,11 @@ asyncio_mode = "auto"
 
 # Run doctests in modules and unit tests and check code coverage.
 addopts = "--cov=pak --doctest-modules pak tests --cov-report=term-missing:skip-covered"
+
+[tool.autoflake]
+recursive                  = true
+check_diff                 = true
+quiet                      = true
+remove_all_unused_imports  = true
+ignore_init_module_imports = true
+exclude                    = "build"

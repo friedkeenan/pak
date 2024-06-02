@@ -28,6 +28,24 @@ jobs:
       - name: Run codespell
         run: codespell *
 
+  autoflake:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Install autoflake
+        run: pip install autoflake
+
+      - name: Run autoflake
+        run: autoflake .
+
   test:
     runs-on: ${{ matrix.os }}
     env:
