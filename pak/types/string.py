@@ -153,7 +153,7 @@ class TerminatedString(Type):
                 continue
 
             if decoded_character == cls.terminator:
-                cls._incremental_decoder.reset()
+                cls._incremental_decoder.decode(b"", final=True)
 
                 return string
 
@@ -290,6 +290,8 @@ class StaticTerminatedString(Type):
                 continue
 
             if decoded_character == cls.terminator:
+                cls._incremental_decoder.decode(b"", final=True)
+
                 return string
 
             if len(data) <= 0:
