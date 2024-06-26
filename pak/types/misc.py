@@ -182,7 +182,15 @@ class StructType(Type):
     endian : :class:`str`
         The endianness prefix used in :mod:`struct`.
 
-        By default little endian.
+        By default little-endian.
+
+        .. seealso::
+
+            :meth:`little_endian`
+
+            :meth:`big_endian`
+
+            :meth:`native_endian`
     """
 
     #: :meta private:
@@ -199,6 +207,72 @@ class StructType(Type):
         if cls.fmt is not None:
             cls._struct = struct.Struct(f"{cls.endian}{cls.fmt}")
             cls._size   = cls._struct.size
+
+    @classmethod
+    def little_endian(cls):
+        """Gets a little-endian version of the :class:`StructType`.
+
+        Returns
+        -------
+        subclass of :class:`StructType`
+            If the :class:`StructType` is already little-endian, then
+            it is simply returned.
+
+            Otherwise, a subclass with the proper endianness is returned.
+        """
+
+        if cls.endian == "<":
+            return cls
+
+        return cls.make_type(
+            f"{cls.__qualname__}.little_endian()",
+
+            endian = "<",
+        )
+
+    @classmethod
+    def big_endian(cls):
+        """Gets a big-endian version of the :class:`StructType`.
+
+        Returns
+        -------
+        subclass of :class:`StructType`
+            If the :class:`StructType` is already big-endian, then
+            it is simply returned.
+
+            Otherwise, a subclass with the proper endianness is returned.
+        """
+
+        if cls.endian == ">":
+            return cls
+
+        return cls.make_type(
+            f"{cls.__qualname__}.big_endian()",
+
+            endian = ">",
+        )
+
+    @classmethod
+    def native_endian(cls):
+        """Gets a native-endian version of the :class:`StructType`.
+
+        Returns
+        -------
+        subclass of :class:`StructType`
+            If the :class:`StructType` is already native-endian, then
+            it is simply returned.
+
+            Otherwise, a subclass with the proper endianness is returned.
+        """
+
+        if cls.endian == "=":
+            return cls
+
+        return cls.make_type(
+            f"{cls.__qualname__}.native_endian()",
+
+            endian = "=",
+        )
 
     @classmethod
     def _unpack(cls, buf, *, ctx):

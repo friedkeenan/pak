@@ -20,7 +20,7 @@ raw_data = (
     # A string encoded in 4 bytes, with characters "abcd".
     b"\x04" + b"abcd" +
 
-    # Two contiguous 16-bit, little endian numbers, '1' and '2'.
+    # Two contiguous 16-bit, little-endian numbers, '1' and '2'.
     b"\x01\x00" + b"\x02\x00"
 )
 

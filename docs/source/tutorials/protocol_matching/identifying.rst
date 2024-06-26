@@ -15,7 +15,7 @@ So where we left off in :doc:`context`, we were left with the following packets:
 
     String = pak.PrefixedString({
         0: pak.UInt8,
-        1: pak.Uint16
+        1: pak.UInt16
     })
 
     class FurType(enum.Enum):

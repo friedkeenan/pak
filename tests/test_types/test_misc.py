@@ -1,4 +1,5 @@
 import io
+import struct
 import pak
 import pytest
 
@@ -192,17 +193,43 @@ def test_raw_byte_array():
     with pytest.raises(pak.util.BufferOutOfDataError):
         TestAttr.unpack(b"\x01")
 
-def test_struct():
-    # StructType also gets tested further
-    # with the numeric types which inherit
-    # from it.
+# NOTE: StructType also gets tested
+# further with the numeric types which
+# inherit from it.
 
-    class TestEndian(pak.StructType):
+def test_struct_endian():
+    class TestStruct(pak.StructType):
         fmt = "H"
-        endian = ">"
+
+    assert TestStruct.endian == "<"
+    assert TestStruct.little_endian() is TestStruct
+
+    TestStruct_BE = TestStruct.big_endian()
+    assert TestStruct_BE.endian == ">"
+
+    TestStruct_NE = TestStruct.native_endian()
+    assert TestStruct_NE.endian == "="
+
+    assert issubclass(TestStruct_BE, TestStruct)
+    assert issubclass(TestStruct_NE, TestStruct)
+
+    assert TestStruct_BE.big_endian()    is TestStruct_BE
+    assert TestStruct_NE.native_endian() is TestStruct_NE
+
+    assert issubclass(TestStruct_BE.little_endian(), TestStruct_BE)
+    assert TestStruct_BE.little_endian().endian == "<"
 
     pak.test.type_behavior(
-        TestEndian,
+        TestStruct,
+
+        (1, b"\x01\x00"),
+
+        static_size = 2,
+        default     = pak.test.NO_DEFAULT,
+    )
+
+    pak.test.type_behavior(
+        TestStruct_BE,
 
         (1, b"\x00\x01"),
 
@@ -210,11 +237,24 @@ def test_struct():
         default     = pak.test.NO_DEFAULT,
     )
 
-    class TestMultiple(pak.StructType):
+    pak.test.type_behavior(
+        TestStruct_NE,
+
+        # NOTE: We call 'struct.pack' here so that it
+        # will deal with whatever the native byte order
+        # is on the machine which is running the test.
+        (1, struct.pack("=H", 1)),
+
+        static_size = 2,
+        default     = pak.test.NO_DEFAULT,
+    )
+
+def test_struct_multiple():
+    class TestStruct(pak.StructType):
         fmt = "BH"
 
     pak.test.type_behavior(
-        TestMultiple,
+        TestStruct,
 
         ((1, 1), b"\x01\x01\x00"),
 

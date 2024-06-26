@@ -414,7 +414,7 @@ So there we go, we're now left with this code defining our current protocol::
 
     String = pak.PrefixedString({
         0: pak.UInt8,
-        1: pak.Uint16,
+        1: pak.UInt16,
     })
 
     class FurType(enum.Enum):
