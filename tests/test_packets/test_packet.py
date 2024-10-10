@@ -463,10 +463,12 @@ def test_id():
     assert TestFakeClassmethodId.Header.unpack(b"\x02") == TestFakeClassmethodId.Header(id=2)
 
     # Classmethods only propagate the descriptor
-    # protocol in Python 3.9+.
+    # protocol from Python 3.9 to Python 3.12,
+    # after being deprecated in Python 3.11.
     #
-    # TODO: Remove this when Python 3.8 support is dropped.
-    if sys.version_info.minor >= 9:
+    # TODO: Change condition when Python 3.8 support is dropped.
+    # TODO: Remove entirely when Python 3.12 support is dropped.
+    if sys.version_info.minor in range(9, 13):
         class TestClassPropertyId(pak.Packet):
             class Header(pak.Packet.Header):
                 id: pak.Int8
