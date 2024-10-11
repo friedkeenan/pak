@@ -1,4 +1,3 @@
-import abc
 import pak
 
 def test_defaulted():

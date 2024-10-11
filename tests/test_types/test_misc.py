@@ -1,4 +1,5 @@
 import io
+import struct
 import pak
 import pytest
 
@@ -90,7 +91,7 @@ def test_padding_array():
     del p.array
 
     ctx_len_2 = TestAttr(test=2).type_ctx(None)
-    pak.Padding["test"].size(ctx=ctx_len_2) == 2
+    pak.Padding["test"].size(None, ctx=ctx_len_2) == 2
 
     assert pak.Padding[2].pack(None)             == b"\x00\x00"
     assert pak.Padding[2].pack("whatever value") == b"\x00\x00"
@@ -174,7 +175,7 @@ def test_raw_byte_array():
 
         (b"\x00\x01", b"\x00\x01"),
 
-        static_size = 2,
+        static_size = None,
         default     = b"\x00\x00",
         ctx         = ctx_len_2,
     )
@@ -192,17 +193,43 @@ def test_raw_byte_array():
     with pytest.raises(pak.util.BufferOutOfDataError):
         TestAttr.unpack(b"\x01")
 
-async def test_struct():
-    # StructType also gets tested further
-    # with the numeric types which inherit
-    # from it.
+# NOTE: StructType also gets tested
+# further with the numeric types which
+# inherit from it.
 
-    class TestEndian(pak.StructType):
+async def test_struct_endian():
+    class TestStruct(pak.StructType):
         fmt = "H"
-        endian = ">"
+
+    assert TestStruct.endian == "<"
+    assert TestStruct.little_endian() is TestStruct
+
+    TestStruct_BE = TestStruct.big_endian()
+    assert TestStruct_BE.endian == ">"
+
+    TestStruct_NE = TestStruct.native_endian()
+    assert TestStruct_NE.endian == "="
+
+    assert issubclass(TestStruct_BE, TestStruct)
+    assert issubclass(TestStruct_NE, TestStruct)
+
+    assert TestStruct_BE.big_endian()    is TestStruct_BE
+    assert TestStruct_NE.native_endian() is TestStruct_NE
+
+    assert issubclass(TestStruct_BE.little_endian(), TestStruct_BE)
+    assert TestStruct_BE.little_endian().endian == "<"
 
     await pak.test.type_behavior_async(
-        TestEndian,
+        TestStruct,
+
+        (1, b"\x01\x00"),
+
+        static_size = 2,
+        default     = pak.test.NO_DEFAULT,
+    )
+
+    await pak.test.type_behavior_async(
+        TestStruct_BE,
 
         (1, b"\x00\x01"),
 
@@ -210,11 +237,24 @@ async def test_struct():
         default     = pak.test.NO_DEFAULT,
     )
 
-    class TestMultiple(pak.StructType):
+    await pak.test.type_behavior_async(
+        TestStruct_NE,
+
+        # NOTE: We call 'struct.pack' here so that it
+        # will deal with whatever the native byte order
+        # is on the machine which is running the test.
+        (1, struct.pack("=H", 1)),
+
+        static_size = 2,
+        default     = pak.test.NO_DEFAULT,
+    )
+
+async def test_struct_multiple():
+    class TestStruct(pak.StructType):
         fmt = "BH"
 
     await pak.test.type_behavior_async(
-        TestMultiple,
+        TestStruct,
 
         ((1, 1), b"\x01\x01\x00"),
 

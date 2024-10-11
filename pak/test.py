@@ -2,7 +2,7 @@
 
 from . import io
 from . import util
-from .types.type import NoStaticSizeError, Type
+from .types.type import NoStaticSizeError
 
 __all__ = [
     "NO_DEFAULT",

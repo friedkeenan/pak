@@ -1,10 +1,19 @@
-import io
 import pak
 import pytest
 
-def test_array():
-    assert issubclass(pak.Int8[2], pak.Array)
+def test_array_specializations():
+    assert issubclass(pak.Array.FixedSize,     pak.Array)
+    assert issubclass(pak.Array.SizePrefixed,  pak.Array)
+    assert issubclass(pak.Array.Unbounded,     pak.Array)
+    assert issubclass(pak.Array.FunctionSized, pak.Array)
 
+    assert issubclass(pak.Int8[2],           pak.Array.FixedSize)
+    assert issubclass(pak.Int8[pak.Int8],    pak.Array.SizePrefixed)
+    assert issubclass(pak.Int8[None],        pak.Array.Unbounded)
+    assert issubclass(pak.Int8["attr"],      pak.Array.FunctionSized)
+    assert issubclass(pak.Int8[lambda p: 1], pak.Array.FunctionSized)
+
+def test_array():
     pak.test.type_behavior(
         pak.Int8[2],
 
@@ -25,6 +34,18 @@ def test_array():
         default     = [],
     )
 
+    # Test prefixed arrays with an
+    # element type with no static size.
+    pak.test.type_behavior(
+        pak.ULEB128[pak.Int8],
+
+        ([0, 1], b"\x02\x00\x01"),
+        ([],     b"\x00"),
+
+        static_size = None,
+        default     = [],
+    )
+
     pak.test.type_behavior(
         pak.Int8[None],
 
@@ -36,10 +57,8 @@ def test_array():
 
     assert pak.Int8[2].pack([1]) == b"\x01\x00"
 
-    # Conveniently testing string sizes will also
-    # test function sizes.
-    assert pak.Int8["test"].has_size_function()
-
+    # NOTE: Conveniently, testing string
+    # sizes will also test function sizes.
     class TestAttr(pak.Packet):
         test:  pak.Int8
         array: pak.Int8["test"]
@@ -60,8 +79,7 @@ def test_array():
 
         ([0, 1], b"\x00\x01"),
 
-        static_size = 2,
-        alignment   = 1,
+        static_size = None,
         default     = [0, 0],
         ctx         = ctx_len_2,
     )
@@ -121,11 +139,47 @@ def test_array_size():
         default     = [1],
     )
 
-def test_array_static_size_none():
-    class NoStaticSizeForArray(pak.Type):
+def test_normal_array_no_static_size():
+    # NOTE: 'pak.ULEB128' has no static size.
+
+    # Fixed size.
+    with pytest.raises(pak.NoStaticSizeError):
+        pak.ULEB128[1].size()
+
+    # Prefixed size.
+    with pytest.raises(pak.NoStaticSizeError):
+        pak.ULEB128[pak.UInt8].size()
+
+    # Function size.
+    with pytest.raises(pak.NoStaticSizeError):
+        pak.Int8["length"].size()
+
+    # Unbound size.
+    with pytest.raises(pak.NoStaticSizeError):
+        pak.ULEB128[None].size()
+
+def test_custom_array_no_static_size():
+    # Test that we will still get a size if the
+    # customized array static size returns 'None'.
+
+    class NoStaticArraySize(pak.Int8):
         @classmethod
         def _array_static_size(cls, array_size, *, ctx):
             return None
 
-    with pytest.raises(pak.NoStaticSizeError):
-        NoStaticSizeForArray[1].size()
+    assert NoStaticArraySize[1].size([1])        == 1
+    assert NoStaticArraySize[pak.Int8].size([1]) == 2
+    assert NoStaticArraySize[None].size([1])     == 1
+
+    class TestAttr(pak.Packet):
+        length: pak.Int8
+        array:  NoStaticArraySize["length"]
+
+    ctx = TestAttr(length=1, array=[1]).type_ctx(None)
+
+    assert TestAttr.array.size([1], ctx=ctx) == 1
+
+    class TestFunction(pak.Packet):
+        array: NoStaticArraySize[lambda p: 1]
+
+    assert TestFunction.array.size([1], ctx=ctx) == 1

@@ -21,12 +21,17 @@ The server should respond to a ``CatPicturesRequest`` packet with its own packet
     class CatPicturesResponse(pak.Packet):
         num_cat_pictures: pak.UInt16
 
-Here we create the packet ``CatPicturesResponse`` with the field ``num_cat_pictures``, of type :class:`.UInt16`. This type is provided by Pak, and represents an unsigned 16-bit integer. Pak by default will interpret data according to "little" `endianness <https://en.wikipedia.org/wiki/Endianness>`_. Therefore, we can just use :class:`.UInt16` as is. However, if we *did* need to use big endian, we could do so like this::
+Here we create the packet ``CatPicturesResponse`` with the field ``num_cat_pictures``, of type :class:`.UInt16`. This type is provided by Pak, and represents an unsigned 16-bit integer. Pak by default will interpret data according to little-`endian <https://en.wikipedia.org/wiki/Endianness>`_ byte order. Therefore, we can just use :class:`.UInt16` as is. However, if we *did* need to use big-endian, we could do so like this::
+
+    class CatPicturesResponse(pak.Packet):
+        num_cat_pictures: pak.UInt16.big_endian()
+
+Here we use the :meth:`.StructType.big_endian` method to get a big-endian version of :class:`.UInt16`, and use that for the ``num_cat_pictures`` field. We could alternatively do this::
 
     class UInt16_BE(pak.UInt16):
         endian = ">"
 
-and use ``UInt16_BE`` instead in our packet definition. With ``endian = ">"`` we set the endianness to big endian, using the same symbol as you would find with the standard :mod:`struct` module to specify endianness.
+and use ``UInt16_BE`` instead in our packet definition. With ``endian = ">"`` we set the endianness to big-endian, using the same symbol as you would find with the standard :mod:`struct` module to specify endianness. Defining this ``UInt16_BE`` class would be basically equivalent to doing ``UInt16_BE = pak.UInt16.big_endian()``.
 
 .. _basic-send-receive-packets:
 

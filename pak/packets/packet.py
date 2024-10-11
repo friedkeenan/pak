@@ -6,7 +6,7 @@ import inspect
 from .. import util
 from ..dyn_value import DynamicValue
 from ..types.type import Type
-from ..types.misc import RawByte, EmptyType
+from ..types.misc import RawByte
 
 __all__ = [
     "ReservedFieldError",
@@ -351,6 +351,10 @@ class Packet:
             This means that when called twice with the same ID,
             then the exact same class will be returned.
 
+        :class:`GenericPacket` will be inherited from such that
+        its ``data`` field will be after all the fields of the
+        parent :class:`Packet`.
+
         Parameters
         ----------
         id
@@ -368,6 +372,8 @@ class Packet:
         ...     class Header(pak.Packet.Header):
         ...         id: pak.Int8
         ...
+        ...     field: pak.Int16
+        ...
         >>> generic = MyPacket.GenericWithID(1)
         >>> generic is MyPacket.GenericWithID(1)
         True
@@ -375,14 +381,14 @@ class Packet:
         True
         >>> issubclass(generic, pak.GenericPacket)
         True
-        >>> packet = generic.unpack(b"generic data")
+        >>> packet = generic.unpack(b"\x02\x00generic data")
         >>> packet
-        MyPacket.GenericWithID(1)(data=bytearray(b'generic data'))
+        MyPacket.GenericWithID(1)(field=2, data=bytearray(b'generic data'))
         >>> packet.pack()
-        b'\x01generic data'
+        b'\x01\x02\x00generic data'
         """
 
-        return type(f"{cls.__qualname__}.GenericWithID({repr(id)})", (GenericPacket, cls), dict(
+        return type(f"{cls.__qualname__}.GenericWithID({repr(id)})", (cls, GenericPacket), dict(
             id = id,
 
             __module__ = cls.__module__,
@@ -530,7 +536,7 @@ class Packet:
 
                 # Set the name manually because '__set_name__'
                 # only gets called on type construction, and
-                # furthermore before __init_subclass__ is called.
+                # furthermore before '__init_subclass__' is called.
                 descriptor.__set_name__(cls, attr)
 
                 setattr(cls, attr, descriptor)
@@ -1409,7 +1415,7 @@ class _Header(Packet):
 
         return self.pack_without_header(ctx=ctx)
 
-# Set appropriate naming for 'Packet.Header'.
+# Set the appropriate naming for 'Packet.Header'.
 _Header.__name__     = "Header"
 _Header.__qualname__ = "Packet.Header"
 Packet.Header        = _Header

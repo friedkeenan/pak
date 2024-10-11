@@ -19,7 +19,7 @@ import pak
 # -- Project information -----------------------------------------------------
 
 project   = "Pak"
-copyright = "2021-2023, friedkeenan"
+copyright = "2021-2024, friedkeenan"
 author    = "friedkeenan"
 release   = pak.__version__
 
@@ -62,26 +62,3 @@ html_theme = "furo"
 
 html_static_path = ["_static"]
 html_css_files   = ["css/uniform_tables.css"]
-
-def process_docstring(app, what, name, obj, options, lines):
-    # If an object's docstring has :meta no-undoc-members:,
-    # then disable documenting members with no docstring.
-    #
-    # This workaround has to be used otherwise attributes will
-    # be documented twice because of sphinx bugs.
-
-    to_remove = -1
-
-    for i, line in enumerate(lines):
-        if line.strip() == ":meta no-undoc-members:":
-            options["undoc-members"] = False
-
-            to_remove = i
-
-            break
-
-    if to_remove >= 0:
-        lines.pop(to_remove)
-
-def setup(app):
-    app.connect("autodoc-process-docstring", process_docstring)

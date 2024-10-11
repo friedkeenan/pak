@@ -1,10 +1,8 @@
 r""":class:`.Packet`\s which are contained in other :class:`.Packet`\s."""
 
-from .. import util
-
 from ..types.type import Type
 
-from .packet         import Packet, GenericPacket
+from .packet         import Packet
 from .aligned_packet import AlignedPacket
 
 __all__ = [

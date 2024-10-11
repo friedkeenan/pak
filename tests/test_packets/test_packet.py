@@ -463,10 +463,12 @@ def test_id():
     assert TestFakeClassmethodId.Header.unpack(b"\x02") == TestFakeClassmethodId.Header(id=2)
 
     # Classmethods only propagate the descriptor
-    # protocol in Python 3.9+.
+    # protocol from Python 3.9 to Python 3.12,
+    # after being deprecated in Python 3.11.
     #
-    # TODO: Remove this when Python 3.8 support is dropped.
-    if sys.version_info.minor >= 9:
+    # TODO: Change condition when Python 3.8 support is dropped.
+    # TODO: Remove entirely when Python 3.12 support is dropped.
+    if sys.version_info.minor in range(9, 13):
         class TestClassPropertyId(pak.Packet):
             class Header(pak.Packet.Header):
                 id: pak.Int8
@@ -528,6 +530,15 @@ def test_subclass_id():
     assert Root.subclass_with_id(1) is Child2
     assert Root.subclass_with_id(2) is GrandChild1
     assert Root.subclass_with_id(3) is None
+
+def test_generic_with_id():
+    class TestPacket(pak.Packet):
+        class Header(pak.Packet.Header):
+            id: pak.UInt8
+
+        field: pak.UInt8
+
+    assert list(TestPacket.GenericWithID(1).field_names()) == ["field", "data"]
 
 test_generic = pak.test.packet_behavior_func(
     (pak.GenericPacket(data=b"\xAA\xBB\xCC"), b"\xAA\xBB\xCC"),

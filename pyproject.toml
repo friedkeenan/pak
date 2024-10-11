@@ -3,7 +3,7 @@ name            = "pak"
 version         = "1.0.0"
 description     = "A general purpose packet marshaling library"
 readme          = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license         = {file = "LICENSE"}
 
 authors = [
@@ -16,6 +16,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: ISC License (ISCL)",
     "Operating System :: OS Independent",
 ]
@@ -32,7 +33,7 @@ tests = [
 ]
 
 docs = [
-    "sphinx==5.0.2",
+    "sphinx==7.1.2",
     "furo",
     "sphinx-copybutton",
 ]
@@ -42,3 +43,11 @@ asyncio_mode = "auto"
 
 # Run doctests in modules and unit tests and check code coverage.
 addopts = "--cov=pak --doctest-modules pak tests --cov-report=term-missing:skip-covered"
+
+[tool.autoflake]
+recursive                  = true
+check_diff                 = true
+quiet                      = true
+remove_all_unused_imports  = true
+ignore_init_module_imports = true
+exclude                    = "build"

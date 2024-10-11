@@ -148,8 +148,8 @@ def test_float64():
         pak.Float64,
 
         # Normal numbers
-        (1,                       b"\x00\x00\x00\x00\x00\x00\xf0\x3F"),
-        (-1,                      b"\x00\x00\x00\x00\x00\x00\xf0\xbf"),
+        (1,                       b"\x00\x00\x00\x00\x00\x00\xF0\x3F"),
+        (-1,                      b"\x00\x00\x00\x00\x00\x00\xF0\xBF"),
 
         # Max/min normal numbers
         ((2 - 2**-52) * 2**1023,  b"\xFF\xFF\xFF\xFF\xFF\xFF\xEF\x7F"),
@@ -166,8 +166,8 @@ def test_float64():
         (-0.0,                    b"\x00\x00\x00\x00\x00\x00\x00\x80"),
 
         # Infinities
-        (math.inf,                b"\x00\x00\x00\x00\x00\x00\xf0\x7F"),
-        (-math.inf,               b"\x00\x00\x00\x00\x00\x00\xf0\xFF"),
+        (math.inf,                b"\x00\x00\x00\x00\x00\x00\xF0\x7F"),
+        (-math.inf,               b"\x00\x00\x00\x00\x00\x00\xF0\xFF"),
 
         static_size = 8,
         alignment   = 8,
