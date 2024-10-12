@@ -187,50 +187,6 @@ def test_dynamic_value_default():
 
         assert TestDefault.default() == 1
 
-def test_unpacking_capabilities():
-    class SyncOnly(pak.Type):
-        @classmethod
-        def _unpack(cls, buf, *, ctx):
-            return 1
-
-    class AsyncOnly(pak.Type):
-        @classmethod
-        def _unpack_async(cls, reader, *, ctx):
-            return 1
-
-    class SyncAndAsync(pak.Type):
-        @classmethod
-        def _unpack(cls, buf, *, ctx):
-            return 1
-
-        @classmethod
-        def _unpack_async(cls, reader, *, ctx):
-            return 1
-
-    class DerivedSyncOnly(SyncOnly):
-        pass
-
-    class DerivedAsyncOnly(AsyncOnly):
-        pass
-
-    class DerivedSyncAndAsync(SyncAndAsync):
-        pass
-
-    assert SyncOnly.has_synchronous_unpacking()
-    assert DerivedSyncOnly.has_synchronous_unpacking()
-    assert not SyncOnly.has_asynchronous_unpacking()
-    assert not DerivedSyncOnly.has_asynchronous_unpacking()
-
-    assert AsyncOnly.has_asynchronous_unpacking()
-    assert DerivedAsyncOnly.has_asynchronous_unpacking()
-    assert not AsyncOnly.has_synchronous_unpacking()
-    assert not DerivedAsyncOnly.has_synchronous_unpacking()
-
-    assert SyncAndAsync.has_synchronous_unpacking()
-    assert DerivedSyncAndAsync.has_synchronous_unpacking()
-    assert SyncAndAsync.has_asynchronous_unpacking()
-    assert DerivedSyncAndAsync.has_asynchronous_unpacking()
-
 def test_cached_make_type():
     class TestCall(pak.Type):
         @classmethod
@@ -255,7 +211,7 @@ async def test_not_implemented_methods():
         pak.Type.unpack(b"")
 
     with pytest.raises(NotImplementedError):
-        await pak.Type.unpack_async(pak.io.ByteStreamReader(b""))
+        await pak.Type.unpack_async(b"")
 
     with pytest.raises(NotImplementedError):
         pak.Type.pack(None)

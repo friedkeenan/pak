@@ -4,6 +4,7 @@ import inspect
 import copy
 import functools
 
+from .. import io
 from .. import util
 from ..dyn_value import DynamicValue
 
@@ -617,13 +618,16 @@ class Type:
 
         Parameters
         ----------
-        reader : :class:`asyncio.StreamReader`
+        reader : :class:`asyncio.StreamReader` or :class:`bytes` or :class:`bytearray`
             The stream of data to unpack from.
 
             .. warning::
 
                 Nothing else should read from ``reader``
                 until this coroutine finishes executing.
+
+            If :class:`bytes` or :class:`bytearray`, then
+            ``reader`` is turned into an :class:`io.ByteStreamReader <.ByteStreamReader>`.
         ctx : :class:`Type.Context` or ``None``
             The context for the :class:`Type`.
 
@@ -634,6 +638,9 @@ class Type:
         any
             The corresponding value of the raw data.
         """
+
+        if isinstance(reader, (bytes, bytearray)):
+            reader = io.ByteStreamReader(reader)
 
         if ctx is None:
             ctx = cls.Context()
@@ -668,36 +675,6 @@ class Type:
             ctx = cls.Context()
 
         return cls._pack(value, ctx=ctx)
-
-    @classmethod
-    def has_synchronous_unpacking(cls):
-        """Gets whether the :class:`Type` has synchronous unpacking.
-
-        If the :class:`Type` has a custom :meth:`_unpack` method
-        defined, then it is considered to have synchronous unpacking.
-
-        Returns
-        -------
-        :class:`bool`
-            Whether the :class:`Type` has synchronous unpacking.
-        """
-
-        return cls._unpack.__func__ is not Type._unpack.__func__
-
-    @classmethod
-    def has_asynchronous_unpacking(cls):
-        """Gets whether the :class:`Type` has asynchronous unpacking.
-
-        If the :class:`Type` has a custom :meth:`_unpack_async` method
-        defined, then it is considered to have asynchronous unpacking.
-
-        Returns
-        -------
-        :class:`bool`
-            Whether the :class:`Type` has asynchronous unpacking.
-        """
-
-        return cls._unpack_async.__func__ is not Type._unpack_async.__func__
 
     @classmethod
     def _unpack(cls, buf, *, ctx):

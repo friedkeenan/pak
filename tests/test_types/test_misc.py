@@ -219,7 +219,7 @@ async def test_struct_endian():
     assert issubclass(TestStruct_BE.little_endian(), TestStruct_BE)
     assert TestStruct_BE.little_endian().endian == "<"
 
-    await pak.test.type_behavior_async(
+    await pak.test.type_behavior_both(
         TestStruct,
 
         (1, b"\x01\x00"),
@@ -228,7 +228,7 @@ async def test_struct_endian():
         default     = pak.test.NO_DEFAULT,
     )
 
-    await pak.test.type_behavior_async(
+    await pak.test.type_behavior_both(
         TestStruct_BE,
 
         (1, b"\x00\x01"),
@@ -237,7 +237,7 @@ async def test_struct_endian():
         default     = pak.test.NO_DEFAULT,
     )
 
-    await pak.test.type_behavior_async(
+    await pak.test.type_behavior_both(
         TestStruct_NE,
 
         # NOTE: We call 'struct.pack' here so that it
@@ -253,7 +253,7 @@ async def test_struct_multiple():
     class TestStruct(pak.StructType):
         fmt = "BH"
 
-    await pak.test.type_behavior_async(
+    await pak.test.type_behavior_both(
         TestStruct,
 
         ((1, 1), b"\x01\x01\x00"),
