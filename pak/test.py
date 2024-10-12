@@ -1,5 +1,6 @@
 """Utilities for testing, exposed for users to use as well."""
 
+from . import io
 from . import util
 from .types.type import NoStaticSizeError
 
@@ -13,6 +14,10 @@ __all__ = [
     "type_behavior_func_both",
     "packet_behavior",
     "packet_behavior_func",
+    "packet_behavior_async",
+    "packet_behavior_func_async",
+    "packet_behavior_both",
+    "packet_behavior_func_both",
 ]
 
 #: An object passed to the :func:`type_behavior` functions
@@ -358,6 +363,8 @@ def type_behavior_func_both(*args, **kwargs):
 def packet_behavior(*packets_and_data, ctx=None):
     r"""Asserts :class:`.Packet`\s marshal to and from expected data.
 
+    When unpacking the raw data, the :meth:`.Packet.unpack` method will be used.
+
     Parameters
     ----------
     *packets_and_data : pair of :class:`.Packet` and :class:`bytes`
@@ -386,7 +393,7 @@ def packet_behavior(*packets_and_data, ctx=None):
         header_from_packet = packet.header(ctx=ctx)
         header_from_data   = packet.Header.unpack(data_file, ctx=ctx)
 
-        assert header_from_packet == header_from_data, f"{data=}, {packet=}"
+        assert header_from_packet == header_from_data, f"{data=}; {packet=}"
 
         data_from_packet = packet.pack(ctx=ctx)
         packet_from_data = packet.unpack(data_file, ctx=ctx)
@@ -424,3 +431,166 @@ def packet_behavior_func(*args, **kwargs):
     """
 
     return lambda: packet_behavior(*args, **kwargs)
+
+async def packet_behavior_async(*packets_and_data, ctx=None):
+    r"""Asserts :class:`.Packet`\s marshal to and from expected data asynchronously.
+
+    When unpacking the raw data, the :meth:`.Packet.unpack_async` method will be used.
+
+    Parameters
+    ----------
+    *packets_and_data : pair of :class:`.Packet` and :class:`bytes`
+        The :class:`.Packet`\s and data to test.
+    ctx : :class:`.Packet.Context`
+        The context for the :class:`Packet`\s.
+
+    Examples
+    --------
+    >>> import pak
+    >>> import asyncio
+    >>> class MyPacket(pak.Packet):
+    ...     id = 1
+    ...     field: pak.UInt8
+    ...     class Header(pak.Packet.Header):
+    ...         id: pak.UInt8
+    ...
+    >>> asyncio.run(pak.test.packet_behavior_async(
+    ...     (MyPacket(field=2), b"\x01\x02"),
+    ...     (MyPacket(field=3), b"\x01\x03"),
+    ... ))
+    """
+
+    for packet, data in packets_and_data:
+        data_reader = io.ByteStreamReader(data)
+
+        header_from_packet = packet.header(ctx=ctx)
+        header_from_data   = await packet.Header.unpack_async(data_reader, ctx=ctx)
+
+        assert header_from_packet == header_from_data, f"{data=}; {packet=}"
+
+        data_from_packet = packet.pack(ctx=ctx)
+        packet_from_data = await packet.unpack_async(data_reader, ctx=ctx)
+
+        assert data_from_packet == data,   f"{data_from_packet=}; {data=}; {packet=}"
+        assert packet_from_data == packet, f"{packet_from_data=}; {packet=}; {data=}"
+
+def packet_behavior_func_async(*args, **kwargs):
+    r"""Generates a coroutine function that calls :func:`packet_behavior_async`.
+
+    This should be used only if you just need to compare :class:`.Packet`\s
+    and raw data, and the :class:`.Packet`\s should be compared using equality.
+    For anything else, you should create your own function, potentially one which
+    uses :func:`packet_behavior_async`.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        Forwarded to :func:`packet_behavior_async`.
+
+    Examples
+    --------
+    >>> import pak
+    >>> import asyncio
+    >>> class MyPacket(pak.Packet):
+    ...     id = 1
+    ...     field: pak.UInt8
+    ...     class Header(pak.Packet.Header):
+    ...         id: pak.UInt8
+    ...
+    >>> test_my_packet = pak.test.packet_behavior_func_async(
+    ...     (MyPacket(field=2), b"\x01\x02"),
+    ...     (MyPacket(field=3), b"\x01\x03"),
+    ... )
+    >>> asyncio.run(test_my_packet())
+    """
+
+    async def tester():
+        await packet_behavior_async(*args, **kwargs)
+
+    return tester
+
+async def packet_behavior_both(*packets_and_data, ctx=None):
+    r"""Asserts :class:`.Packet`\s marshal to and from expected data asynchronously.
+
+    When unpacking, both the :meth:`.Packet.unpack` and
+    :meth:`.Packet.unpack_async` methods will be used.
+
+    Parameters
+    ----------
+    *packets_and_data : pair of :class:`.Packet` and :class:`bytes`
+        The :class:`.Packet`\s and data to test.
+    ctx : :class:`.Packet.Context`
+        The context for the :class:`Packet`\s.
+
+    Examples
+    --------
+    >>> import pak
+    >>> import asyncio
+    >>> class MyPacket(pak.Packet):
+    ...     id = 1
+    ...     field: pak.UInt8
+    ...     class Header(pak.Packet.Header):
+    ...         id: pak.UInt8
+    ...
+    >>> asyncio.run(pak.test.packet_behavior_both(
+    ...     (MyPacket(field=2), b"\x01\x02"),
+    ...     (MyPacket(field=3), b"\x01\x03"),
+    ... ))
+    """
+
+    for packet, data in packets_and_data:
+        data_file   = util.file_object(data)
+        data_reader = io.ByteStreamReader(data)
+
+        header_from_packet = packet.header(ctx=ctx)
+
+        header_from_data_sync  = packet.Header.unpack(data_file, ctx=ctx)
+        header_from_data_async = await packet.Header.unpack_async(data_reader, ctx=ctx)
+
+        assert header_from_packet == header_from_data_sync,  f"{data=}; {packet=}"
+        assert header_from_packet == header_from_data_async, f"{data=}; {packet=}"
+
+        data_from_packet = packet.pack(ctx=ctx)
+
+        assert data_from_packet == data, f"{data_from_packet=}; {data=}; {packet=}"
+
+        packet_from_data_sync  = packet.unpack(data_file, ctx=ctx)
+        packet_from_data_async = await packet.unpack_async(data_reader, ctx=ctx)
+
+        assert packet_from_data_sync  == packet, f"{packet_from_data_sync=}; {packet=}; {data=}"
+        assert packet_from_data_async == packet, f"{packet_from_data_async=}; {packet=}; {data=}"
+
+def packet_behavior_func_both(*args, **kwargs):
+    r"""Generates a function that calls :func:`packet_behavior_both`.
+
+    This should be used only if you just need to compare :class:`.Packet`\s
+    and raw data, and the :class:`.Packet`\s should be compared using equality.
+    For anything else, you should create your own function, potentially one which
+    uses :func:`packet_behavior_both`.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        Forwarded to :func:`packet_behavior_both`.
+
+    Examples
+    --------
+    >>> import pak
+    >>> import asyncio
+    >>> class MyPacket(pak.Packet):
+    ...     id = 1
+    ...     field: pak.UInt8
+    ...     class Header(pak.Packet.Header):
+    ...         id: pak.UInt8
+    ...
+    >>> test_my_packet = pak.test.packet_behavior_func_both(
+    ...     (MyPacket(field=2), b"\x01\x02"),
+    ...     (MyPacket(field=3), b"\x01\x03"),
+    ... )
+    >>> asyncio.run(test_my_packet())
+    """
+
+    async def tester():
+        await packet_behavior_both(*args, **kwargs)
+
+    return tester
