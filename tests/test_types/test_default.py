@@ -1,11 +1,11 @@
 import pak
 
-def test_defaulted():
+async def test_defaulted():
     DefaultedInt8 = pak.Defaulted(pak.Int8, 1)
 
     assert DefaultedInt8.mro() == [DefaultedInt8, pak.Int8, pak.StructType, pak.Defaulted, pak.Type, object]
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         DefaultedInt8,
 
         (0, b"\x00"),
