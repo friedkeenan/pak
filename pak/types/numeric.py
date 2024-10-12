@@ -149,6 +149,24 @@ class LEB128(Type):
                 return util.to_signed(num, bits=bits)
 
     @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        num = 0
+
+        bits = 0
+        while True:
+            byte = await UInt8.unpack_async(reader, ctx=ctx)
+
+            # Get the bottom 7 bits.
+            value = byte & 0b01111111
+
+            num  |= value << bits
+            bits += 7
+
+            # If the top bit is not set, return.
+            if byte & 0b10000000 == 0:
+                return util.to_signed(num, bits=bits)
+
+    @classmethod
     def _pack(cls, value, *, ctx):
         data = b""
 
@@ -187,6 +205,24 @@ class ULEB128(Type):
         bits = 0
         while True:
             byte = UInt8.unpack(buf, ctx=ctx)
+
+            # Get the bottom 7 bits.
+            value = byte & 0b01111111
+
+            num  |= value << bits
+            bits += 7
+
+            # If the top bit is not set, return.
+            if byte & 0b10000000 == 0:
+                return num
+
+    @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        num = 0
+
+        bits = 0
+        while True:
+            byte = await UInt8.unpack_async(reader, ctx=ctx)
 
             # Get the bottom 7 bits.
             value = byte & 0b01111111
@@ -259,6 +295,10 @@ class ScaledInteger(Type):
     @classmethod
     def _unpack(cls, buf, *, ctx):
         return cls.elem_type.unpack(buf, ctx=ctx) / cls.divisor
+
+    @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        return await cls.elem_type.unpack_async(reader, ctx=ctx) / cls.divisor
 
     @classmethod
     def _pack(cls, value, *, ctx):

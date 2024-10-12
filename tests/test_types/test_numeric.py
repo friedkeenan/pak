@@ -179,7 +179,7 @@ async def test_float64():
     assert math.isnan(pak.Float64.unpack(b"\x01\x00\x00\x00\x00\x00\xF0\x7F"))
     assert math.isnan(await pak.Float64.unpack_async(b"\x01\x00\x00\x00\x00\x00\xF0\x7F"))
 
-test_leb128 = pak.test.type_behavior_func(
+test_leb128 = pak.test.type_behavior_func_both(
     pak.LEB128,
 
     (0,         b"\x00"),
@@ -207,7 +207,7 @@ test_leb128 = pak.test.type_behavior_func(
     default     = 0,
 )
 
-test_uleb128 = pak.test.type_behavior_func(
+test_uleb128 = pak.test.type_behavior_func_both(
     pak.ULEB128,
 
     (0,         b"\x00"),
@@ -222,7 +222,7 @@ test_uleb128 = pak.test.type_behavior_func(
     default     = 0,
 )
 
-test_scaled_integer_static = pak.test.type_behavior_func(
+test_scaled_integer_static = pak.test.type_behavior_func_both(
     pak.ScaledInteger(pak.Int8, 2),
 
     (-0.5, b"\xFF"),
@@ -240,7 +240,7 @@ test_scaled_integer_static = pak.test.type_behavior_func(
     default     = 0.0,
 )
 
-test_scaled_integer_dynamic = pak.test.type_behavior_func(
+test_scaled_integer_dynamic = pak.test.type_behavior_func_both(
     pak.ScaledInteger(pak.LEB128, 2),
 
     (-0.5, b"\x7F"),
