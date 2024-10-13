@@ -115,6 +115,13 @@ class _PrefixChecked(Optional):
         return None
 
     @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        if await cls.exists.unpack_async(reader, ctx=ctx):
+            return await cls.elem_type.unpack_async(reader, ctx=ctx)
+
+        return None
+
+    @classmethod
     def _pack(cls, value, *, ctx):
         if value is None:
             return cls.exists.pack(False, ctx=ctx)
@@ -172,6 +179,13 @@ class _Unchecked(Optional):
     def _unpack(cls, buf, *, ctx):
         try:
             return cls.elem_type.unpack(buf, ctx=ctx)
+        except Exception:
+            return None
+
+    @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        try:
+            return await cls.elem_type.unpack_async(reader, ctx=ctx)
         except Exception:
             return None
 
@@ -278,6 +292,13 @@ class _FunctionChecked(Optional):
     def _unpack(cls, buf, *, ctx):
         if cls.exists(ctx.packet):
             return cls.elem_type.unpack(buf, ctx=ctx)
+
+        return None
+
+    @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        if cls.exists(ctx.packet):
+            return await cls.elem_type.unpack_async(reader, ctx=ctx)
 
         return None
 

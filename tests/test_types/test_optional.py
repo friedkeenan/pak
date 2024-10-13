@@ -10,9 +10,9 @@ def test_optional_specializations():
     assert issubclass(pak.Optional(pak.Int8, "attr"),         pak.Optional.FunctionChecked)
     assert issubclass(pak.Optional(pak.Int8, lambda p: True), pak.Optional.FunctionChecked)
 
-def test_optional():
+async def test_optional():
     TestPrefix = pak.Optional(pak.Int8, pak.Bool)
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         TestPrefix,
 
         (None, b"\x00"),
@@ -23,7 +23,7 @@ def test_optional():
     )
 
     TestUnchecked = pak.Optional(pak.Int8)
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         TestUnchecked,
 
         (None, b""),
@@ -44,7 +44,7 @@ def test_optional():
     assert TestAttr(test=False).optional is None
     assert TestAttr(test=True).optional  == 0
 
-    pak.test.packet_behavior(
+    await pak.test.packet_behavior_both(
         (TestAttr(test=False), b"\x00"),
         (TestAttr(test=True),  b"\x01\x00"),
     )
@@ -52,7 +52,7 @@ def test_optional():
     ctx_false = TestAttr(test=False).type_ctx(None)
     ctx_true  = TestAttr(test=True).type_ctx(None)
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         TestFunction,
 
         (None, b""),
@@ -62,7 +62,7 @@ def test_optional():
         ctx         = ctx_false,
     )
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         TestFunction,
 
         (0, b"\x00"),
