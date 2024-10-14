@@ -215,6 +215,16 @@ class Type:
     def prepare_types(func):
         """A decorator that converts arguments annotated with :class:`Type` to a :class:`Type`.
 
+        .. note::
+
+            The decorated :class:`function` will not retain
+            its annotations of parameters that are annotated
+            with :class:`Type`, as the purpose of annotating
+            a parameter with :class:`Type` in this context
+            is not for type hinting, and is only really relevant
+            to the implementation of the :class:`function`,
+            and otherwise could be confusing.
+
         Examples
         --------
         >>> import pak
@@ -228,9 +238,11 @@ class Type:
         EmptyType
         """
 
+        original_signature = inspect.signature(func)
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            args_annotations, kwargs_annotations = util.bind_annotations(func, *args, **kwargs)
+            args_annotations, kwargs_annotations = util.bind_annotations(original_signature, *args, **kwargs)
 
             new_args = [
                 Type(value) if annotation is Type
@@ -249,6 +261,26 @@ class Type:
             }
 
             return func(*new_args, **new_kwargs)
+
+        # Remove annotations of 'Type' from places irrelevant to them.
+
+        func.__signature__ = original_signature.replace(
+            parameters = [
+                param.replace(annotation=inspect.Parameter.empty) if param.annotation is Type
+                else param
+
+                for param in original_signature.parameters.values()
+            ],
+        )
+
+        if hasattr(wrapper, "__annotations__"):
+            wrapper.__annotations__ = {
+                name: annotation
+
+                for name, annotation in wrapper.__annotations__.items()
+
+                if annotation is not Type or name == "return"
+            }
 
         return wrapper
 

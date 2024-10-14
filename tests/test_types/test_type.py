@@ -1,3 +1,4 @@
+import inspect
 import pak
 import pytest
 
@@ -73,13 +74,20 @@ def test_typelike():
 
 def test_prepare_types():
     @pak.Type.prepare_types
-    def test(x, y: pak.Type, *args: pak.Type, **kwargs: pak.Type):
+    def test(x: 1, y: pak.Type, *args: pak.Type, **kwargs: pak.Type) -> pak.Type:
         assert issubclass(y, pak.Type)
         assert all(issubclass(arg, pak.Type) for arg in args)
         assert all(issubclass(value, pak.Type) for value in kwargs.values())
 
     # Nones will be converted to EmptyType.
     test(1, None, None, None, test=None, other_test=None)
+
+    assert test.__annotations__ == {
+        "x": 1,
+        "return": pak.Type,
+    }
+
+    assert str(inspect.signature(test)) == "(x: 1, y, *args, **kwargs) -> pak.types.type.Type"
 
 def test_static_size():
     class TestStaticSize(pak.Type):

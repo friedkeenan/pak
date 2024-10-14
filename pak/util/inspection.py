@@ -67,13 +67,15 @@ def annotations(obj):
 
     return getattr(obj, "__annotations__", {})
 
-def bind_annotations(func, *args, **kwargs):
+def bind_annotations(func_or_signature, /, *args, **kwargs):
     """Maps function arguments to their annotations.
 
     Parameters
     ----------
-    func : :class:`function`
-        The function to take annotations from.
+    func_or_signature : :class:`function` or :class:`inspect.Signature`
+        If a :class:`function`, then the annotations are obtained from its signature.
+
+        If an :class:`inspect.Signature`, then the annotations are obtained from it.
     *args, **kwargs
         The arguments to map annotations to.
 
@@ -87,7 +89,10 @@ def bind_annotations(func, *args, **kwargs):
         ``{name: (value, annotation)}``.
     """
 
-    parameters = inspect.signature(func).parameters
+    if isinstance(func_or_signature, inspect.Signature):
+        parameters = func_or_signature.parameters
+    else:
+        parameters = inspect.signature(func_or_signature).parameters
 
     args_annotations   = []
     kwargs_annotations = {}
