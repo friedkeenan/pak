@@ -623,6 +623,10 @@ class Packet:
         This method will call the :meth:`.Type.unpack`
         method on the fields of the :class:`Packet`.
 
+        .. seealso::
+
+            :meth:`unpack_async`
+
         Parameters
         ----------
         buf : file object or :class:`bytes` or :class:`bytearray`
@@ -678,6 +682,10 @@ class Packet:
 
         This method will call the :meth:`.Type.unpack_async`
         method on the fields of the :class:`Packet`.
+
+        .. seealso::
+
+            :meth:`unpack`
 
         Parameters
         ----------

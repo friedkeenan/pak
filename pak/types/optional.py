@@ -1,6 +1,6 @@
 r""":class:`.Type`\s for marshaling data which might exist."""
 
-from .type import Type
+from .type import Type, UnpackMethodNotImplementedError
 
 __all__ = [
     "Optional",
@@ -179,6 +179,10 @@ class _Unchecked(Optional):
     def _unpack(cls, buf, *, ctx):
         try:
             return cls.elem_type.unpack(buf, ctx=ctx)
+
+        except UnpackMethodNotImplementedError:
+            raise
+
         except Exception:
             return None
 
@@ -186,6 +190,10 @@ class _Unchecked(Optional):
     async def _unpack_async(cls, reader, *, ctx):
         try:
             return await cls.elem_type.unpack_async(reader, ctx=ctx)
+
+        except UnpackMethodNotImplementedError:
+            raise
+
         except Exception:
             return None
 

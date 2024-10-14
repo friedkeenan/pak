@@ -220,3 +220,15 @@ async def test_unbounded_array_raises_base_exception():
 
     with pytest.raises(NotAnError):
         await RaisesNotAnError[None].unpack_async(b"")
+
+async def test_unbounded_array_raises_unpack_not_implemented():
+    # By default, unbounded arrays read until and exception
+    # is thrown by unpacking. This test ensures that errors
+    # due to an unpack method not being implemented will not
+    # be swallowed up.
+
+    with pytest.raises(pak.UnpackMethodNotImplementedError, match="'_unpack'"):
+        pak.Type[None].unpack(b"")
+
+    with pytest.raises(pak.UnpackMethodNotImplementedError, match="'_unpack_async'"):
+        await pak.Type[None].unpack_async(b"")

@@ -10,6 +10,7 @@ from ..dyn_value import DynamicValue
 
 __all__ = [
     "NoStaticSizeError",
+    "UnpackMethodNotImplementedError",
     "Type",
 ]
 
@@ -24,6 +25,22 @@ class NoStaticSizeError(Exception):
 
     def __init__(self, type_cls):
         super().__init__(f"'{type_cls.__qualname__}' has no static size")
+
+class UnpackMethodNotImplementedError(NotImplementedError):
+    """An error indicating a :class:`Type` has not implemented a certain method for unpacking.
+
+    Parameters
+    ----------
+    type_cls : subclass of :class:`Type`
+        The :class:`Type` which has not implemented the method.
+    is_async : :class:`bool`
+        Whether the method is asynchronous or not.
+    """
+
+    def __init__(self, type_cls, *, is_async):
+        unpack_name = "_unpack_async" if is_async else '_unpack'
+
+        super().__init__(f"'{type_cls.__qualname__}' has not implemented the '{unpack_name}' method")
 
 class Type:
     r"""A definition of how to marshal raw data to and from values.
@@ -740,7 +757,7 @@ class Type:
             The corresponding value of the raw data.
         """
 
-        raise NotImplementedError
+        raise UnpackMethodNotImplementedError(cls, is_async=False)
 
     @classmethod
     async def _unpack_async(cls, reader, *, ctx):
@@ -765,7 +782,7 @@ class Type:
             The corresponding value of the raw data.
         """
 
-        raise NotImplementedError
+        raise UnpackMethodNotImplementedError(cls, is_async=True)
 
     @classmethod
     def _pack(cls, value, *, ctx):
@@ -873,6 +890,9 @@ class Type:
             try:
                 elem = cls.unpack(buf, ctx=ctx)
 
+            except UnpackMethodNotImplementedError:
+                raise
+
             except Exception:
                 return array
 
@@ -913,6 +933,9 @@ class Type:
         while True:
             try:
                 elem = await cls.unpack_async(reader, ctx=ctx)
+
+            except UnpackMethodNotImplementedError:
+                raise
 
             except Exception:
                 return array

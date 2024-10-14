@@ -46,6 +46,10 @@ class EmptyType(Type):
         return None
 
     @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        return None
+
+    @classmethod
     def _pack(cls, value, *, ctx):
         return b""
 
@@ -87,6 +91,12 @@ class Padding(Type):
         return None
 
     @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        await reader.readexactly(1)
+
+        return None
+
+    @classmethod
     def _pack(cls, value, *, ctx):
         return b"\x00"
 
@@ -104,6 +114,17 @@ class Padding(Type):
         data = buf.read(array_size)
         if len(data) < array_size:
             raise util.BufferOutOfDataError("Reading padding failed")
+
+        return None
+
+    @classmethod
+    async def _array_unpack_async(cls, reader, array_size, *, ctx):
+        if array_size is None:
+            await reader.read()
+
+            return None
+
+        await reader.readexactly(array_size)
 
         return None
 
@@ -145,6 +166,10 @@ class RawByte(Type):
         return byte
 
     @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        return await reader.readexactly(1)
+
+    @classmethod
     def _pack(cls, value, *, ctx):
         return bytes(value[:1])
 
@@ -162,6 +187,13 @@ class RawByte(Type):
             raise util.BufferOutOfDataError("Reading data failed")
 
         return bytearray(data)
+
+    @classmethod
+    async def _array_unpack_async(cls, reader, array_size, *, ctx):
+        if array_size is None:
+            return bytearray(await reader.read())
+
+        return bytearray(await reader.readexactly(array_size))
 
     @classmethod
     def _array_pack(cls, value, array_size, *, ctx):

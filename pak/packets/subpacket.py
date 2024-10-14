@@ -160,7 +160,7 @@ class SubPacket(Packet, metaclass=_SubPacketMeta):
             # the capability of a dynamic size. If a user really
             # wants some sort of aligned subpacket, then they can
             # define their own custom type.
-            raise TypeError(f"'{cls.__qualname__}' may not define its own header because it as an 'AlignedPacket'")
+            raise TypeError(f"'{cls.__qualname__}' may not define its own header because it is an 'AlignedPacket'")
 
         for name in cls.Header.field_names():
             if name not in ("id", "size"):
@@ -246,10 +246,23 @@ class _SubPacketType(Type):
     def _unpack(cls, buf, *, ctx):
         header = cls.subpacket_cls.Header.unpack(buf, ctx=ctx.packet_ctx)
 
+        if header.has_field("id"):
+            packet_cls = cls.subpacket_cls.subclass_with_id(header.id, ctx=ctx.packet_ctx)
+            if packet_cls is None:
+                packet_cls = cls.subpacket_cls._subclass_for_unknown_id(header.id, ctx=ctx.packet_ctx)
+        else:
+            packet_cls = cls.subpacket_cls
+
         if header.has_field("size"):
             packet_buf = buf.read(header.size)
         else:
             packet_buf = buf
+
+        return packet_cls.unpack(packet_buf, ctx=ctx.packet_ctx)
+
+    @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        header = await cls.subpacket_cls.Header.unpack_async(reader, ctx=ctx.packet_ctx)
 
         if header.has_field("id"):
             packet_cls = cls.subpacket_cls.subclass_with_id(header.id, ctx=ctx.packet_ctx)
@@ -258,7 +271,12 @@ class _SubPacketType(Type):
         else:
             packet_cls = cls.subpacket_cls
 
-        return packet_cls.unpack(packet_buf, ctx=ctx.packet_ctx)
+        if header.has_field("size"):
+            # NOTE: We use synchronous 'unpack' here
+            # because we read the data out ahead of time.
+            return packet_cls.unpack(await reader.readexactly(header.size), ctx=ctx.packet_ctx)
+
+        return await packet_cls.unpack_async(reader, ctx=ctx.packet_ctx)
 
     @classmethod
     def _pack(cls, value, *, ctx):

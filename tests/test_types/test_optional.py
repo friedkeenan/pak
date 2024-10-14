@@ -1,4 +1,5 @@
 import pak
+import pytest
 
 def test_optional_specializations():
     assert issubclass(pak.Optional.PrefixChecked,   pak.Optional)
@@ -71,3 +72,39 @@ async def test_optional():
         default     = 0,
         ctx         = ctx_true,
     )
+
+async def test_unchecked_optional_raises_base_exception():
+    # By default, unchecked optionals try to read and just
+    # pass if an exception occurs. This test ensures that
+    # "system" exceptions which do not inherit from 'Exception'
+    # will not be swallowed up.
+
+    class NotAnError(BaseException):
+        pass
+
+    class RaisesNotAnError(pak.Type):
+        @classmethod
+        def _unpack(cls, buf, *, ctx):
+            raise NotAnError
+
+        @classmethod
+        async def _unpack_async(cls, reader, *, ctx):
+            raise NotAnError
+
+    with pytest.raises(NotAnError):
+        pak.Optional(RaisesNotAnError).unpack(b"")
+
+    with pytest.raises(NotAnError):
+        await pak.Optional(RaisesNotAnError).unpack_async(b"")
+
+async def test_unchecked_optional_raises_unpack_not_implemented():
+    # By default, unchecked optionals try to read and just
+    # pass if an exception occurs. This test ensures that
+    # errors due to an unpack method not being implemented
+    # will not be swallowed up.
+
+    with pytest.raises(pak.UnpackMethodNotImplementedError, match="'_unpack'"):
+        pak.Optional(pak.Type).unpack(b"")
+
+    with pytest.raises(pak.UnpackMethodNotImplementedError, match="'_unpack_async'"):
+        await pak.Optional(pak.Type).unpack_async(b"")
