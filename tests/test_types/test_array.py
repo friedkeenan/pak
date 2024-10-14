@@ -13,8 +13,8 @@ def test_array_specializations():
     assert issubclass(pak.Int8["attr"],      pak.Array.FunctionSized)
     assert issubclass(pak.Int8[lambda p: 1], pak.Array.FunctionSized)
 
-def test_array():
-    pak.test.type_behavior(
+async def test_array():
+    await pak.test.type_behavior_both(
         pak.Int8[2],
 
         ([0, 1], b"\x00\x01"),
@@ -24,7 +24,7 @@ def test_array():
         default     = [0, 0],
     )
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         pak.Int8[pak.Int8],
 
         ([0, 1], b"\x02\x00\x01"),
@@ -36,7 +36,7 @@ def test_array():
 
     # Test prefixed arrays with an
     # element type with no static size.
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         pak.ULEB128[pak.Int8],
 
         ([0, 1], b"\x02\x00\x01"),
@@ -46,7 +46,7 @@ def test_array():
         default     = [],
     )
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         pak.Int8[None],
 
         ([0, 1, 2], b"\x00\x01\x02"),
@@ -69,12 +69,12 @@ def test_array():
     p = TestAttr()
     del p.array
 
-    pak.test.packet_behavior(
+    await pak.test.packet_behavior_both(
         (TestAttr(test=2, array=[0, 1]), b"\x02\x00\x01"),
     )
 
     ctx_len_2 = TestAttr(test=2, array=[0, 1]).type_ctx(None)
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         pak.Int8["test"],
 
         ([0, 1], b"\x00\x01"),
@@ -88,12 +88,21 @@ def test_array():
         pak.Int8[2].unpack(b"\x00")
 
     with pytest.raises(Exception):
+        await pak.Int8[2].unpack_async(b"\x00")
+
+    with pytest.raises(Exception):
         pak.Int8[pak.Int8].unpack(b"\x01")
+
+    with pytest.raises(Exception):
+        await pak.Int8[pak.Int8].unpack_async(b"\x01")
 
     with pytest.raises(Exception):
         TestAttr.unpack(b"\x01")
 
-def test_array_size():
+    with pytest.raises(Exception):
+        await TestAttr.unpack_async(b"\x01")
+
+async def test_array_size():
     class WeirdType(pak.Type):
         @classmethod
         def _array_static_size(cls, array_size, *, ctx):
@@ -108,6 +117,10 @@ def test_array_size():
             return [1]
 
         @classmethod
+        async def _array_unpack_async(cls, reader, size, *, ctx):
+            return [1]
+
+        @classmethod
         def _array_num_elements(cls, value, *, ctx):
             return 1
 
@@ -119,7 +132,7 @@ def test_array_size():
         def _array_pack(cls, value, size, *, ctx):
             return b""
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         WeirdType[2],
 
         ([1], b""),
@@ -128,7 +141,7 @@ def test_array_size():
         default     = [1],
     )
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         WeirdType[pak.UInt8],
 
         ([1], b"\x01"),
@@ -183,3 +196,27 @@ def test_custom_array_no_static_size():
         array: NoStaticArraySize[lambda p: 1]
 
     assert TestFunction.array.size([1], ctx=ctx) == 1
+
+async def test_unbounded_array_raises_base_exception():
+    # By default, unbounded arrays read until an exception
+    # is thrown by unpacking. This test ensures that "system"
+    # excpetions which do not inherit from 'Exception' will
+    # not be swallowed up.
+
+    class NotAnError(BaseException):
+        pass
+
+    class RaisesNotAnError(pak.Type):
+        @classmethod
+        def _unpack(cls, buf, *, ctx):
+            raise NotAnError
+
+        @classmethod
+        async def _unpack_async(cls, reader, *, ctx):
+            raise NotAnError
+
+    with pytest.raises(NotAnError):
+        RaisesNotAnError[None].unpack(b"")
+
+    with pytest.raises(NotAnError):
+        await RaisesNotAnError[None].unpack_async(b"")

@@ -585,6 +585,10 @@ class Type:
             Do **not** override this method. Instead override
             :meth:`_unpack`.
 
+        .. seealso::
+
+            :meth:`unpack_async`
+
         Parameters
         ----------
         buf : file object or :class:`bytes` or :class:`bytearray`
@@ -615,6 +619,10 @@ class Type:
 
             Do **not** override this method. Instead override
             :meth:`_unpack_async`.
+
+        .. seealso::
+
+            :meth:`unpack`
 
         Parameters
         ----------
@@ -801,6 +809,10 @@ class Type:
     def _array_unpack(cls, buf, array_size, *, ctx):
         """Unpacks an :class:`.Array` with the :class:`Type` as its element.
 
+        .. seealso::
+
+            :meth:`_array_unpack_async`
+
         Parameters
         ----------
         buf : file object
@@ -829,7 +841,48 @@ class Type:
             try:
                 elem = cls.unpack(buf, ctx=ctx)
 
-            except:
+            except Exception:
+                return array
+
+            array.append(elem)
+
+    @classmethod
+    async def _array_unpack_async(cls, reader, array_size, *, ctx):
+        """Asynchronously unpacks an :class:`.Array` with the :class:`Type` as its element.
+
+        .. seealso::
+
+            :meth:`_array_unpack`
+
+        Parameters
+        ----------
+        reader : :class:`asyncio.StreamReader`
+            The stream of data to unpack from.
+        array_size : :class:`int` or ``None``
+            The number of elements to unpack.
+
+            If ``None``, then as many elements
+            as possible should be unpacked from
+            ``reader``.
+        ctx : :class:`Type.Context`
+            The context for the :class:`Type`.
+
+        Returns
+        -------
+        any
+            The corresponding value for an :class:`.Array` with
+            the :class:`Type` as its element.
+        """
+
+        if array_size is not None:
+            return [await cls.unpack_async(reader, ctx=ctx) for x in range(array_size)]
+
+        array = []
+        while True:
+            try:
+                elem = await cls.unpack_async(reader, ctx=ctx)
+
+            except Exception:
                 return array
 
             array.append(elem)
