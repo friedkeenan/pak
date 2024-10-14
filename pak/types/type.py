@@ -238,7 +238,23 @@ class Type(abc.ABC):
         EmptyType
         """
 
+        annotations = util.annotations(func)
+
+        if len(annotations) == 0 or ("return" in annotations and len(annotations) == 1):
+            # If 'func' doesn't have any parameter annotations, don't bother wrapping it.
+
+            return func
+
         original_signature = inspect.signature(func)
+
+        # Remove parameter annotations of 'Type'.
+        func.__annotations__ = {
+            name: annotation
+
+            for name, annotation in annotations.items()
+
+            if annotation is not Type or name == "return"
+        }
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -261,26 +277,6 @@ class Type(abc.ABC):
             }
 
             return func(*new_args, **new_kwargs)
-
-        # Remove annotations of 'Type' from places irrelevant to them.
-
-        func.__signature__ = original_signature.replace(
-            parameters = [
-                param.replace(annotation=inspect.Parameter.empty) if param.annotation is Type
-                else param
-
-                for param in original_signature.parameters.values()
-            ],
-        )
-
-        if hasattr(wrapper, "__annotations__"):
-            wrapper.__annotations__ = {
-                name: annotation
-
-                for name, annotation in wrapper.__annotations__.items()
-
-                if annotation is not Type or name == "return"
-            }
 
         return wrapper
 

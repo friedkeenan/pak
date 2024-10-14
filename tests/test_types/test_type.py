@@ -87,7 +87,20 @@ def test_prepare_types():
         "return": pak.Type,
     }
 
+    assert test.__annotations__ == test.__wrapped__.__annotations__
+
     assert str(inspect.signature(test)) == "(x: 1, y, *args, **kwargs) -> pak.types.type.Type"
+
+def test_prepare_types_unwrapped():
+    def no_annotations(x, y, z):
+        pass
+
+    assert pak.Type.prepare_types(no_annotations) is no_annotations
+
+    def return_annotation(x, y, z) -> int:
+        pass
+
+    assert pak.Type.prepare_types(return_annotation) is return_annotation
 
 def test_static_size():
     class TestStaticSize(pak.Type):
