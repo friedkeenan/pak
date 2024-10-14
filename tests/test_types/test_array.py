@@ -200,7 +200,7 @@ def test_custom_array_no_static_size():
 async def test_unbounded_array_raises_base_exception():
     # By default, unbounded arrays read until an exception
     # is thrown by unpacking. This test ensures that "system"
-    # excpetions which do not inherit from 'Exception' will
+    # exceptions which do not inherit from 'Exception' will
     # not be swallowed up.
 
     class NotAnError(BaseException):
