@@ -9,7 +9,7 @@ class EnumRaw(enum.Enum):
 async def test_static_enum():
     EnumStatic = pak.Enum(pak.Int8, EnumRaw)
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         EnumStatic,
 
         (EnumRaw.A, b"\x01"),

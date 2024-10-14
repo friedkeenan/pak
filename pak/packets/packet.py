@@ -502,9 +502,7 @@ class Packet:
         # remove or fundamentally alter these things,
         # packet fields being slots will remain unimplemented.
 
-        annotations = util.annotations(cls)
-
-        cls._fields = {}
+        # Aggregate reserved fields first.
         reserved_fields = set(cls.RESERVED_FIELDS)
         for base in cls.mro()[1:]:
             if not issubclass(base, Packet):
@@ -512,12 +510,25 @@ class Packet:
 
             reserved_fields.update(base.RESERVED_FIELDS)
 
+
+        cls._fields = {}
+
+        # Collect fields of base Packets beforehand.
+        for base in cls.mro()[1:]:
+            if not issubclass(base, Packet):
+                continue
+
             for attr, attr_type in base.enumerate_field_types():
+                if attr in reserved_fields:
+                    raise ReservedFieldError(cls, attr)
+
                 if attr in cls._fields:
                     raise DuplicateFieldError(cls, attr)
 
                 cls._fields[attr] = attr_type
 
+        # Collect fields of the new Packet.
+        annotations = util.annotations(cls)
         for attr, attr_type in annotations.items():
             if attr in reserved_fields:
                 raise ReservedFieldError(cls, attr)
