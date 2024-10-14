@@ -51,12 +51,12 @@ def test_subpacket_typelike():
 def test_subpacket_terse_array():
     assert issubclass(pak.SubPacket[1], pak.Array)
 
-def test_subpacket_static():
+async def test_subpacket_static():
     class TestStatic(pak.SubPacket):
         field: pak.Int8
         other: pak.Int16
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         pak.Type(TestStatic),
 
         (TestStatic(field=1, other=2), b"\x01\x02\x00"),
@@ -65,12 +65,12 @@ def test_subpacket_static():
         default     = TestStatic(),
     )
 
-def test_subpacket_dynamic():
+async def test_subpacket_dynamic():
     class TestDynamic(pak.SubPacket):
         field: pak.LEB128
         other: pak.Int16
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         pak.Type(TestDynamic),
 
         (TestDynamic(field=1, other=2), b"\x01\x02\x00"),
@@ -79,12 +79,12 @@ def test_subpacket_dynamic():
         default     = TestDynamic(),
     )
 
-def test_subpacket_aligned():
+async def test_subpacket_aligned():
     class TestAligned(pak.AlignedSubPacket):
         field: pak.Int8
         other: pak.Int16
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         pak.Type(TestAligned),
 
         (TestAligned(field=1, other=2), b"\x01\x00\x02\x00"),
@@ -99,7 +99,7 @@ def test_subpacket_aligned():
             class Header(pak.AlignedSubPacket.Header):
                 id: pak.Int8
 
-def test_subpacket_sized():
+async def test_subpacket_sized():
     class TestSized(pak.SubPacket):
         class Header(pak.SubPacket.Header):
             size: pak.Int8
@@ -110,7 +110,7 @@ def test_subpacket_sized():
         sized: TestSized
         after: pak.Int8
 
-    pak.test.packet_behavior(
+    await pak.test.packet_behavior_both(
         (TestSizedPacket(sized=TestSized(data=b"data"), after=1), b"\x04data\x01"),
     )
 
@@ -120,7 +120,7 @@ def test_subpacket_sized():
 
         field: pak.Int8
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         pak.Type(TestStaticSized),
 
         (TestStaticSized(field=2), b"\x01\x02"),
@@ -129,7 +129,7 @@ def test_subpacket_sized():
         default     = TestStaticSized(),
     )
 
-def test_subpacket_id():
+async def test_subpacket_id():
     class TestID(pak.SubPacket):
         class Header(pak.SubPacket.Header):
             id: pak.Int8
@@ -144,7 +144,7 @@ def test_subpacket_id():
 
         second: pak.PrefixedString(pak.Int8)
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         pak.Type(TestID),
 
         (TestIDFirst(first=1),       b"\x01\x01\x00"),
@@ -157,6 +157,9 @@ def test_subpacket_id():
     with pytest.raises(ValueError, match="Unknown ID.+: 3"):
         pak.Type(TestID).unpack(b"\x03")
 
+    with pytest.raises(ValueError, match="Unknown ID.+: 3"):
+        await pak.Type(TestID).unpack_async(b"\x03")
+
     class TestIDUnknown(pak.SubPacket):
         class Header(pak.SubPacket.Header):
             id: pak.Int8
@@ -165,7 +168,7 @@ def test_subpacket_id():
         def _subclass_for_unknown_id(cls, id, *, ctx):
             return cls.GenericWithID(id)
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         pak.Type(TestIDUnknown),
 
         (TestIDUnknown.GenericWithID(1)(data=b"data"), b"\x01data"),

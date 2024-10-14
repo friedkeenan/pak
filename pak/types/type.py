@@ -1,15 +1,16 @@
 r"""Base code for :class:`.Type`\s."""
 
-import abc
 import inspect
 import copy
 import functools
 
+from .. import io
 from .. import util
 from ..dyn_value import DynamicValue
 
 __all__ = [
     "NoStaticSizeError",
+    "UnpackMethodNotImplementedError",
     "Type",
 ]
 
@@ -25,7 +26,23 @@ class NoStaticSizeError(Exception):
     def __init__(self, type_cls):
         super().__init__(f"'{type_cls.__qualname__}' has no static size")
 
-class Type(abc.ABC):
+class UnpackMethodNotImplementedError(NotImplementedError):
+    """An error indicating a :class:`Type` has not implemented a certain method for unpacking.
+
+    Parameters
+    ----------
+    type_cls : subclass of :class:`Type`
+        The :class:`Type` which has not implemented the method.
+    is_async : :class:`bool`
+        Whether the method is asynchronous or not.
+    """
+
+    def __init__(self, type_cls, *, is_async):
+        unpack_name = "_unpack_async" if is_async else '_unpack'
+
+        super().__init__(f"'{type_cls.__qualname__}' has not implemented the '{unpack_name}' method")
+
+class Type:
     r"""A definition of how to marshal raw data to and from values.
 
     Typically used for the types of :class:`.Packet` fields.
@@ -617,6 +634,10 @@ class Type(abc.ABC):
             Do **not** override this method. Instead override
             :meth:`_unpack`.
 
+        .. seealso::
+
+            :meth:`unpack_async`
+
         Parameters
         ----------
         buf : file object or :class:`bytes` or :class:`bytearray`
@@ -629,7 +650,7 @@ class Type(abc.ABC):
         Returns
         -------
         any
-            The corresponding value of the buffer.
+            The corresponding value of the raw data.
         """
 
         buf = util.file_object(buf)
@@ -638,6 +659,50 @@ class Type(abc.ABC):
             ctx = cls.Context()
 
         return cls._unpack(buf, ctx=ctx)
+
+    @classmethod
+    async def unpack_async(cls, reader, *, ctx=None):
+        """Asynchronously unpacks raw data into its corresponding value.
+
+        .. warning::
+
+            Do **not** override this method. Instead override
+            :meth:`_unpack_async`.
+
+        .. seealso::
+
+            :meth:`unpack`
+
+        Parameters
+        ----------
+        reader : :class:`asyncio.StreamReader` or :class:`bytes` or :class:`bytearray`
+            The stream of data to unpack from.
+
+            .. warning::
+
+                Nothing else should read from ``reader``
+                until this coroutine finishes executing.
+
+            If :class:`bytes` or :class:`bytearray`, then
+            ``reader`` is turned into an :class:`io.ByteStreamReader <.ByteStreamReader>`.
+        ctx : :class:`Type.Context` or ``None``
+            The context for the :class:`Type`.
+
+            If ``None``, then an empty :class:`Type.Context` is used.
+
+        Returns
+        -------
+        any
+            The corresponding value of the raw data.
+        """
+
+        if isinstance(reader, (bytes, bytearray)):
+            reader = io.ByteStreamReader(reader)
+
+        if ctx is None:
+            ctx = cls.Context()
+
+        return await cls._unpack_async(reader, ctx=ctx)
 
     @classmethod
     def pack(cls, value, *, ctx=None):
@@ -669,7 +734,6 @@ class Type(abc.ABC):
         return cls._pack(value, ctx=ctx)
 
     @classmethod
-    @abc.abstractmethod
     def _unpack(cls, buf, *, ctx):
         """Unpacks raw data into its corresponding value.
 
@@ -690,13 +754,37 @@ class Type(abc.ABC):
         Returns
         -------
         any
-            The corresponding value from the buffer.
+            The corresponding value of the raw data.
         """
 
-        raise NotImplementedError
+        raise UnpackMethodNotImplementedError(cls, is_async=False)
 
     @classmethod
-    @abc.abstractmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        """Asynchronously unpacks raw data into its corresponding value.
+
+        To be overridden by subclasses.
+
+        .. warning::
+            Do not use this method directly, **always** use
+            :meth:`unpack_async` instead.
+
+        Parameters
+        ----------
+        reader : :class:`asyncio.StreamReader`
+            The stream of data to unpack from.
+        ctx : :class:`Type.Context`
+            The context for the :class:`Type`.
+
+        Returns
+        -------
+        any
+            The corresponding value of the raw data.
+        """
+
+        raise UnpackMethodNotImplementedError(cls, is_async=True)
+
+    @classmethod
     def _pack(cls, value, *, ctx):
         """Packs a value into its corresponding raw data.
 
@@ -770,6 +858,10 @@ class Type(abc.ABC):
     def _array_unpack(cls, buf, array_size, *, ctx):
         """Unpacks an :class:`.Array` with the :class:`Type` as its element.
 
+        .. seealso::
+
+            :meth:`_array_unpack_async`
+
         Parameters
         ----------
         buf : file object
@@ -798,7 +890,54 @@ class Type(abc.ABC):
             try:
                 elem = cls.unpack(buf, ctx=ctx)
 
-            except:
+            except UnpackMethodNotImplementedError:
+                raise
+
+            except Exception:
+                return array
+
+            array.append(elem)
+
+    @classmethod
+    async def _array_unpack_async(cls, reader, array_size, *, ctx):
+        """Asynchronously unpacks an :class:`.Array` with the :class:`Type` as its element.
+
+        .. seealso::
+
+            :meth:`_array_unpack`
+
+        Parameters
+        ----------
+        reader : :class:`asyncio.StreamReader`
+            The stream of data to unpack from.
+        array_size : :class:`int` or ``None``
+            The number of elements to unpack.
+
+            If ``None``, then as many elements
+            as possible should be unpacked from
+            ``reader``.
+        ctx : :class:`Type.Context`
+            The context for the :class:`Type`.
+
+        Returns
+        -------
+        any
+            The corresponding value for an :class:`.Array` with
+            the :class:`Type` as its element.
+        """
+
+        if array_size is not None:
+            return [await cls.unpack_async(reader, ctx=ctx) for x in range(array_size)]
+
+        array = []
+        while True:
+            try:
+                elem = await cls.unpack_async(reader, ctx=ctx)
+
+            except UnpackMethodNotImplementedError:
+                raise
+
+            except Exception:
                 return array
 
             array.append(elem)
@@ -909,8 +1048,7 @@ class Type(abc.ABC):
         The generated type's :attr:`__module__` attribute is
         set to be the same as the origin type's. This is done to
         get around an issue where generated types would have
-        their :attr:`__module__` attribute be ``"abc"`` because
-        :class:`Type` inherits from :class:`abc.ABC`.
+        their :attr:`__module__` attribute be otherwise unintuitve.
 
         This method is cached so a new type is only made if it
         hasn't been made before.

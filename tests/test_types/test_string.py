@@ -1,10 +1,11 @@
+import asyncio
 import pak
 import pytest
 
-def test_prefixed_string():
+async def test_prefixed_string():
     TestPrefixed = pak.PrefixedString(pak.UInt8)
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         TestPrefixed,
 
         ("abc", b"\x03abc"),
@@ -19,15 +20,19 @@ def test_prefixed_string():
     )
 
     # Invalid bytes get replaced.
-    assert TestPrefixed.unpack(b"\x01\xFF") == "\uFFFD"
+    assert TestPrefixed.unpack(b"\x01\xFF")             == "\uFFFD"
+    assert await TestPrefixed.unpack_async(b"\x01\xFF") == "\uFFFD"
 
     TestStrictPrefixed = pak.PrefixedString(pak.UInt8, errors="strict")
 
     with pytest.raises(UnicodeDecodeError):
         TestStrictPrefixed.unpack(b"\x01\xFF")
 
-def test_terminated_string():
-    pak.test.type_behavior(
+    with pytest.raises(UnicodeDecodeError):
+        await TestStrictPrefixed.unpack_async(b"\x01\xFF")
+
+async def test_terminated_string():
+    await pak.test.type_behavior_both(
         pak.TerminatedString,
 
         ("abc", b"abc\x00"),
@@ -41,19 +46,23 @@ def test_terminated_string():
     )
 
     # Invalid bytes get replaced.
-    assert pak.TerminatedString.unpack(b"\xFF\x00") == "\uFFFD"
+    assert pak.TerminatedString.unpack(b"\xFF\x00")             == "\uFFFD"
+    assert await pak.TerminatedString.unpack_async(b"\xFF\x00") == "\uFFFD"
 
     with pytest.raises(pak.util.BufferOutOfDataError):
         pak.TerminatedString.unpack(b"Non-terminated string")
 
-def test_terminated_string_alternate_terminator():
+    with pytest.raises(asyncio.IncompleteReadError):
+        await pak.TerminatedString.unpack_async(b"Non-terminated string")
+
+async def test_terminated_string_alternate_terminator():
     with pytest.raises(ValueError, match="length"):
         pak.TerminatedString(terminator="ab")
 
     with pytest.raises(ValueError, match="length"):
         pak.TerminatedString(terminator="")
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         pak.TerminatedString(terminator="Z"),
 
         ("abc", b"abcZ"),
@@ -67,16 +76,19 @@ def test_terminated_string_alternate_terminator():
         default     = "",
     )
 
-def test_terminated_string_strict_errors():
+async def test_terminated_string_strict_errors():
     TestString = pak.TerminatedString(errors="strict")
 
     with pytest.raises(UnicodeDecodeError):
         TestString.unpack(b"\xFF\x00")
 
-def test_static_terminated_string():
+    with pytest.raises(UnicodeDecodeError):
+        await TestString.unpack_async(b"\xFF\x00")
+
+async def test_static_terminated_string():
     TestString = pak.StaticTerminatedString(4)
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         TestString,
 
         ("abc", b"abc\x00"),
@@ -92,14 +104,21 @@ def test_static_terminated_string():
     )
 
     # Invalid bytes get replaced.
-    assert TestString.unpack(b"\xFF\x00\x00\x00") == "\uFFFD"
+    assert TestString.unpack(b"\xFF\x00\x00\x00")             == "\uFFFD"
+    assert await TestString.unpack_async(b"\xFF\x00\x00\x00") == "\uFFFD"
 
     # An error is raised if there is not enough data.
     with pytest.raises(pak.util.BufferOutOfDataError):
         TestString.unpack(b"ab\x00")
 
+    with pytest.raises(asyncio.IncompleteReadError):
+        await TestString.unpack_async(b"ab\x00")
+
     with pytest.raises(ValueError, match="terminator"):
         TestString.unpack(b"abcd")
+
+    with pytest.raises(ValueError, match="terminator"):
+        await TestString.unpack_async(b"abcd")
 
     # Make sure we consider the terminator when seeing
     # if a string is too large to pack.
@@ -112,14 +131,14 @@ def test_static_terminated_string():
     with pytest.raises(ValueError, match="too large"):
         TestString.pack("\u200B\u200B")
 
-def test_static_terminated_string_alternate_terminator():
+async def test_static_terminated_string_alternate_terminator():
     with pytest.raises(ValueError, match="length"):
         pak.StaticTerminatedString(4, terminator="ab")
 
     with pytest.raises(ValueError, match="length"):
         pak.StaticTerminatedString(4, terminator="")
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         pak.StaticTerminatedString(4, terminator="Z"),
 
         ("abc", b"abcZ"),
@@ -134,14 +153,18 @@ def test_static_terminated_string_alternate_terminator():
         default     = "",
     )
 
-def test_static_terminated_string_strict_errors():
+async def test_static_terminated_string_strict_errors():
     TestString = pak.StaticTerminatedString(4, errors="strict")
 
     with pytest.raises(UnicodeDecodeError):
         TestString.unpack(b"\xFF\x00\x00\x00")
 
+    with pytest.raises(UnicodeDecodeError):
+        await TestString.unpack_async(b"\xFF\x00\x00\x00")
+
     # Make sure invalid bytes after the terminator don't raise errors.
-    assert TestString.unpack(b"a\x00\xFF\x00") == "a"
+    assert TestString.unpack(b"a\x00\xFF\x00")             == "a"
+    assert await TestString.unpack_async(b"a\x00\xFF\x00") == "a"
 
 def test_static_terminated_string_alignment():
     SameEncoding = pak.StaticTerminatedString(4, encoding="utf-8")

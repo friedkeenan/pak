@@ -69,6 +69,13 @@ class PrefixedString(Type):
         return data.decode(cls.encoding, errors=cls.errors)
 
     @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        length = await cls.prefix.unpack_async(reader, ctx=ctx)
+        data   = await reader.readexactly(length)
+
+        return data.decode(cls.encoding, errors=cls.errors)
+
+    @classmethod
     def _pack(cls, value, *, ctx):
         data = value.encode(cls.encoding, errors=cls.errors)
 
@@ -147,6 +154,24 @@ class TerminatedString(Type):
             byte = buf.read(1)
             if byte == b"":
                 raise util.BufferOutOfDataError("Buffer ran out of string data")
+
+            decoded_character = cls._incremental_decoder.decode(byte)
+            if decoded_character == "":
+                continue
+
+            if decoded_character == cls.terminator:
+                cls._incremental_decoder.decode(b"", final=True)
+
+                return string
+
+            string += decoded_character
+
+    @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        string = ""
+
+        while True:
+            byte = await reader.readexactly(1)
 
             decoded_character = cls._incremental_decoder.decode(byte)
             if decoded_character == "":
@@ -283,6 +308,33 @@ class StaticTerminatedString(Type):
 
         string = ""
 
+        while True:
+            byte = bytes([data.pop(0)])
+            decoded_character = cls._incremental_decoder.decode(byte)
+            if decoded_character == "":
+                continue
+
+            if decoded_character == cls.terminator:
+                cls._incremental_decoder.decode(b"", final=True)
+
+                return string
+
+            if len(data) <= 0:
+                raise ValueError("Could not find terminator in string data")
+
+            string += decoded_character
+
+    @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        # We must use an incremental decoder to decode our string data
+        # so that the garbage data after the terminator plays nicely
+        # with the 'errors' attribute.
+
+        buffer_size = cls.size(ctx=ctx)
+
+        data = bytearray(await reader.readexactly(buffer_size))
+
+        string = ""
         while True:
             byte = bytes([data.pop(0)])
             decoded_character = cls._incremental_decoder.decode(byte)

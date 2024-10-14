@@ -32,6 +32,10 @@ class _BitFieldType(Type):
         return cls.bitfield_cls.unpack_from_int(cls.underlying.unpack(buf, ctx=ctx))
 
     @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        return cls.bitfield_cls.unpack_from_int(await cls.underlying.unpack_async(reader, ctx=ctx))
+
+    @classmethod
     def _pack(cls, value, *, ctx):
         return cls.underlying.pack(value.pack_to_int(), ctx=ctx)
 

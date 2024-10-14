@@ -1,5 +1,6 @@
 r""":class:`.Packet`\s which align their fields."""
 
+from .. import io
 from .. import util
 from ..types.type import Type
 
@@ -101,6 +102,31 @@ class AlignedPacket(Packet):
         for (field, field_type), padding_amount in zip(cls.enumerate_field_types(), cls._padding_lengths(type_ctx=type_ctx)):
             value = field_type.unpack(buf, ctx=type_ctx)
             buf.read(padding_amount)
+
+            try:
+                setattr(self, field, value)
+
+            except AttributeError:
+                # If trying to set an unpacked value fails
+                # (like if the attribute is read-only)
+                # then just move on.
+                pass
+
+        return self
+
+    @classmethod
+    async def unpack_async(cls, reader, *, ctx=None):
+        """Overrides :meth:`.Packet.unpack_async` to handle alignment padding."""
+
+        self = object.__new__(cls)
+
+        if isinstance(reader, (bytes, bytearray)):
+            reader = io.ByteStreamReader(reader)
+
+        type_ctx = self.type_ctx(ctx)
+        for (field, field_type), padding_amount in zip(cls.enumerate_field_types(), cls._padding_lengths(type_ctx=type_ctx)):
+            value = await field_type.unpack_async(reader, ctx=type_ctx)
+            await reader.readexactly(padding_amount)
 
             try:
                 setattr(self, field, value)

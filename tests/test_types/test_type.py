@@ -211,12 +211,15 @@ def test_make_type_namespace():
     assert TestType.name  == "name"
     assert TestType.bases == "bases"
 
-def test_not_implemented_methods():
+async def test_not_implemented_methods():
     with pytest.raises(TypeError, match="initialized"):
         pak.Type.__init__(object())
 
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(pak.UnpackMethodNotImplementedError, match="'_unpack'"):
         pak.Type.unpack(b"")
+
+    with pytest.raises(pak.UnpackMethodNotImplementedError, match="'_unpack_async"):
+        await pak.Type.unpack_async(b"")
 
     with pytest.raises(NotImplementedError):
         pak.Type.pack(None)

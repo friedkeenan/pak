@@ -1,8 +1,6 @@
 import asyncio
 import pak
-import pytest
 
-@pytest.mark.asyncio
 async def test_yield_exec():
     class ExecSentinel:
         def __init__(self):
@@ -26,7 +24,6 @@ async def test_yield_exec():
 
     await exec_task
 
-@pytest.mark.asyncio
 async def test_value_holder():
     async def set_holder_value(holder):
         holder.set(1)
