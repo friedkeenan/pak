@@ -1,3 +1,4 @@
+import inspect
 import pak
 import pytest
 
@@ -152,3 +153,18 @@ def test_bind_annotations():
         kwargs_annotations["blah"]  == (6, 5) and
         kwargs_annotations["other"] == (7, 5)
     )
+
+def test_bind_annotations_from_signature():
+    def test_function(x: 1, y: 2, *, z: 3):
+        pass
+
+    signature = inspect.signature(test_function)
+
+    args_annotations, kwargs_annotations = pak.util.bind_annotations(signature, 1, 2, z=3)
+
+    assert (
+        args_annotations[0] == (1, 1) and
+        args_annotations[1] == (2, 2)
+    )
+
+    assert kwargs_annotations["z"] == (3, 3)
