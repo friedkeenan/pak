@@ -154,7 +154,7 @@ class Type:
         its propagation through the program.
 
         Such operations will neglect to suppress
-        an :exc:`UnsuppressedError` however,
+        a :exc:`Type.UnsuppressedError` however,
         enabling it to signal that something
         unambiguously wrong has occurred.
         """

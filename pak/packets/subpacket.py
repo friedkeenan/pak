@@ -150,6 +150,24 @@ class SubPacket(Packet, metaclass=_SubPacketMeta):
     is called, allowing customization for different needs.
     """
 
+    class NoAvailableSubclassError(ValueError, Type.UnsuppressedError):
+        """An error indicating that there was no corresponding subclass of a :class:`SubPacket` for a particular ID.
+
+        By default, :meth:`.SubPacket._subclass_for_unknown_id`
+        will throw a :exc:`SubPacket.NoAvailableSubclassError`.
+
+        Parameters
+        ----------
+        subpacket_cls : subclass of :class:`SubPacket`
+            The :class:`SubPacket` for which
+            there was no corresponding subclass.
+        id
+            The ID for which there was no corresponding subclass.
+        """
+
+        def __init__(self, subpacket_cls, *, id):
+            super().__init__(f"Unknown ID encountered for '{subpacket_cls.__qualname__}': {repr(id)}")
+
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -177,7 +195,8 @@ class SubPacket(Packet, metaclass=_SubPacketMeta):
         For instance, a subclass from :meth:`.Packet.GenericWithID` or
         :meth:`.Packet.EmptyWithID` could be returned.
 
-        By default, a :exc:`ValueError` is raised upon encountering an unknown ID.
+        By default, a :exc:`SubPacket.NoAvailableSubclassError`
+        is raised upon encountering an unknown ID.
 
         Parameters
         ----------
@@ -192,7 +211,7 @@ class SubPacket(Packet, metaclass=_SubPacketMeta):
             The subclass of the :class:`SubPacket`.
         """
 
-        raise ValueError(f"Unknown ID encountered for '{cls.__qualname__}': {repr(id)}")
+        raise cls.NoAvailableSubclassError(cls, id=id)
 
     @classmethod
     def __class_getitem__(cls, index):

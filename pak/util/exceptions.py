@@ -4,7 +4,7 @@ __all__ = [
     "BufferOutOfDataError",
 ]
 
-class BufferOutOfDataError(Exception):
+class BufferOutOfDataError(EOFError):
     r"""May be raised when a buffer runs out of data.
 
     .. warning::

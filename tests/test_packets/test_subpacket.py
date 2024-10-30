@@ -129,6 +129,10 @@ async def test_subpacket_sized():
         default     = TestStaticSized(),
     )
 
+def test_no_available_subclass_error_inheritance():
+    assert issubclass(pak.SubPacket.NoAvailableSubclassError, ValueError)
+    assert issubclass(pak.SubPacket.NoAvailableSubclassError, pak.Type.UnsuppressedError)
+
 async def test_subpacket_id():
     class TestID(pak.SubPacket):
         class Header(pak.SubPacket.Header):
@@ -154,10 +158,10 @@ async def test_subpacket_id():
         default     = pak.test.NO_DEFAULT,
     )
 
-    with pytest.raises(ValueError, match="Unknown ID.+: 3"):
+    with pytest.raises(pak.SubPacket.NoAvailableSubclassError, match="Unknown ID.+: 3"):
         pak.Type(TestID).unpack(b"\x03")
 
-    with pytest.raises(ValueError, match="Unknown ID.+: 3"):
+    with pytest.raises(pak.SubPacket.NoAvailableSubclassError, match="Unknown ID.+: 3"):
         await pak.Type(TestID).unpack_async(b"\x03")
 
     class TestIDUnknown(pak.SubPacket):
@@ -176,3 +180,17 @@ async def test_subpacket_id():
         static_size = None,
         default     = pak.test.NO_DEFAULT,
     )
+
+async def test_subpacket_unknown_id_unbounded_array():
+    class TestID(pak.SubPacket):
+        class Header(pak.SubPacket.Header):
+            id: pak.Int8
+
+    class KnownID(TestID):
+        id = 1
+
+    # An error should be raised upon encountering an unknown ID,
+    # instead of being suppressed like other exceptions.
+    with pytest.raises(pak.SubPacket.NoAvailableSubclassError, match="Unknown ID.+: 2"):
+        # Raw data is a known ID '1', then an unknown ID '2', then another known ID '1'.
+        TestID[None].unpack(b"\x01" + b"\x02" + b"\x01")
