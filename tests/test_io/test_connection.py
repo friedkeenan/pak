@@ -338,3 +338,87 @@ async def test_connection_write_packet():
     assert connection.writer.written_data == b"\x00\x01\x02"
 
     assert connection.created_packet
+
+# The asynchronous unpacking API was motivated by the packet
+# protocol for the CTF game 'Pwn Adventure 3: Pwnie Island'
+# which has packets that do not report their size in their
+# header but that nonetheless still have a dynamic size,
+# which massively complicated the process of sanely unpacking
+# them from an 'asyncio.StreamReader', and therefore a 'pak.io.Connection'.
+#
+# Thus we test here a similar sort of protocol
+# to make sure that we can handle such a case.
+
+class UnsizedPacket(pak.Packet):
+    class Header(pak.Packet.Header):
+        id: pak.UInt8
+
+class UnsizedStringPacket(UnsizedPacket):
+    id = 1
+
+    string: pak.TerminatedString
+
+# Test to make sure we can define custom field types
+# as expected using the asynchronous API and whatnot.
+class UnsizedCustomTypePacket(UnsizedPacket):
+    id = 2
+
+    # Takes a 'TerminatedString' and splits it into a list.
+    class CustomType(pak.Type):
+        @classmethod
+        async def _unpack_async(cls, reader, *, ctx):
+            return (await pak.TerminatedString.unpack_async(reader, ctx=ctx)).split()
+
+        @classmethod
+        def _pack(cls, value, *, ctx):
+            return pak.TerminatedString.pack(" ".join(value), ctx=ctx)
+
+    custom: CustomType
+
+class UnsizedConnection(pak.io.Connection):
+    def __init__(self, *, data=None, ctx=UnsizedPacket.Context()):
+        reader = None
+        writer = None
+
+        if data is not None:
+            reader = pak.io.ByteStreamReader(data)
+            writer = pak.io.ByteStreamWriter()
+
+        super().__init__(reader=reader, writer=writer, ctx=ctx)
+
+    async def _read_next_packet(self):
+        header_data = await self.read_data(UnsizedPacket.Header.size(ctx=self.ctx))
+        if header_data is None:
+            return None
+
+        header = UnsizedPacket.Header.unpack(header_data, ctx=self.ctx)
+
+        packet_cls = UnsizedPacket.subclass_with_id(header.id, ctx=self.ctx)
+
+        return await packet_cls.unpack_async(self.reader, ctx=self.ctx)
+
+    async def write_packet_instance(self, packet):
+        await self.write_data(packet.pack(ctx=self.ctx))
+
+async def test_unsized_connection():
+    connection = UnsizedConnection(
+        data = (
+            b"\x01" + b"test\x00" +
+
+            b"\x01" + b"another test\x00" +
+
+            b"\x02" + b"yet another test\x00"
+        )
+    )
+
+    packets = []
+    async for packet in connection.continuously_read_packets():
+        packets.append(packet)
+
+    assert packets == [
+        UnsizedStringPacket(string="test"),
+
+        UnsizedStringPacket(string="another test"),
+
+        UnsizedCustomTypePacket(custom=["yet", "another", "test"])
+    ]
