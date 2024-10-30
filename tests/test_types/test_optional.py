@@ -103,8 +103,8 @@ async def test_unchecked_optional_raises_unpack_not_implemented():
     # errors due to an unpack method not being implemented
     # will not be swallowed up.
 
-    with pytest.raises(pak.UnpackMethodNotImplementedError, match="'_unpack'"):
+    with pytest.raises(pak.Type.UnpackMethodNotImplementedError, match="'_unpack'"):
         pak.Optional(pak.Type).unpack(b"")
 
-    with pytest.raises(pak.UnpackMethodNotImplementedError, match="'_unpack_async'"):
+    with pytest.raises(pak.Type.UnpackMethodNotImplementedError, match="'_unpack_async'"):
         await pak.Optional(pak.Type).unpack_async(b"")

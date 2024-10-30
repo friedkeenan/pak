@@ -10,7 +10,6 @@ from ..dyn_value import DynamicValue
 
 __all__ = [
     "NoStaticSizeError",
-    "UnpackMethodNotImplementedError",
     "Type",
 ]
 
@@ -25,22 +24,6 @@ class NoStaticSizeError(Exception):
 
     def __init__(self, type_cls):
         super().__init__(f"'{type_cls.__qualname__}' has no static size")
-
-class UnpackMethodNotImplementedError(NotImplementedError):
-    """An error indicating a :class:`Type` has not implemented a certain method for unpacking.
-
-    Parameters
-    ----------
-    type_cls : subclass of :class:`Type`
-        The :class:`Type` which has not implemented the method.
-    is_async : :class:`bool`
-        Whether the method is asynchronous or not.
-    """
-
-    def __init__(self, type_cls, *, is_async):
-        unpack_name = "_unpack_async" if is_async else '_unpack'
-
-        super().__init__(f"'{type_cls.__qualname__}' has not implemented the '{unpack_name}' method")
 
 class Type:
     r"""A definition of how to marshal raw data to and from values.
@@ -161,6 +144,36 @@ class Type:
             # of a 'Type.Context' depends on the identity of the
             # packet, not the packet's value.
             return self.packet is other.packet and self.packet_ctx == other.packet_ctx
+
+    class UnsuppressedError(Exception):
+        """An error that is left unsuppressed by certain :class:`Type` operations.
+
+        Certain :class:`Type` operations, such as unpacking
+        :class:`.Array.Unbounded` and :class:`.Optional.Unchecked`,
+        involve suppressing a general :exc:`Exception`, preventing
+        its propagation through the program.
+
+        Such operations will neglect to suppress
+        an :exc:`UnsuppressedError` however,
+        enabling it to signal that something
+        unambiguously wrong has occurred.
+        """
+
+    class UnpackMethodNotImplementedError(NotImplementedError, UnsuppressedError):
+        """An error indicating a :class:`Type` has not implemented a certain method for unpacking.
+
+        Parameters
+        ----------
+        type_cls : subclass of :class:`Type`
+            The :class:`Type` which has not implemented the method.
+        is_async : :class:`bool`
+            Whether the method is asynchronous or not.
+        """
+
+        def __init__(self, type_cls, *, is_async):
+            unpack_name = "_unpack_async" if is_async else '_unpack'
+
+            super().__init__(f"'{type_cls.__qualname__}' has not implemented the '{unpack_name}' method")
 
     _typelikes = {}
 
@@ -757,7 +770,7 @@ class Type:
             The corresponding value of the raw data.
         """
 
-        raise UnpackMethodNotImplementedError(cls, is_async=False)
+        raise cls.UnpackMethodNotImplementedError(cls, is_async=False)
 
     @classmethod
     async def _unpack_async(cls, reader, *, ctx):
@@ -782,7 +795,7 @@ class Type:
             The corresponding value of the raw data.
         """
 
-        raise UnpackMethodNotImplementedError(cls, is_async=True)
+        raise cls.UnpackMethodNotImplementedError(cls, is_async=True)
 
     @classmethod
     def _pack(cls, value, *, ctx):
@@ -883,14 +896,14 @@ class Type:
         """
 
         if array_size is not None:
-            return [cls.unpack(buf, ctx=ctx) for x in range(array_size)]
+            return [cls.unpack(buf, ctx=ctx) for _ in range(array_size)]
 
         array = []
         while True:
             try:
                 elem = cls.unpack(buf, ctx=ctx)
 
-            except UnpackMethodNotImplementedError:
+            except cls.UnsuppressedError:
                 raise
 
             except Exception:
@@ -927,14 +940,14 @@ class Type:
         """
 
         if array_size is not None:
-            return [await cls.unpack_async(reader, ctx=ctx) for x in range(array_size)]
+            return [await cls.unpack_async(reader, ctx=ctx) for _ in range(array_size)]
 
         array = []
         while True:
             try:
                 elem = await cls.unpack_async(reader, ctx=ctx)
 
-            except UnpackMethodNotImplementedError:
+            except cls.UnsuppressedError:
                 raise
 
             except Exception:

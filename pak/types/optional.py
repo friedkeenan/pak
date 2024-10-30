@@ -1,6 +1,6 @@
 r""":class:`.Type`\s for marshaling data which might exist."""
 
-from .type import Type, UnpackMethodNotImplementedError
+from .type import Type
 
 __all__ = [
     "Optional",
@@ -143,8 +143,11 @@ class _Unchecked(Optional):
 
     Such :class:`Optional`\s are usually placed at the end of raw data.
 
-    If any :exc:`Exception` is thrown while unpacking,
-    then the :class:`Optional` does not exist.
+    The :class:`Optional` does not exist if any :exc:`Exception`
+    is thrown while unpacking.
+
+    If a :exc:`.Type.UnsuppressedError` is thrown while unpacking,
+    then that :exc:`Exception` will not be suppressed.
 
     Parameters
     ----------
@@ -180,7 +183,7 @@ class _Unchecked(Optional):
         try:
             return cls.elem_type.unpack(buf, ctx=ctx)
 
-        except UnpackMethodNotImplementedError:
+        except cls.UnsuppressedError:
             raise
 
         except Exception:
@@ -191,7 +194,7 @@ class _Unchecked(Optional):
         try:
             return await cls.elem_type.unpack_async(reader, ctx=ctx)
 
-        except UnpackMethodNotImplementedError:
+        except cls.UnsuppressedError:
             raise
 
         except Exception:

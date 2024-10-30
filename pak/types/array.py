@@ -206,6 +206,14 @@ class _Unbounded(Array):
 
     An unbounded :class:`Array` will read its elements until the end of the buffer.
 
+    Unless customized, an unbounded :class:`Array` will read its elements
+    until an :exc:`Exception` is thrown while unpacking them, at which
+    point the :exc:`Exception` will be suppressed and the :class:`Array`
+    will contain all the elements that were able to be successfully read.
+
+    If a :exc:`.Type.UnsuppressedError` is thrown while unpacking
+    an element, then that :exc:`Exception` will not be suppressed.
+
     Parameters
     ----------
     elem_type : typelike

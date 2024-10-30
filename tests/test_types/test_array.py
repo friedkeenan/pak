@@ -227,8 +227,32 @@ async def test_unbounded_array_raises_unpack_not_implemented():
     # due to an unpack method not being implemented will not
     # be swallowed up.
 
-    with pytest.raises(pak.UnpackMethodNotImplementedError, match="'_unpack'"):
+    with pytest.raises(pak.Type.UnpackMethodNotImplementedError, match="'_unpack'"):
         pak.Type[None].unpack(b"")
 
-    with pytest.raises(pak.UnpackMethodNotImplementedError, match="'_unpack_async'"):
+    with pytest.raises(pak.Type.UnpackMethodNotImplementedError, match="'_unpack_async'"):
         await pak.Type[None].unpack_async(b"")
+
+async def test_unbounded_array_raises_unsuppressed_error():
+    # By default, unbounded arrays read until and exception
+    # is thrown by unpacking. This test ensures that errors
+    # which inherit from 'pak.Type.UnsuppressedError' will
+    # not be swallowed up.
+
+    class CustomError(pak.Type.UnsuppressedError):
+        pass
+
+    class UnsuppressedType(pak.Type):
+        @classmethod
+        def _unpack(cls, buf, *, ctx):
+            raise CustomError
+
+        @classmethod
+        async def _unpack_async(cls, reader, *, ctx):
+            raise CustomError
+
+    with pytest.raises(CustomError):
+        UnsuppressedType[None].unpack(b"")
+
+    with pytest.raises(CustomError):
+        await UnsuppressedType[None].unpack_async(b"")
