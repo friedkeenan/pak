@@ -66,6 +66,9 @@ class PrefixedString(Type):
         length = cls.prefix.unpack(buf, ctx=ctx)
         data   = buf.read(length)
 
+        if len(data) < length:
+            raise util.BufferOutOfDataError("Could not read the full string buffer")
+
         return data.decode(cls.encoding, errors=cls.errors)
 
     @classmethod

@@ -23,6 +23,13 @@ async def test_prefixed_string():
     assert TestPrefixed.unpack(b"\x01\xFF")             == "\uFFFD"
     assert await TestPrefixed.unpack_async(b"\x01\xFF") == "\uFFFD"
 
+    # An error is raised if there's not enough data.
+    with pytest.raises(pak.util.BufferOutOfDataError):
+        TestPrefixed.unpack(b"\x03ab")
+
+    with pytest.raises(asyncio.IncompleteReadError):
+        await TestPrefixed.unpack_async(b"\x03ab")
+
     TestStrictPrefixed = pak.PrefixedString(pak.UInt8, errors="strict")
 
     with pytest.raises(UnicodeDecodeError):
