@@ -1,5 +1,6 @@
 r""":class:`.Packet`\s which are contained in other :class:`.Packet`\s."""
 
+from .. import util
 from ..types.type import Type
 
 from .packet         import Packet
@@ -274,6 +275,9 @@ class _SubPacketType(Type):
 
         if header.has_field("size"):
             packet_buf = buf.read(header.size)
+
+            if len(packet_buf) < header.size:
+                raise util.BufferOutOfDataError("Unable to read the amount of data reported by the header")
         else:
             packet_buf = buf
 

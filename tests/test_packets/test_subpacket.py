@@ -1,3 +1,4 @@
+import asyncio
 import pak
 import pytest
 
@@ -128,6 +129,14 @@ async def test_subpacket_sized():
         static_size = None,
         default     = TestStaticSized(),
     )
+
+    with pytest.raises(pak.util.BufferOutOfDataError, match="header"):
+        # The header reports 4 bytes, but can only read 3.
+        pak.Type(TestSized).unpack(b"\x04" + b"\x01\x02\x03")
+
+    with pytest.raises(asyncio.IncompleteReadError):
+        # The header reports 4 bytes, but can only read 3.
+        await pak.Type(TestSized).unpack_async(b"\x04" + b"\x01\x02\x03")
 
 def test_no_available_subclass_error_inheritance():
     assert issubclass(pak.SubPacket.NoAvailableSubclassError, ValueError)
