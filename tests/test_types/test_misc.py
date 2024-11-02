@@ -340,3 +340,22 @@ async def test_struct_multiple():
         static_size = 3,
         default     = pak.test.NO_DEFAULT,
     )
+
+async def test_struct_not_enough_data():
+    class TestSingle(pak.StructType):
+        fmt = "H"
+
+    with pytest.raises(struct.error, match="requires a buffer of 2 bytes"):
+        TestSingle.unpack(b"\x01")
+
+    with pytest.raises(asyncio.IncompleteReadError):
+        await TestSingle.unpack_async(b"\x01")
+
+    class TestMultiple(pak.StructType):
+        fmt = "BH"
+
+    with pytest.raises(struct.error, match="requires a buffer of 3 bytes"):
+        TestMultiple.unpack(b"\x01\x02")
+
+    with pytest.raises(asyncio.IncompleteReadError):
+        await TestMultiple.unpack_async(b"\x01\x02")
