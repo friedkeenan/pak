@@ -351,7 +351,7 @@ async def test_connection_write_packet():
 
 class UnsizedPacket(pak.Packet):
     class Header(pak.Packet.Header):
-        id: pak.UInt8
+        id: pak.ULEB128
 
 class UnsizedStringPacket(UnsizedPacket):
     id = 1
@@ -386,16 +386,26 @@ class UnsizedConnection(pak.io.Connection):
 
         super().__init__(reader=reader, writer=writer, ctx=ctx)
 
-    async def _read_next_packet(self):
-        header_data = await self.read_data(UnsizedPacket.Header.size(ctx=self.ctx))
-        if header_data is None:
+    async def _try_read_packet(self, packet_cls):
+        # Handle when we reach EOF.
+
+        try:
+            return await packet_cls.unpack_async(self.reader, ctx=self.ctx)
+
+        except pak.Type.UnsuppressedError:
+            pass
+
+        except Exception:
             return None
 
-        header = UnsizedPacket.Header.unpack(header_data, ctx=self.ctx)
+    async def _read_next_packet(self):
+        header = await self._try_read_packet(UnsizedPacket.Header)
+        if header is None:
+            return None
 
         packet_cls = UnsizedPacket.subclass_with_id(header.id, ctx=self.ctx)
 
-        return await packet_cls.unpack_async(self.reader, ctx=self.ctx)
+        return await self._try_read_packet(packet_cls)
 
     async def write_packet_instance(self, packet):
         await self.write_data(packet.pack(ctx=self.ctx))
