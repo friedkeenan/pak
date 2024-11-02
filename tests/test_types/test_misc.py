@@ -303,6 +303,31 @@ async def test_struct_endian():
         default     = pak.test.NO_DEFAULT,
     )
 
+async def test_struct_manual_endian():
+    # Make sure we can still manually specify
+    # the endianness of 'StructType'.
+
+    class TestStruct(pak.StructType):
+        fmt = "H"
+
+    assert TestStruct.fmt    == "H"
+    assert TestStruct.endian == "<"
+
+    class TestStruct_BE(TestStruct):
+        endian = ">"
+
+    assert TestStruct_BE.fmt    == "H"
+    assert TestStruct_BE.endian == ">"
+
+    await pak.test.type_behavior_both(
+        TestStruct_BE,
+
+        (1, b"\x00\x01"),
+
+        static_size = 2,
+        default     = pak.test.NO_DEFAULT,
+    )
+
 async def test_struct_multiple():
     class TestStruct(pak.StructType):
         fmt = "BH"
