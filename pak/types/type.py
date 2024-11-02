@@ -422,7 +422,7 @@ class Type:
         The return value of the :class:`classmethod` will be returned from
         this method.
 
-        Otherwise, if the :attr:`_size` attribute is a :class:`DynamicValue`,
+        Otherwise, if the :attr:`_size` attribute is a :class:`.DynamicValue`,
         which it is automatically transformed into on class construction
         if applicable, then the dynamic value of that is returned.
 
@@ -504,7 +504,7 @@ class Type:
         The return value of the :class:`classmethod` will be returned from
         this method.
 
-        Otherwise, if the :class:`_alignment` attribute is a :class:`DynamicValue`,
+        Otherwise, if the :class:`_alignment` attribute is a :class:`.DynamicValue`,
         which it is automatically transformed into on class construction if
         applicable, then the dynamic value of that is returned.
 
@@ -598,7 +598,7 @@ class Type:
         The return value of the :class:`classmethod` will be returned from
         this method.
 
-        Else, if the :attr:`_default` attribute is a :class:`DynamicValue`,
+        Else, if the :attr:`_default` attribute is a :class:`.DynamicValue`,
         which it is automatically transformed into on class construction
         if applicable, then the dynamic value of that is returned.
 

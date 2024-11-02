@@ -1,0 +1,4 @@
+/* Unify exception colors. */
+body[data-theme="light"]       .highlight .ne { color: #cc0000 }
+body[data-theme="dark"]        .highlight .ne { color: #cc0000 }
+body:not([data-theme="light"]) .highlight .ne { color: #cc0000 }
