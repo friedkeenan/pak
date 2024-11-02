@@ -1,3 +1,4 @@
+import asyncio
 import pak
 import pytest
 
@@ -18,7 +19,7 @@ def test_aligned_packet_size():
     assert AlignedTest.size()   == 12
     assert AlignedTest().size() == 12
 
-async def test_faulty_aligned_packet():
+async def test_aligned_packet_faulty_field():
     class FaultyPacket(pak.AlignedPacket):
         field: pak.ULEB128
 
@@ -30,6 +31,21 @@ async def test_faulty_aligned_packet():
 
     with pytest.raises(TypeError, match="no alignment"):
         FaultyPacket().pack()
+
+async def test_aligned_packet_not_enough_padding():
+    with pytest.raises(pak.util.BufferOutOfDataError, match="padding"):
+        # '\xAA' and '\xBB' represent alignment padding.
+        #
+        # There should be one more byte of alignment
+        # padding at the end of the data.
+        AlignedTest.unpack(b"\x01\x00\xAA\xAA\x02\x00\x00\x00\x03\xBB\xBB")
+
+    with pytest.raises(asyncio.IncompleteReadError):
+        # '\xAA' and '\xBB' represent alignment padding.
+        #
+        # There should be one more byte of alignment
+        # padding at the end of the data.
+        await AlignedTest.unpack_async(b"\x01\x00\xAA\xAA\x02\x00\x00\x00\x03\xBB\xBB")
 
 async def test_aligned_packet_read_only():
     class TestReadOnly(pak.AlignedPacket):

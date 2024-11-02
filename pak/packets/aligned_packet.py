@@ -101,7 +101,10 @@ class AlignedPacket(Packet):
         type_ctx = self.type_ctx(ctx)
         for (field, field_type), padding_amount in zip(cls.enumerate_field_types(), cls._padding_lengths(type_ctx=type_ctx)):
             value = field_type.unpack(buf, ctx=type_ctx)
-            buf.read(padding_amount)
+
+            # Read out the padding data and check we read enough.
+            if len(buf.read(padding_amount)) < padding_amount:
+                raise util.BufferOutOfDataError("Unable to read enough padding for alignment")
 
             try:
                 setattr(self, field, value)
@@ -126,6 +129,7 @@ class AlignedPacket(Packet):
         type_ctx = self.type_ctx(ctx)
         for (field, field_type), padding_amount in zip(cls.enumerate_field_types(), cls._padding_lengths(type_ctx=type_ctx)):
             value = await field_type.unpack_async(reader, ctx=type_ctx)
+
             await reader.readexactly(padding_amount)
 
             try:
