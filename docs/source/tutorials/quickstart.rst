@@ -123,6 +123,35 @@ Let's see how to use a :class:`.Type`:
 
 First we call the :meth:`.Type.pack` method to get the raw data which corresponds to the value ``1``, asserting that we get the raw data ``b"\x01"``. Then we call the :meth:`.Type.unpack` method to get the value which corresponds to the raw data ``b"\x01"``, asserting we get the value ``1``.
 
+The :meth:`.Type.unpack` method may also accept a binary file object in addition to plain byte data:
+
+.. testcode::
+
+    import io
+
+    buf = io.BytesIO(
+        # Two bytes '1' and '2'.
+        b"\x01" + b"\x02"
+    )
+
+    value_from_buf = pak.Int8.unpack(buf)
+
+    assert value_from_buf == 1
+
+    value_from_buf = pak.Int8.unpack(buf)
+
+    assert value_from_buf == 2
+
+Here we construct an :class:`io.BytesIO` file object filled with the data corresponding to a ``1`` and then a ``2``. Then we unpack from that binary file object a value, asserting that it equals ``1``, and then we unpack another value and assert it equals ``2``. This works because unpacking will seek forward past the corresponding raw data within the file object, allowing you to chain calls to :meth:`.Type.unpack`. This will also work with :meth:`.Packet.unpack`.
+
+.. note::
+
+    In certain cases it may be necessary, or otherwise desirable, to unpack a :class:`.Type` "asynchronously" using coroutines and the ``await`` syntax. For this case, there is the :meth:`.Type.unpack_async` method, which accepts an :class:`asyncio.StreamReader` in place of where :meth:`.Type.unpack` accepts a file object.
+
+    Similarly there is also a :meth:`.Packet.unpack_async` method, and in general where a Pak utility involves unpacking, there will be a corresponding asynchronous version suffixed with ``_async``.
+
+    All :class:`.Type`\s within Pak support both the synchronous and asynchronous APIs, but be aware that custom :class:`.Type`\s are permitted to only support one or the other.
+
 ----
 
 :class:`.Type`\s may also have default values:
