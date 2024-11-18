@@ -95,6 +95,25 @@ In the ``_pack`` method we first encode the string using the ``"utf-8"`` codec t
 
 Note that when calling :meth:`.Type.unpack` and :meth:`.Type.pack`, we pass the keyword argument ``ctx=ctx``. For now we're going to gloss over exactly why we do this, but know that it is important to forward on the ``ctx`` parameter in this way.
 
+.. note::
+
+    If we wanted to add support for asynchronous unpacking via the :meth:`.Type.unpack_async` method, we could add an override of the :meth:`.Type._unpack_async` method, that would look like this::
+
+        @classmethod
+        async def _unpack_async(cls, reader, *, ctx):
+            # Unpack the length of the string data.
+            data_length = await pak.UInt8.unpack_async(reader, ctx=ctx)
+
+            # Read the string data.
+            data = await reader.readexactly(data_length)
+
+            # Decode the data into a string and return it.
+            return data.decode("utf-8")
+
+    The ``reader`` parameter here refers to the :class:`asyncio.StreamReader` which contains the raw data. As you can see, the logic is the same as our ``_unpack`` method, only instead utilizing an asynchronous interface.
+
+    Custom types are empowered to neglect to implement either of the unpacking interfaces, since it is very often that they will only need one or the other. This tutorial will carry on with only using the synchronous unpacking interface.
+
 Let's make sure our ``String`` type works as expected:
 
 .. testcode::
