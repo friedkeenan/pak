@@ -127,15 +127,15 @@ class ByteStreamReader:
         return match_end
 
     async def readuntil(self, separator=b"\n"):
-        """Reads until ``separator`` is found.
+        """Reads until a separator is found.
 
         Parameters
         ----------
         separator : :class:`bytes` or :class:`tuple` of :class:`bytes`
-            The string of bytes to find.
+            If :class:`bytes`, then the separator to read until.
 
             If a :class:`tuple`, then the collection of
-            possible separators to find. The separator
+            possible separators to read until. The separator
             which results in the least amount of data
             being read will be the one utilized.
 
