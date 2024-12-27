@@ -53,6 +53,22 @@ async def test_byte_stream_reader_readuntil():
 
     assert reader.at_eof()
 
+async def test_byte_stream_reader_readuntil_multiple():
+    reader = pak.io.ByteStreamReader(b"abcd")
+
+    assert await reader.readuntil((b"bc", b"bcd")) == b"abc"
+
+    with pytest.raises(ValueError, match="Separator.*one byte"):
+        await reader.readuntil((b"d", b""))
+
+    with pytest.raises(asyncio.IncompleteReadError) as exc_info:
+        await reader.readuntil((b"e", b"f"))
+
+    assert exc_info.value.partial  == b"d"
+    assert exc_info.value.expected is None
+
+    assert reader.at_eof()
+
 async def test_byte_stream_writer_close():
     writer = pak.io.ByteStreamWriter()
 
