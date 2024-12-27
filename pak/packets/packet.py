@@ -3,6 +3,7 @@ r"""Base code for :class:`.Packet`\s."""
 import copy
 import inspect
 
+from .. import io
 from .. import util
 from ..dyn_value import DynamicValue
 from ..types.type import Type
@@ -501,9 +502,7 @@ class Packet:
         # remove or fundamentally alter these things,
         # packet fields being slots will remain unimplemented.
 
-        annotations = util.annotations(cls)
-
-        cls._fields = {}
+        # Aggregate reserved fields first.
         reserved_fields = set(cls.RESERVED_FIELDS)
         for base in cls.mro()[1:]:
             if not issubclass(base, Packet):
@@ -511,12 +510,25 @@ class Packet:
 
             reserved_fields.update(base.RESERVED_FIELDS)
 
+
+        cls._fields = {}
+
+        # Collect fields of base Packets beforehand.
+        for base in cls.mro()[1:]:
+            if not issubclass(base, Packet):
+                continue
+
             for attr, attr_type in base.enumerate_field_types():
+                if attr in reserved_fields:
+                    raise ReservedFieldError(cls, attr)
+
                 if attr in cls._fields:
                     raise DuplicateFieldError(cls, attr)
 
                 cls._fields[attr] = attr_type
 
+        # Collect fields of the new Packet.
+        annotations = util.annotations(cls)
         for attr, attr_type in annotations.items():
             if attr in reserved_fields:
                 raise ReservedFieldError(cls, attr)
@@ -614,9 +626,17 @@ class Packet:
 
         .. note::
 
-            This doesn't unpack the header, as you need to unpack
-            the :class:`Packet.Header` to determine the correct
-            :class:`Packet` to unpack in the first place.
+            This doesn't unpack the header, as you often need to
+            unpack the :class:`Packet.Header` to determine the
+            correct :class:`Packet` to unpack in the first place,
+            let alone other aspects of the data.
+
+        This method will call the :meth:`.Type.unpack`
+        method on the fields of the :class:`Packet`.
+
+        .. seealso::
+
+            :meth:`unpack_async`
 
         Parameters
         ----------
@@ -648,6 +668,65 @@ class Packet:
         type_ctx = self.type_ctx(ctx)
         for attr, attr_type in cls.enumerate_field_types():
             value = attr_type.unpack(buf, ctx=type_ctx)
+
+            try:
+                setattr(self, attr, value)
+
+            except AttributeError:
+                # If trying to set an unpacked value fails
+                # (like if the attribute is read-only)
+                # then just move on.
+                pass
+
+        return self
+
+    @classmethod
+    async def unpack_async(cls, reader, *, ctx=None):
+        """Asynchronously unpacks a :class:`Packet` from raw data.
+
+        .. note::
+
+            This doesn't unpack the header, as you often need to
+            unpack the :class:`Packet.Header` to determine the
+            correct :class:`Packet` to unpack in the first place,
+            let alone other aspects of the data.
+
+        This method will call the :meth:`.Type.unpack_async`
+        method on the fields of the :class:`Packet`.
+
+        .. seealso::
+
+            :meth:`unpack`
+
+        Parameters
+        ----------
+        reader : :class:`asyncio.StreamReader` or :class:`bytes` or :class:`bytearray`
+            The stream of data to unpack from.
+
+            .. warning::
+
+                Nothing else should read from ``reader``
+                until this coroutine finishes executing.
+
+            If :class:`bytes` or :class:`bytearray`, then
+            ``reader`` is turned into an :class:`io.ByteStreamReader <.ByteStreamReader>`.
+        ctx : :class:`Packet.Context`
+            The context for the :class:`Packet`.
+
+        Returns
+        -------
+        :class:`Packet`
+            The :class:`Packet` marshaled from the raw data.
+        """
+
+        self = object.__new__(cls)
+
+        if isinstance(reader, (bytes, bytearray)):
+            reader = io.ByteStreamReader(reader)
+
+        type_ctx = self.type_ctx(ctx)
+        for attr, attr_type in cls.enumerate_field_types():
+            value = await attr_type.unpack_async(reader, ctx=type_ctx)
 
             try:
                 setattr(self, attr, value)

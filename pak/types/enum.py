@@ -64,8 +64,8 @@ class Enum(Type):
     #   values, and this matches with other Types which cannot
     #   pack values they were not meant to (e.g. Int8 can't pack
     #   strings). This however does create an awkward situation
-    #   where an Enum can return a value from unpacking which then
-    #   can't be packed again. I lean towards this being fine,
+    #   where an 'Enum' can return a value from unpacking which
+    #   then can't be packed again. I lean towards this being fine,
     #   but there is to consider that for something like a proxy,
     #   which does not control either end of its protocol and may
     #   just simply be forwarding on packets, a change in its
@@ -73,7 +73,7 @@ class Enum(Type):
     #   break the proxy, requiring the addition of the new valid
     #   enum value. I do not presently feel very sympathetic to
     #   this issue, and lean towards that if a protocol changes,
-    #   then your pak specification should simply be updated accordingly.
+    #   then your Pak specification should simply be updated accordingly.
     INVALID = util.UniqueSentinel("INVALID")
 
     @classmethod
@@ -95,6 +95,15 @@ class Enum(Type):
     @classmethod
     def _unpack(cls, buf, *, ctx):
         value = cls.elem_type.unpack(buf, ctx=ctx)
+
+        try:
+            return cls.enum_type(value)
+        except ValueError:
+            return cls.INVALID
+
+    @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        value = await cls.elem_type.unpack_async(reader, ctx=ctx)
 
         try:
             return cls.enum_type(value)
@@ -226,6 +235,12 @@ class EnumOr(Type):
     @classmethod
     def _unpack(cls, buf, *, ctx):
         value = cls.elem_type.unpack(buf, ctx=ctx)
+
+        return cls._try_to_enum(value)
+
+    @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        value = await cls.elem_type.unpack_async(reader, ctx=ctx)
 
         return cls._try_to_enum(value)
 

@@ -19,7 +19,7 @@ class BasicPacket(pak.Packet):
     attr1: pak.Int8
     attr2: pak.Int16
 
-def test_packet():
+async def test_packet():
     assert isinstance(BasicPacket.attr1, pak.Int8)
 
     p = BasicPacket()
@@ -28,7 +28,7 @@ def test_packet():
     # Test deleting fields works.
     del p.attr1
 
-    pak.test.packet_behavior(
+    await pak.test.packet_behavior_both(
         (BasicPacket(attr1=0, attr2=1), b"\x00\x01\x00"),
     )
 
@@ -132,6 +132,22 @@ def test_user_reserved_field():
         class ChildPacket(UserPacket, UnrelatedPacket):
             ctx: pak.Int8
 
+    # A base packet cannot use a field that a child packet has reserved.
+    class UnreservedPacket(pak.Packet):
+        later_reserved: pak.Int8
+
+    with pytest.raises(pak.ReservedFieldError, match="later_reserved"):
+        class ChildPacket(UnreservedPacket):
+            RESERVED_FIELDS = ["later_reserved"]
+
+    # One base packet cannot use a field that a later base packet reserved.
+    class ReservedPacket(pak.Packet):
+        RESERVED_FIELDS = ["later_reserved"]
+
+    with pytest.raises(pak.ReservedFieldError, match="later_reserved"):
+        class ChildPacket(UnreservedPacket, ReservedPacket):
+            pass
+
     # If two base packets reserve the same field, it's okay.
     class DoubleUserPacket(pak.Packet):
         RESERVED_FIELDS = ["user_field"]
@@ -139,19 +155,19 @@ def test_user_reserved_field():
     class ChildPacket(UserPacket, DoubleUserPacket):
         pass
 
-def test_typelike_attr():
+async def test_typelike_attr():
     pak.Type.register_typelike(int, lambda x: pak.Int8)
 
     class TestTypelike(pak.Packet):
         attr: 1
 
-    pak.test.packet_behavior(
+    await pak.test.packet_behavior_both(
         (TestTypelike(attr=5), b"\x05"),
     )
 
     pak.Type.unregister_typelike(int)
 
-def test_packet_property():
+async def test_packet_property():
     class TestProperty(pak.Packet):
         prop: pak.Int8
 
@@ -166,7 +182,7 @@ def test_packet_property():
     p = TestProperty()
     assert p.prop == 0
 
-    pak.test.packet_behavior(
+    await pak.test.packet_behavior_both(
         (TestProperty(prop=1), b"\x01"),
     )
 
@@ -183,7 +199,7 @@ def test_packet_property():
     p = TestReadOnly()
     assert p.read_only == 1
 
-    pak.test.packet_behavior(
+    await pak.test.packet_behavior_both(
         (TestReadOnly(), b"\x01"),
     )
 
@@ -193,7 +209,7 @@ def test_packet_property():
     with pytest.raises(AttributeError):
         TestReadOnly(read_only=2)
 
-def test_packet_inheritance():
+async def test_packet_inheritance():
     class TestParent(pak.Packet):
         test: pak.Int8
 
@@ -210,7 +226,7 @@ def test_packet_inheritance():
     assert TestChildBasic()    == TestParent()
     assert TestChildOverride() != TestParent()
 
-    pak.test.packet_behavior(
+    await pak.test.packet_behavior_both(
         (
             TestChildBasic(test=1),
 
@@ -228,7 +244,7 @@ def test_packet_inheritance():
         class TestDuplicateField(TestParent):
             test: pak.Int8
 
-def test_packet_multiple_inheritance():
+async def test_packet_multiple_inheritance():
     class FirstParent(pak.Packet):
         first: pak.Int8
 
@@ -244,7 +260,7 @@ def test_packet_multiple_inheritance():
         ("child",  pak.Int32),
     ]
 
-    pak.test.packet_behavior(
+    await pak.test.packet_behavior_both(
         (
             Child(first=1, second=2, child=3),
 
@@ -313,7 +329,7 @@ def test_packet_copy_from_immutable():
     # We can mutate the copy even though the original was immutable.
     copy.foo = 1
 
-def test_header():
+async def test_header():
     class Test(pak.Packet):
         class Header(pak.Packet.Header):
             size: pak.UInt8
@@ -321,7 +337,7 @@ def test_header():
         byte:  pak.Int8
         short: pak.Int16
 
-    pak.test.packet_behavior(
+    await pak.test.packet_behavior_both(
         (Test.Header(size=3), b"\x03"),
     )
 
@@ -372,16 +388,17 @@ def test_header_positional_only():
 
     assert header.packet == 1
 
-def test_id():
+async def test_id():
     class TestEmpty(pak.Packet):
         pass
 
     assert TestEmpty.id() is None
-    pak.test.packet_behavior(
+    await pak.test.packet_behavior_both(
         (TestEmpty(), b""),
     )
 
-    assert TestEmpty.Header.unpack(b"test") == pak.Packet.Header()
+    assert TestEmpty.Header.unpack(b"test")             == pak.Packet.Header()
+    assert await TestEmpty.Header.unpack_async(b"test") == pak.Packet.Header()
 
     class TestOverrideEmpty(TestEmpty):
         id = 1
@@ -397,7 +414,8 @@ def test_id():
     assert TestStaticId.id()     == 1
     assert TestStaticId().pack() == b"\x01"
 
-    assert TestStaticId.Header.unpack(b"\x02") == TestStaticId.Header(id=2)
+    assert TestStaticId.Header.unpack(b"\x02")             == TestStaticId.Header(id=2)
+    assert await TestStaticId.Header.unpack_async(b"\x02") == TestStaticId.Header(id=2)
 
     with StringToIntDynamicValue.context():
         class TestDynamicId(pak.Packet):
@@ -409,7 +427,8 @@ def test_id():
         assert TestDynamicId.id()     == 1
         assert TestDynamicId().pack() == b"\x01"
 
-        assert TestDynamicId.Header.unpack(b"\x02") == TestDynamicId.Header(id=2)
+        assert TestDynamicId.Header.unpack(b"\x02")             == TestDynamicId.Header(id=2)
+        assert await TestDynamicId.Header.unpack_async(b"\x02") == TestDynamicId.Header(id=2)
 
     class TestClassmethodId(pak.Packet):
         class Header(pak.Packet.Header):
@@ -424,7 +443,8 @@ def test_id():
     assert TestClassmethodId.id()     == 1
     assert TestClassmethodId().pack() == b"\x01"
 
-    assert TestClassmethodId.Header.unpack(b"\x02") == TestClassmethodId.Header(id=2)
+    assert TestClassmethodId.Header.unpack(b"\x02")             == TestClassmethodId.Header(id=2)
+    assert await TestClassmethodId.Header.unpack_async(b"\x02") == TestClassmethodId.Header(id=2)
 
     class DummyDescriptor:
         def __get__(self, instance, owner=None):
@@ -439,7 +459,8 @@ def test_id():
     assert TestPlainDescriptorId.id()     == 1
     assert TestPlainDescriptorId().pack() == b"\x01"
 
-    assert TestPlainDescriptorId.Header.unpack(b"\x02") == TestPlainDescriptorId.Header(id=2)
+    assert TestPlainDescriptorId.Header.unpack(b"\x02")             == TestPlainDescriptorId.Header(id=2)
+    assert await TestPlainDescriptorId.Header.unpack_async(b"\x02") == TestPlainDescriptorId.Header(id=2)
 
     class FakeClassmethodDescriptor:
         @staticmethod
@@ -460,7 +481,8 @@ def test_id():
     assert TestFakeClassmethodId.id()     == 1
     assert TestFakeClassmethodId().pack() == b"\x01"
 
-    assert TestFakeClassmethodId.Header.unpack(b"\x02") == TestFakeClassmethodId.Header(id=2)
+    assert TestFakeClassmethodId.Header.unpack(b"\x02")             == TestFakeClassmethodId.Header(id=2)
+    assert await TestFakeClassmethodId.Header.unpack_async(b"\x02") == TestFakeClassmethodId.Header(id=2)
 
     # Classmethods only propagate the descriptor
     # protocol from Python 3.9 to Python 3.12,
@@ -481,7 +503,8 @@ def test_id():
         assert TestClassPropertyId.id()     == 1
         assert TestClassPropertyId().pack() == b"\x01"
 
-        assert TestClassPropertyId.Header.unpack(b"\x02") == TestClassPropertyId.Header(id=2)
+        assert TestClassPropertyId.Header.unpack(b"\x02")             == TestClassPropertyId.Header(id=2)
+        assert await TestClassPropertyId.Header.unpack_async(b"\x02") == TestClassPropertyId.Header(id=2)
 
     class TestPathologicalMethodId(pak.Packet):
         id = pak.Packet.unpack
@@ -540,6 +563,6 @@ def test_generic_with_id():
 
     assert list(TestPacket.GenericWithID(1).field_names()) == ["field", "data"]
 
-test_generic = pak.test.packet_behavior_func(
+test_generic = pak.test.packet_behavior_func_both(
     (pak.GenericPacket(data=b"\xAA\xBB\xCC"), b"\xAA\xBB\xCC"),
 )

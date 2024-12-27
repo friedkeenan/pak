@@ -56,7 +56,6 @@ class DummyConnection(pak.io.Connection):
     async def write_packet_instance(self, packet):
         await self.write_data(packet.pack(ctx=self.ctx))
 
-@pytest.mark.asyncio
 async def test_connection_abc():
     with pytest.raises(TypeError, match="instantiate abstract"):
         pak.io.Connection()
@@ -67,7 +66,6 @@ async def test_connection_abc():
     with pytest.raises(NotImplementedError):
         await pak.io.Connection.write_packet_instance(object(), pak.Packet())
 
-@pytest.mark.asyncio
 async def test_connection_close():
     connection = DummyConnection()
 
@@ -125,7 +123,6 @@ async def test_connection_close():
     await writer_close_task
     await connection_close_task
 
-@pytest.mark.asyncio
 async def test_connection_context():
     connection = DummyConnection(data=b"")
 
@@ -191,7 +188,6 @@ def test_connection_create_packet_positional_only():
 
     assert packet.packet_cls == 1
 
-@pytest.mark.asyncio
 async def test_connection_read_data():
     connection = DummyConnection(data=b"abcd")
 
@@ -199,7 +195,6 @@ async def test_connection_read_data():
 
     assert await connection.read_data(2) is None
 
-@pytest.mark.asyncio
 async def test_connection_continuously_read_packets():
     connection = DummyConnection(
         # A single DummyValuePacket(value=2).
@@ -217,7 +212,6 @@ async def test_connection_continuously_read_packets():
 
     assert connection.is_closing()
 
-@pytest.mark.asyncio
 async def test_connection_continuously_read_packets_ends_on_close():
     connection = DummyConnection(
         # A single DummyValuePacket(value=2).
@@ -232,7 +226,6 @@ async def test_connection_continuously_read_packets_ends_on_close():
 
     assert iterations == 1
 
-@pytest.mark.asyncio
 async def test_connection_watch_for_packet():
     connection = DummyConnection(
         # A single DummyValuePacket(value=2).
@@ -260,7 +253,6 @@ async def test_connection_watch_for_packet():
     await watch_for_packet_task
     await watch_for_parent_packet_task
 
-@pytest.mark.asyncio
 async def test_connection_watch_for_packet_on_close():
     connection = DummyConnection(
         # A single DummyValuePacket(value=2).
@@ -279,7 +271,6 @@ async def test_connection_watch_for_packet_on_close():
 
     await watch_for_packet_task
 
-@pytest.mark.asyncio
 async def test_connection_is_watching_for_packet():
     connection = DummyConnection(data=b"")
 
@@ -303,7 +294,6 @@ async def test_connection_is_watching_for_packet():
 
     await watch_for_packet_task
 
-@pytest.mark.asyncio
 async def test_connection_write_data():
     connection = DummyConnection(data=b"")
 
@@ -311,7 +301,6 @@ async def test_connection_write_data():
 
     assert connection.writer.written_data == b"abcd"
 
-@pytest.mark.asyncio
 async def test_connection_write_packet_instance():
     # This is technically testing our test code,
     # however it is added so that we can ensure
@@ -324,7 +313,6 @@ async def test_connection_write_packet_instance():
 
     assert connection.writer.written_data == b"\x00\x01\x02"
 
-@pytest.mark.asyncio
 async def test_connection_write_packet():
     class CheckCreatePacket(DummyConnection):
         def __init__(self, **kwargs):
@@ -350,3 +338,97 @@ async def test_connection_write_packet():
     assert connection.writer.written_data == b"\x00\x01\x02"
 
     assert connection.created_packet
+
+# The asynchronous unpacking API was motivated by the packet
+# protocol for the CTF game 'Pwn Adventure 3: Pwnie Island'
+# which has packets that do not report their size in their
+# header but that nonetheless still have a dynamic size,
+# which massively complicated the process of sanely unpacking
+# them from an 'asyncio.StreamReader', and therefore a 'pak.io.Connection'.
+#
+# Thus we test here a similar sort of protocol
+# to make sure that we can handle such a case.
+
+class UnsizedPacket(pak.Packet):
+    class Header(pak.Packet.Header):
+        id: pak.ULEB128
+
+class UnsizedStringPacket(UnsizedPacket):
+    id = 1
+
+    string: pak.TerminatedString
+
+# Test to make sure we can define custom field types
+# as expected using the asynchronous API and whatnot.
+class UnsizedCustomTypePacket(UnsizedPacket):
+    id = 2
+
+    # Takes a 'TerminatedString' and splits it into a list.
+    class CustomType(pak.Type):
+        @classmethod
+        async def _unpack_async(cls, reader, *, ctx):
+            return (await pak.TerminatedString.unpack_async(reader, ctx=ctx)).split()
+
+        @classmethod
+        def _pack(cls, value, *, ctx):
+            return pak.TerminatedString.pack(" ".join(value), ctx=ctx)
+
+    custom: CustomType
+
+class UnsizedConnection(pak.io.Connection):
+    def __init__(self, *, data=None, ctx=UnsizedPacket.Context()):
+        reader = None
+        writer = None
+
+        if data is not None:
+            reader = pak.io.ByteStreamReader(data)
+            writer = pak.io.ByteStreamWriter()
+
+        super().__init__(reader=reader, writer=writer, ctx=ctx)
+
+    async def _try_read_packet(self, packet_cls):
+        # Handle when we reach EOF.
+
+        try:
+            return await packet_cls.unpack_async(self.reader, ctx=self.ctx)
+
+        except pak.Type.UnsuppressedError:
+            pass
+
+        except Exception:
+            return None
+
+    async def _read_next_packet(self):
+        header = await self._try_read_packet(UnsizedPacket.Header)
+        if header is None:
+            return None
+
+        packet_cls = UnsizedPacket.subclass_with_id(header.id, ctx=self.ctx)
+
+        return await self._try_read_packet(packet_cls)
+
+    async def write_packet_instance(self, packet):
+        await self.write_data(packet.pack(ctx=self.ctx))
+
+async def test_unsized_connection():
+    connection = UnsizedConnection(
+        data = (
+            b"\x01" + b"test\x00" +
+
+            b"\x01" + b"another test\x00" +
+
+            b"\x02" + b"yet another test\x00"
+        )
+    )
+
+    packets = []
+    async for packet in connection.continuously_read_packets():
+        packets.append(packet)
+
+    assert packets == [
+        UnsizedStringPacket(string="test"),
+
+        UnsizedStringPacket(string="another test"),
+
+        UnsizedCustomTypePacket(custom=["yet", "another", "test"])
+    ]

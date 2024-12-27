@@ -101,41 +101,68 @@ class ByteStreamReader:
 
         return await self.read(n)
 
+    def _find_separator_end(self, separator):
+        # NOTE: Support for a tuple of multiple
+        # separators was added in Python 3.13.
+
+        if not isinstance(separator, tuple):
+            separator = [separator]
+
+        match_end = None
+        for to_find in separator:
+            if len(to_find) <= 0:
+                raise ValueError("Separator must contain at least one byte")
+
+            pos = self._buffer.find(to_find)
+            if pos >= 0:
+                possible_end = pos + len(to_find)
+
+                if match_end is None:
+                    match_end = possible_end
+                else:
+                    match_end = min(match_end, possible_end)
+
+        # NOTE: This will return 'None' instead of '-1'
+        # to signify that we did not find any separators.
+        return match_end
+
     async def readuntil(self, separator=b"\n"):
-        """Reads until ``separator`` is found.
+        """Reads until a separator is found.
 
         Parameters
         ----------
-        separator : :class:`bytes`
-            The string of bytes to find.
+        separator : :class:`bytes` or :class:`tuple` of :class:`bytes`
+            If :class:`bytes`, then the separator to read until.
+
+            If a :class:`tuple`, then the collection of
+            possible separators to read until. The separator
+            which results in the least amount of data
+            being read will be the one utilized.
 
         Returns
         -------
         :class:`bytes`
             The data read from the stream.
 
-            ``separator`` will be included in the data.
+            The appropriate separator will be included in the data.
 
         Raises
         ------
         :exc:`ValueError`
-            If ``separator`` doesn't contain at least one byte.
+            If the separators don't all contain at least one byte.
         :exc:`asyncio.IncompleteReadError`
-            If ``separator`` cannot be found.
+            If no separator can be found.
 
             The ``partial`` attribute will contain the
             partially read data, potentially including
-            part of ``separator``.
+            part of a separator.
         """
 
-        if len(separator) == 0:
-            raise ValueError("Separator must contain at least one byte")
-
-        pos = self._buffer.find(separator)
-        if pos < 0:
+        pos = self._find_separator_end(separator)
+        if pos is None:
             raise asyncio.IncompleteReadError(partial=await self.read(), expected=None)
 
-        return await self.readexactly(pos + len(separator))
+        return await self.readexactly(pos)
 
     def at_eof(self):
         """Gets whether the stream has ended.

@@ -53,13 +53,13 @@ class ReprTestBitField(pak.BitField):
 def test_bit_field_repr():
     assert repr(ReprTestBitField()) == "ReprTestBitField(first=False, second=0)"
 
-def test_static_bit_field():
+async def test_static_bit_field():
     class TestStatic(pak.BitField):
         first:  1
         second: 2
         third:  2
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         TestStatic.Type(pak.UInt8),
 
         (TestStatic(first=False, second=0, third=0), b"\x00"),
@@ -80,14 +80,14 @@ def test_static_bit_field():
     with pytest.raises(ValueError, match="too wide for width"):
         TestStatic.Type(pak.UInt8).pack(TestStatic(first=False, second=4, third=0))
 
-def test_dynamic_bit_field():
+async def test_dynamic_bit_field():
     class TestDynamic(pak.BitField):
         first:   1
         second:  2
         _unused: 4
         third:   2
 
-    pak.test.type_behavior(
+    await pak.test.type_behavior_both(
         TestDynamic.Type(pak.ULEB128),
 
         (TestDynamic(first=False, second=0, third=0), b"\x00"),

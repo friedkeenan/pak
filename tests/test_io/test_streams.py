@@ -2,7 +2,6 @@ import asyncio
 import pak
 import pytest
 
-@pytest.mark.asyncio
 async def test_byte_stream_reader_read():
     reader = pak.io.ByteStreamReader(b"abcd")
 
@@ -14,7 +13,6 @@ async def test_byte_stream_reader_read():
     assert reader.at_eof()
     assert await reader.read() == b""
 
-@pytest.mark.asyncio
 async def test_byte_stream_reader_readline():
     reader = pak.io.ByteStreamReader(b"abcd\nefgh")
 
@@ -25,7 +23,6 @@ async def test_byte_stream_reader_readline():
 
     assert await reader.readline() == b""
 
-@pytest.mark.asyncio
 async def test_byte_stream_reader_readexactly():
     reader = pak.io.ByteStreamReader(b"abcd")
 
@@ -40,7 +37,6 @@ async def test_byte_stream_reader_readexactly():
     assert reader.at_eof()
     assert await reader.readexactly(0) == b""
 
-@pytest.mark.asyncio
 async def test_byte_stream_reader_readuntil():
     reader = pak.io.ByteStreamReader(b"abcd")
 
@@ -57,7 +53,22 @@ async def test_byte_stream_reader_readuntil():
 
     assert reader.at_eof()
 
-@pytest.mark.asyncio
+async def test_byte_stream_reader_readuntil_multiple():
+    reader = pak.io.ByteStreamReader(b"abcd")
+
+    assert await reader.readuntil((b"bc", b"bcd")) == b"abc"
+
+    with pytest.raises(ValueError, match="Separator.*one byte"):
+        await reader.readuntil((b"d", b""))
+
+    with pytest.raises(asyncio.IncompleteReadError) as exc_info:
+        await reader.readuntil((b"e", b"f"))
+
+    assert exc_info.value.partial  == b"d"
+    assert exc_info.value.expected is None
+
+    assert reader.at_eof()
+
 async def test_byte_stream_writer_close():
     writer = pak.io.ByteStreamWriter()
 
@@ -91,7 +102,6 @@ async def test_byte_stream_writer_close():
 
     await set_closed_task
 
-@pytest.mark.asyncio
 async def test_byte_stream_writer_write():
     writer = pak.io.ByteStreamWriter()
 
@@ -108,7 +118,6 @@ async def test_byte_stream_writer_write():
     # Make sure we can still access the written data after closing.
     assert writer.written_data == b"abcd"
 
-@pytest.mark.asyncio
 async def test_byte_stream_writer_writelines():
     writer = pak.io.ByteStreamWriter()
 

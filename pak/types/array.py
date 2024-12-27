@@ -114,6 +114,10 @@ class _FixedSize(Array):
         return cls.elem_type._array_unpack(buf, cls.array_size, ctx=ctx)
 
     @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        return await cls.elem_type._array_unpack_async(reader, cls.array_size, ctx=ctx)
+
+    @classmethod
     def _pack(cls, value, *, ctx):
         value = cls.elem_type._array_ensure_size(value, cls.array_size, ctx=ctx)
 
@@ -172,6 +176,12 @@ class _SizePrefixed(Array):
         return cls.elem_type._array_unpack(buf, size, ctx=ctx)
 
     @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        size = await cls.array_size.unpack_async(reader, ctx=ctx)
+
+        return await cls.elem_type._array_unpack_async(reader, size, ctx=ctx)
+
+    @classmethod
     def _pack(cls, value, *, ctx):
         size = cls.elem_type._array_num_elements(value, ctx=ctx)
 
@@ -195,6 +205,14 @@ class _Unbounded(Array):
     r"""An unbounded :class:`Array`.
 
     An unbounded :class:`Array` will read its elements until the end of the buffer.
+
+    Unless customized, an unbounded :class:`Array` will read its elements
+    until an :exc:`Exception` is thrown while unpacking them, at which
+    point the :exc:`Exception` will be suppressed and the :class:`Array`
+    will contain all the elements that were able to be successfully read.
+
+    If a :exc:`.Type.UnsuppressedError` is thrown while unpacking
+    an element, then that :exc:`Exception` will not be suppressed.
 
     Parameters
     ----------
@@ -226,6 +244,10 @@ class _Unbounded(Array):
     @classmethod
     def _unpack(cls, buf, *, ctx):
         return cls.elem_type._array_unpack(buf, None, ctx=ctx)
+
+    @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        return await cls.elem_type._array_unpack_async(reader, None, ctx=ctx)
 
     @classmethod
     def _pack(cls, value, *, ctx):
@@ -311,6 +333,10 @@ class _FunctionSized(Array):
     @classmethod
     def _unpack(cls, buf, *, ctx):
         return cls.elem_type._array_unpack(buf, cls.array_size(ctx.packet), ctx=ctx)
+
+    @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        return await cls.elem_type._array_unpack_async(reader, cls.array_size(ctx.packet), ctx=ctx)
 
     @classmethod
     def _pack(cls, value, *, ctx):

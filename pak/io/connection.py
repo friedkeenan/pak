@@ -203,7 +203,7 @@ class Connection(abc.ABC):
 
         .. note::
 
-            This must be iterated over for :meth:`read_packet` to function.
+            This must be iterated over for :meth:`watch_for_packet` to function.
 
         This will continue to yield :class:`.Packet`\s until the
         :class:`Connection` is closed or EOF is reached.
