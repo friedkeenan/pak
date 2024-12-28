@@ -560,7 +560,7 @@ class Packet:
         cls._init_id()
         cls._init_fields_from_annotations()
 
-    def __init__(self, *, ctx=None, **fields):
+    def __init__(self, /, *, ctx=None, **fields):
         # Lazy initialized when needed.
         type_ctx = None
 

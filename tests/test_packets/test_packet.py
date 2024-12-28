@@ -155,6 +155,14 @@ def test_user_reserved_field():
     class ChildPacket(UserPacket, DoubleUserPacket):
         pass
 
+async def test_packet_self_field():
+    class SelfPacket(pak.Packet):
+        self: pak.UInt8
+
+    await pak.test.packet_behavior_both(
+        (SelfPacket(self=1), b"\x01"),
+    )
+
 async def test_typelike_attr():
     pak.Type.register_typelike(int, lambda x: pak.Int8)
 
