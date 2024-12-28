@@ -177,6 +177,22 @@ def test_alignment_padding():
         3,
     ]
 
+    # Make sure we can "disable" certain Types in an
+    # aligned context by giving them an alignment of '0'.
+    assert pak.Type.alignment_padding_lengths(
+        pak.Int16,
+        pak.Int32,
+        pak.EmptyType,
+        pak.Int8,
+
+        total_alignment = 4,
+    ) == [
+        2,
+        0,
+        0,
+        3,
+    ]
+
 def test_static_default():
     class Test(pak.Type):
         _default = [1, 2, 3]

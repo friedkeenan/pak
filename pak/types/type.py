@@ -540,6 +540,13 @@ class Type:
         return alignment
 
     @staticmethod
+    def _alignment_padding_at_offset(offset, alignment):
+        if alignment <= 0:
+            return 0
+
+        return -offset & (alignment - 1)
+
+    @staticmethod
     @util.cache
     def alignment_padding_lengths(*types, total_alignment, ctx=None):
         r"""Gets the length of padding after each :class:`Type` for alignment purposes.
@@ -552,12 +559,17 @@ class Type:
         *types : subclass of :class:`Type`
             The :class:`Type`\s for which to find the padding for.
         total_alignment : :class:`int`
-            The total alignment that `*types` should be aligned to,
+            The total alignment that ``*types`` should be aligned to,
             used for the padding at the end.
         ctx : :class:`Type.Context` or ``None``
             The context for ``*types``.
 
             If ``None``, then an empty :class:`Type.Context` is used.
+
+        Returns
+        -------
+        :class:`list`
+            The lengths of padding after each :class:`Type` in ``*types``.
         """
 
         # See https://en.wikipedia.org/wiki/Data_structure_alignment#Computing_padding
@@ -570,13 +582,13 @@ class Type:
 
         offset = types[0].size(ctx=ctx)
         for t in types[1:]:
-            padding_amount = -offset & (t.alignment(ctx=ctx) - 1)
+            padding_amount = Type._alignment_padding_at_offset(offset, t.alignment(ctx=ctx))
 
             offset += t.size(ctx=ctx) + padding_amount
             padding_lengths.append(padding_amount)
 
         # Pad out the end with the total alignment,
-        padding_lengths.append(-offset & (total_alignment - 1))
+        padding_lengths.append(Type._alignment_padding_at_offset(offset, total_alignment))
 
         return padding_lengths
 

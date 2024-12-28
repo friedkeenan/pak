@@ -7,7 +7,15 @@ import pytest
 async def test_empty():
     assert pak.Type(None) is pak.EmptyType
 
-    assert pak.EmptyType.default() is None
+    await pak.test.type_behavior_both(
+        pak.EmptyType,
+
+        (None, b""),
+
+        static_size = 0,
+        alignment   = 0,
+        default     = None,
+    )
 
     buf = io.BytesIO(b"test")
     assert pak.EmptyType.unpack(buf) is None
@@ -18,8 +26,6 @@ async def test_empty():
     assert await reader.read() == b"test"
 
     assert pak.EmptyType.pack("whatever value") == b""
-
-    assert pak.EmptyType.size() == 0
 
     class TestDescriptor(pak.Packet):
         empty: pak.EmptyType
@@ -155,6 +161,7 @@ async def test_raw_byte():
         (b"\xAA", b"\xAA"),
 
         static_size = 1,
+        alignment   = 1,
         default     = b"\x00",
     )
 
@@ -180,6 +187,7 @@ async def test_raw_byte_array():
         (b"\xAA\xBB", b"\xAA\xBB"),
 
         static_size = 2,
+        alignment   = 1,
         default     = b"\x00\x00",
     )
 

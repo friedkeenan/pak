@@ -23,7 +23,8 @@ class EmptyType(Type):
     :class:`EmptyType`.
     """
 
-    _size = 0
+    _size      = 0
+    _alignment = 0
 
     def __get__(self, instance, owner=None):
         if instance is None:
@@ -153,8 +154,9 @@ class RawByte(Type):
     :class:`bytearray` value.
     """
 
-    _size    = 1
-    _default = b"\x00"
+    _size      = 1
+    _alignment = 1
+    _default   = b"\x00"
 
     @classmethod
     def _unpack(cls, buf, *, ctx):

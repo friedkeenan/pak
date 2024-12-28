@@ -3,9 +3,10 @@ import pak
 import pytest
 
 class AlignedTest(pak.AlignedPacket):
-    first:  pak.Int16
-    second: pak.Int32
-    third:  pak.Int8
+    first:    pak.Int16
+    second:   pak.Int32
+    disabled: pak.EmptyType
+    third:    pak.Int8
 
 test_aligned_packet_marshal = pak.test.packet_behavior_func_both(
     (
