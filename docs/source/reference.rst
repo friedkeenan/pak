@@ -26,6 +26,7 @@ Types
 
     ~types.array
     ~types.default
+    ~types.deferring
     ~types.enum
     ~types.misc
     ~types.numeric

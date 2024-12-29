@@ -200,6 +200,11 @@ async def test_subpacket_unknown_id_unbounded_array():
 
     # An error should be raised upon encountering an unknown ID,
     # instead of being suppressed like other exceptions.
+
     with pytest.raises(pak.SubPacket.NoAvailableSubclassError, match="Unknown ID.+: 2"):
         # Raw data is a known ID '1', then an unknown ID '2', then another known ID '1'.
         TestID[None].unpack(b"\x01" + b"\x02" + b"\x01")
+
+    with pytest.raises(pak.SubPacket.NoAvailableSubclassError, match="Unknown ID.+: 2"):
+        # Raw data is a known ID '1', then an unknown ID '2', then another known ID '1'.
+        await TestID[None].unpack_async(b"\x01" + b"\x02" + b"\x01")

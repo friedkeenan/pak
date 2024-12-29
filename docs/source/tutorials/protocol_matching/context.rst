@@ -85,7 +85,7 @@ It is somewhat important that our ``FelinePacket.Context`` is default constructi
 
 ----
 
-But how do we pass this information to our ``String`` type? This is where :class:`.Type.Context`\s come in. A :class:`.Type.Context` is basically just a wrapper for :class:`.Packet.Context`\s, giving only the additional information of what :class:`.Packet` the :class:`.Type` operation concerns, if any. A :class:`.Type.Context` can be acquired by calling the :class:`.Type.Context` constructor, optionally passing the relevant :class:`.Packet` instance and :class:`.Packet.Context`. The passed packet can be accessed through the :attr:`~.Type.Context.packet` attribute and the passed context can be accessed through the :attr:`~.Type.Context.packet_ctx` attribute, though you will likely not need to access it through that attribute as the attributes of the :class:`.Packet.Context` can be acquired through the constructed :class:`.Type.Context`, like so:
+But how do we pass this information to our ``String`` type? This is where :class:`.Type.Context`\s come in. A :class:`.Type.Context` is basically just a wrapper for :class:`.Packet.Context`\s, giving only the additional information of what :class:`.Packet` the :class:`.Type` operation concerns, if any. A :class:`.Type.Context` can be acquired by calling the :class:`.Type.Context` constructor, optionally passing the relevant :class:`.Packet` instance and :class:`.Packet.Context`. The passed packet can be accessed through the :attr:`~.Type.Context.packet` attribute and the passed context can be accessed through the :attr:`~.Type.Context.packet_ctx` attribute, though you will likely not need to access it through that attribute as the attributes of the :class:`.Packet.Context` can be acquired directly through the constructed :class:`.Type.Context`, like so:
 
 .. testcode::
 
@@ -186,9 +186,7 @@ So there we go, now we have a ``String`` type which packs and unpacks differentl
 
 ----
 
-Is there a better way we could do this though? Yes, potentially. What we did is make our ``String`` code explicitly check the version stored in the ``ctx`` parameter, but we could abstract the logic out a bit further into a new :class:`.Type` which would represent the length of our string's encoded data. Then we could just have our ``String`` type call into that, being itself wholly unaware of any protocol versioning. So let's make that :class:`.Type`:
-
-.. testcode::
+Is there a better way we could do this though? Yes, potentially. What we did is make our ``String`` code explicitly check the version stored in the ``ctx`` parameter, but we could abstract the logic out a bit further into a new :class:`.Type` which would represent the length of our string's encoded data. Then we could just have our ``String`` :class:`.Type` call into that, being itself wholly unaware of any protocol versioning. So let's make that :class:`.Type`::
 
     class StringDataLength(pak.Type):
         @classmethod
@@ -205,7 +203,19 @@ Is there a better way we could do this though? Yes, potentially. What we did is 
 
             return pak.UInt16.pack(value, ctx=ctx)
 
-Pretty simple, right? Let's put it to use now:
+Here we just switch between using a :class:`.UInt8` or a :class:`.UInt16` to unpack and pack based on the version, but Pak actually provides a :class:`.DeferringType` facility for this sort of purpose already, which we can inherit from, and which will forward on the appropriate :class:`.Type` behavior to other operations beyond unpacking and packing as well. Here's how that would look:
+
+.. testcode::
+
+    class StringDataLength(pak.DeferringType):
+        @classmethod
+        def _defer_to(cls, *, ctx):
+            if ctx.version < 1:
+                return pak.UInt8
+
+            return pak.UInt16
+
+This then cuts down on a lot of overhead that we would otherwise have to write ourselves, and lets us focus on the actually meaningful logic of how to pick the appropriate :class:`.Type`. So let's put it to use now:
 
 .. testcode::
 
@@ -263,7 +273,7 @@ We can actually at this point throw out all our custom ``String`` code and just 
 
     String = pak.PrefixedString(StringDataLength)
 
-and come out with essentially the same functionality. This should give you a good idea about just how modular and composable :class:`.Type`\s can be.
+and come out with essentially the same functionality. This all should give you a good idea about just how modular and composable :class:`.Type`\s can be.
 
 Doing Better: Typelikes
 ***********************
@@ -280,35 +290,27 @@ This is where the concept of a "typelike" comes in. A typelike is an object that
 
 But why are typelikes relevant here and how can we add our own?
 
-Well, it would be really nice if instead of creating a whole ``StringDataLength`` type to handle the different protocol versions, we could instead have something like this::
+Well, it would be really nice if instead of creating a whole ``StringDataLength`` :class:`.Type` to handle the different protocol versions, we could instead have something like this::
 
     String = pak.PrefixedString({
         0: pak.UInt8,
         1: pak.UInt16,
     })
 
-This would be much more declarative, showing us very clearly that in version ``0``, strings are prefixed with a :class:`.UInt8` and in version ``1`` with a :class:`.UInt16`. This is where typelikes would help us, as we could make it so :class:`dict`\s are typelike, converting to a special type that forwards onto other types depending on the protocol version. Now, how would we go about this?
+This would be much more declarative, showing us very clearly that in version ``0``, strings are prefixed with a :class:`.UInt8` and in version ``1`` with a :class:`.UInt16`. It would also be helpful if we wanted to reuse this API for other versioned :class:`.Type`\s our protocol could have. This is where typelikes would help us, as we could make it so :class:`dict`\s are typelike, converting to a special :class:`.Type` that forwards onto other :class:`.Type`\s depending on the protocol version. Now, how would we go about this?
 
-First, we'll create the forwarding type; let's call it ``VersionedType``::
+First, we'll create the forwarding :class:`.Type`; let's call it ``VersionedType``::
 
-    class VersionedType(pak.Type):
+    class VersionedType(pak.DeferringType):
         # This will eventually be filled in with a specified dictionary.
         version_types = None
 
         @classmethod
-        def appropriate_type(cls, *, ctx):
+        def _defer_to(cls, *, ctx):
             # Get the appropriate type for the version, converting any typelike results.
             return pak.Type(cls.version_types[ctx.version])
 
-        @classmethod
-        def _unpack(cls, buf, *, ctx):
-            return cls.appropriate_type(ctx=ctx).unpack(buf, ctx=ctx)
-
-        @classmethod
-        def _pack(cls, value, *, ctx):
-            return cls.appropriate_type(ctx=ctx).pack(value, ctx=ctx)
-
-And it's basically as simple as that. In a real protocol where you're gonna have more than two protocol versions, you would want a more refined way of getting the appropriate type than just indexing directly into the dictionary, but this is fine for our purposes. In the real world, you would also want to forward on more aspects of :class:`.Type`\s, but what we've done is sufficient for a tutorial.
+And it's basically as simple as that. In a real protocol where you're gonna have more than two protocol versions, you would want a more refined way of getting the appropriate type than just indexing directly into the dictionary, but this is fine for our purposes.
 
 Now how do we fill in that ``version_types`` attribute? Well, we can make it so calling ``VersionedType`` will fill it in, meaning we could use ``VersionedType`` like so::
 
@@ -323,22 +325,14 @@ Well, when :class:`.Type`\s get called, the :meth:`.Type._call` classmethod gets
 
 .. testcode::
 
-    class VersionedType(pak.Type):
+    class VersionedType(pak.DeferringType):
         # This will eventually be filled in with a specified dictionary.
         version_types = None
 
         @classmethod
-        def appropriate_type(cls, *, ctx):
+        def _defer_to(cls, *, ctx):
             # Get the appropriate type for the version, converting any typelike results.
             return pak.Type(cls.version_types[ctx.version])
-
-        @classmethod
-        def _unpack(cls, buf, *, ctx):
-            return cls.appropriate_type(ctx=ctx).unpack(buf, ctx=ctx)
-
-        @classmethod
-        def _pack(cls, value, *, ctx):
-            return cls.appropriate_type(ctx=ctx).pack(value, ctx=ctx)
 
         @classmethod
         def _call(cls, version_types):
@@ -372,7 +366,7 @@ We should now be able to use it like so:
     assert StringDataLength.pack(2, ctx=ctx_version_0) == raw_data_version_0
     assert StringDataLength.pack(2, ctx=ctx_version_1) == raw_data_version_1
 
-And that's great, but we still haven't gotten to the API we set out for. To get there, we'll need to make :class:`dict`\s into typelikes that convert into a ``VersionedType``. To do this, we can use :meth:`.Type.register_typelike`, passing it the class of objects we want to be typelike (:class:`dict`), and a callable that will convert a :class:`dict` into a ``VersionedType``. Luckily, we just turned ``VersionedType`` into just that::
+And that's great, but we still haven't gotten to the API we set out for. To get there, we'll need to make :class:`dict`\s into typelikes that convert into a ``VersionedType``. To do this, we can use :meth:`.Type.register_typelike`, passing it the class of objects that we want to be typelike (:class:`dict`), and a callable that will convert a :class:`dict` into a ``VersionedType``. Luckily, we just turned ``VersionedType`` into just that::
 
     pak.Type.register_typelike(dict, VersionedType)
 
