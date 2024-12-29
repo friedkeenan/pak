@@ -310,7 +310,7 @@ First, we'll create the forwarding :class:`.Type`; let's call it ``VersionedType
             # Get the appropriate type for the version, converting any typelike results.
             return pak.Type(cls.version_types[ctx.version])
 
-And it's basically as simple as that. In a real protocol where you're gonna have more than two protocol versions, you would want a more refined way of getting the appropriate type than just indexing directly into the dictionary, but this is fine for our purposes.
+And it's basically as simple as that. In a real protocol where you're gonna have more than two protocol versions, you would want a more refined way of getting the appropriate :class:`.Type` than just indexing directly into the dictionary, but this is fine for our purposes.
 
 Now how do we fill in that ``version_types`` attribute? Well, we can make it so calling ``VersionedType`` will fill it in, meaning we could use ``VersionedType`` like so::
 
