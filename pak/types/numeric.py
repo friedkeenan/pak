@@ -1,7 +1,7 @@
 r""":class:`.Type`\s for numbers."""
 
 from .. import util
-from .type import Type
+from .type import Type, MaxBytesExceededError
 from .misc import StructType
 
 __all__ = [
@@ -125,10 +125,111 @@ class Float64(StructType):
 
     fmt = "d"
 
+# NOTE: I'm not utterly content with the
+# amount of code duplication involved with
+# the 'LEB128' types, but I think it's
+# ultimately fine even if annoying.
+
 class LEB128(Type):
     """A variable length signed integer following the ``LEB128`` format."""
 
     _default = 0
+
+    class Limited(Type):
+        """An :class:`LEB128` which is limited to a certain number of bytes.
+
+        It may be useful to limit the number of bytes
+        which may be marshaled in order to prevent a
+        malicious actor from endlessly setting the top
+        bit of each byte so that unpacking never ends.
+
+        By limiting the number of bytes, then
+        unpacking is always guaranteed to end.
+
+        When unpacking, if the number of bytes exceeds the
+        specified maximum, then a :exc:`.MaxBytesExceededError`
+        will be raised.
+
+        When packing, if the to-be-packed value exceeds the
+        associated range of values for the maximum number of
+        bytes, then a :exc:`ValueError` will be raised.
+
+        Parameters
+        ----------
+        max_bytes : :class:`int`
+            The number of bytes to limit the :class:`LEB128` to.
+        """
+
+        _default = 0
+
+        max_bytes = None
+
+        @classmethod
+        def __init_subclass__(cls, **kwargs):
+            super().__init_subclass__(**kwargs)
+
+            if cls.max_bytes is not None:
+                max_bits = cls.max_bytes * 7
+
+                cls._value_range = range(-util.bit(max_bits - 1), util.bit(max_bits - 1))
+
+        @classmethod
+        def _unpack(cls, buf, *, ctx):
+            num = 0
+
+            for i in range(cls.max_bytes):
+                byte = UInt8.unpack(buf, ctx=ctx)
+
+                # Get the bottom 7 bits.
+                value = byte & 0b01111111
+
+                num |= value << (i * 7)
+
+                # If the top bit is not set, return.
+                if byte & 0b10000000 == 0:
+                    return util.to_signed(num, bits=(i + 1) * 7)
+
+            raise MaxBytesExceededError(cls)
+
+        @classmethod
+        async def _unpack_async(cls, reader, *, ctx):
+            num = 0
+
+            for i in range(cls.max_bytes):
+                byte = await UInt8.unpack_async(reader, ctx=ctx)
+
+                # Get the bottom 7 bits.
+                value = byte & 0b01111111
+
+                num |= value << (i * 7)
+
+                # If the top bit is not set, return.
+                if byte & 0b10000000 == 0:
+                    return util.to_signed(num, bits=(i + 1) * 7)
+
+            raise MaxBytesExceededError(cls)
+
+        @classmethod
+        def _pack(cls, value, *, ctx):
+            # If 'value' is not an 'int' then checking if
+            # it's contained in the value range will loop
+            # through the quite large range instead of just
+            # comparing against the start and end.
+            #
+            # Therefore we decide to just not worry about
+            # non-integer values.
+            if isinstance(value, int) and value not in cls._value_range:
+                raise ValueError(f"Value '{value}' is out of the range of '{cls.__qualname__}'")
+
+            return LEB128.pack(value, ctx=ctx)
+
+        @classmethod
+        def _call(cls, *, max_bytes):
+            return cls.make_type(
+                f"{cls.__qualname__}(max_bytes={max_bytes})",
+
+                max_bytes = max_bytes,
+            )
 
     @classmethod
     def _unpack(cls, buf, *, ctx):
@@ -197,6 +298,102 @@ class ULEB128(Type):
     """A variable length unsigned integer following the ``LEB128`` format."""
 
     _default = 0
+
+    class Limited(Type):
+        """An :class:`ULEB128` which is limited to a certain number of bytes.
+
+        It may be useful to limit the number of bytes
+        which may be marshaled in order to prevent a
+        malicious actor from endlessly setting the top
+        bit of each byte so that unpacking never ends.
+
+        By limiting the number of bytes, then
+        unpacking is always guaranteed to end.
+
+        When unpacking, if the number of bytes exceeds the
+        specified maximum, then a :exc:`.MaxBytesExceededError`
+        will be raised.
+
+        When packing, if the to-be-packed value exceeds the
+        associated range of values for the maximum number of
+        bytes, then a :exc:`ValueError` will be raised.
+
+        Parameters
+        ----------
+        max_bytes : :class:`int`
+            The number of bytes to limit the :class:`ULEB128` to.
+        """
+
+        _default = 0
+
+        max_bytes = None
+
+        @classmethod
+        def __init_subclass__(cls, **kwargs):
+            super().__init_subclass__(**kwargs)
+
+            if cls.max_bytes is not None:
+                max_bits = cls.max_bytes * 7
+
+                cls._value_range = range(util.bit(max_bits))
+
+        @classmethod
+        def _unpack(cls, buf, *, ctx):
+            num = 0
+
+            for i in range(cls.max_bytes):
+                byte = UInt8.unpack(buf, ctx=ctx)
+
+                # Get the bottom 7 bits.
+                value = byte & 0b01111111
+
+                num |= value << (i * 7)
+
+                # If the top bit is not set, return.
+                if byte & 0b10000000 == 0:
+                    return num
+
+            raise MaxBytesExceededError(cls)
+
+        @classmethod
+        async def _unpack_async(cls, reader, *, ctx):
+            num = 0
+
+            for i in range(cls.max_bytes):
+                byte = await UInt8.unpack_async(reader, ctx=ctx)
+
+                # Get the bottom 7 bits.
+                value = byte & 0b01111111
+
+                num |= value << (i * 7)
+
+                # If the top bit is not set, return.
+                if byte & 0b10000000 == 0:
+                    return num
+
+            raise MaxBytesExceededError(cls)
+
+        @classmethod
+        def _pack(cls, value, *, ctx):
+            # If 'value' is not an 'int' then checking if
+            # it's contained in the value range will loop
+            # through the quite large range instead of just
+            # comparing against the start and end.
+            #
+            # Therefore we decide to just not worry about
+            # non-integer values.
+            if isinstance(value, int) and value not in cls._value_range:
+                raise ValueError(f"Value '{value}' is out of the range of '{cls.__qualname__}'")
+
+            return ULEB128.pack(value, ctx=ctx)
+
+        @classmethod
+        def _call(cls, *, max_bytes):
+            return cls.make_type(
+                f"{cls.__qualname__}(max_bytes={max_bytes})",
+
+                max_bytes = max_bytes,
+            )
 
     @classmethod
     def _unpack(cls, buf, *, ctx):

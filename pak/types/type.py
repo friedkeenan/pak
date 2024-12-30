@@ -9,21 +9,10 @@ from .. import util
 from ..dyn_value import DynamicValue
 
 __all__ = [
-    "NoStaticSizeError",
     "Type",
+    "NoStaticSizeError",
+    "MaxBytesExceededError",
 ]
-
-class NoStaticSizeError(Exception):
-    """An error indicating a :class:`Type` has no static size.
-
-    Parameters
-    ----------
-    type_cls : subclass of :class:`Type`
-        The :class:`Type` which has no static size.
-    """
-
-    def __init__(self, type_cls):
-        super().__init__(f"'{type_cls.__qualname__}' has no static size")
 
 class Type:
     r"""A definition of how to marshal raw data to and from values.
@@ -1109,3 +1098,27 @@ class Type:
         """
 
         raise NotImplementedError
+
+class NoStaticSizeError(Exception):
+    """An error indicating a :class:`Type` has no static size.
+
+    Parameters
+    ----------
+    type_cls : subclass of :class:`Type`
+        The :class:`Type` which has no static size.
+    """
+
+    def __init__(self, type_cls):
+        super().__init__(f"'{type_cls.__qualname__}' has no static size")
+
+class MaxBytesExceededError(Type.UnsuppressedError):
+    """An error indicating a :class:`Type` has exceeded its maximum number of bytes when unpacking.
+
+    Parameters
+    ----------
+    type_cls : subclass of :class:`Type`
+        The :class:`Type` which exceeded its maximum number of bytes.
+    """
+
+    def __init__(self, type_cls):
+        super().__init__(f"'{type_cls.__qualname__}' exceeded its maximum number of bytes when unpacking")

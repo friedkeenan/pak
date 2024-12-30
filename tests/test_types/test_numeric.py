@@ -1,5 +1,6 @@
 import math
 import pak
+import pytest
 
 test_bool = pak.test.type_behavior_func_both(
 
@@ -192,12 +193,15 @@ test_leb128 = pak.test.type_behavior_func_both(
     (2**13 - 1, b"\xFF\x3F"),
     (2**13,     b"\x80\xC0\x00"),
     (2**31 - 1, b"\xFF\xFF\xFF\xFF\x07"),
+    (2**34 - 1, b"\xFF\xFF\xFF\xFF\x3F"),
     (2**69 - 1, b"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x3F"),
 
     (-1,     b"\x7F"),
     (-2**6,  b"\x40"),
     (-2**7,  b"\x80\x7F"),
     (-2**13, b"\x80\x40"),
+    (-2**31, b"\x80\x80\x80\x80\x78"),
+    (-2**34, b"\x80\x80\x80\x80\x40"),
     (-2**69, b"\x80\x80\x80\x80\x80\x80\x80\x80\x80\x40"),
 
     # This is a particular value that I ran into issues with in the wild.
@@ -206,6 +210,62 @@ test_leb128 = pak.test.type_behavior_func_both(
     static_size = None,
     default     = 0,
 )
+
+async def test_leb128_limited():
+    # 5 bytes, max 35 bits.
+    Limited = pak.LEB128.Limited(max_bytes=5)
+
+    await pak.test.type_behavior_both(
+        Limited,
+
+        (0,         b"\x00"),
+        (1,         b"\x01"),
+        (2**6 - 1,  b"\x3F"),
+        (2**6,      b"\xC0\x00"),
+        (2**7 - 1,  b"\xFF\x00"),
+        (2**7,      b"\x80\x01"),
+        (2**8 - 1,  b"\xFF\x01"),
+        (2**13 - 1, b"\xFF\x3F"),
+        (2**13,     b"\x80\xC0\x00"),
+        (2**31 - 1, b"\xFF\xFF\xFF\xFF\x07"),
+        (2**34 - 1, b"\xFF\xFF\xFF\xFF\x3F"),
+
+        (-1,     b"\x7F"),
+        (-2**6,  b"\x40"),
+        (-2**7,  b"\x80\x7F"),
+        (-2**13, b"\x80\x40"),
+        (-2**31, b"\x80\x80\x80\x80\x78"),
+        (-2**34, b"\x80\x80\x80\x80\x40"),
+
+        # This is a particular value that I ran into issues with in the wild.
+        (-9998, b"\xF2\xB1\x7F"),
+
+        static_size = None,
+        default     = 0,
+    )
+
+    with pytest.raises(pak.MaxBytesExceededError, match=r"LEB128\.Limited\(max_bytes=5\)"):
+        # Five bytes with their top bits set,
+        # which should exceed the max bytes.
+        Limited.unpack(b"\x80\x80\x80\x80\x80")
+
+    with pytest.raises(pak.MaxBytesExceededError, match=r"LEB128\.Limited\(max_bytes=5\)"):
+        # Five bytes with their top bits set,
+        # which should exceed the max bytes.
+        await Limited.unpack_async(b"\x80\x80\x80\x80\x80")
+
+    with pytest.raises(ValueError, match="is out of the range of"):
+        Limited.pack(2**34)
+
+async def test_leb128_limited_unbounded_array():
+    # An unbounded array should not suppress the error
+    # of a limited 'LEB128' that exceeds its max bytes.
+
+    with pytest.raises(pak.MaxBytesExceededError, match=r"LEB128\.Limited\(max_bytes=1\)"):
+        pak.LEB128.Limited(max_bytes=1)[None].unpack(b"\x80")
+
+    with pytest.raises(pak.MaxBytesExceededError, match=r"LEB128\.Limited\(max_bytes=1\)"):
+        await pak.LEB128.Limited(max_bytes=1)[None].unpack_async(b"\x80")
 
 test_uleb128 = pak.test.type_behavior_func_both(
     pak.ULEB128,
@@ -216,11 +276,56 @@ test_uleb128 = pak.test.type_behavior_func_both(
     (2**7,      b"\x80\x01"),
     (2**8 - 1,  b"\xFF\x01"),
     (2**31 - 1, b"\xFF\xFF\xFF\xFF\x07"),
+    (2**32 - 1, b"\xFF\xFF\xFF\xFF\x0F"),
+    (2**35 - 1, b"\xFF\xFF\xFF\xFF\x7F"),
     (2**69 - 1, b"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x3F"),
 
     static_size = None,
     default     = 0,
 )
+
+async def test_uleb128_limited():
+    # 5 bytes, max 35 bits.
+    Limited = pak.ULEB128.Limited(max_bytes=5)
+
+    await pak.test.type_behavior_both(
+        Limited,
+
+        (0,         b"\x00"),
+        (1,         b"\x01"),
+        (2**7 - 1,  b"\x7F"),
+        (2**7,      b"\x80\x01"),
+        (2**8 - 1,  b"\xFF\x01"),
+        (2**31 - 1, b"\xFF\xFF\xFF\xFF\x07"),
+        (2**32 - 1, b"\xFF\xFF\xFF\xFF\x0F"),
+        (2**35 - 1, b"\xFF\xFF\xFF\xFF\x7F"),
+
+        static_size = None,
+        default     = 0,
+    )
+
+    with pytest.raises(pak.MaxBytesExceededError, match=r"ULEB128\.Limited\(max_bytes=5\)"):
+        # Five bytes with their top bits set,
+        # which should exceed the max bytes.
+        Limited.unpack(b"\x80\x80\x80\x80\x80")
+
+    with pytest.raises(pak.MaxBytesExceededError, match=r"ULEB128\.Limited\(max_bytes=5\)"):
+        # Five bytes with their top bits set,
+        # which should exceed the max bytes.
+        await Limited.unpack_async(b"\x80\x80\x80\x80\x80")
+
+    with pytest.raises(ValueError, match="is out of the range of"):
+        Limited.pack(2**35)
+
+async def test_leb128_limited_unbounded_array():
+    # An unbounded array should not suppress the error
+    # of a limited 'ULEB128' that exceeds its max bytes.
+
+    with pytest.raises(pak.MaxBytesExceededError, match=r"ULEB128\.Limited\(max_bytes=1\)"):
+        pak.ULEB128.Limited(max_bytes=1)[None].unpack(b"\x80")
+
+    with pytest.raises(pak.MaxBytesExceededError, match=r"ULEB128\.Limited\(max_bytes=1\)"):
+        await pak.ULEB128.Limited(max_bytes=1)[None].unpack_async(b"\x80")
 
 test_scaled_integer_static = pak.test.type_behavior_func_both(
     pak.ScaledInteger(pak.Int8, 2),

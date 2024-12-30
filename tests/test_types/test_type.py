@@ -265,3 +265,6 @@ async def test_not_implemented_methods():
 
     with pytest.raises(NotImplementedError):
         TestNotImplementedInheritedCall()
+
+def test_max_bytes_exceeded_inheritance():
+    assert issubclass(pak.MaxBytesExceededError, pak.Type.UnsuppressedError)
