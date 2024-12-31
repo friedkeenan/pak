@@ -295,9 +295,12 @@ class _SubPacketType(Type):
             packet_cls = cls.subpacket_cls
 
         if header.has_field("size"):
-            # NOTE: We use synchronous 'unpack' here
-            # because we read the data out ahead of time.
-            return packet_cls.unpack(await reader.readexactly(header.size), ctx=ctx.packet_ctx)
+            # NOTE: We could use synchronous 'unpack' here
+            # because we read the data out ahead of time,
+            # however I would worry about how that would
+            # interface with custom types which do not
+            # implement the synchronous unpacking API.
+            return await packet_cls.unpack_async(await reader.readexactly(header.size), ctx=ctx.packet_ctx)
 
         return await packet_cls.unpack_async(reader, ctx=ctx.packet_ctx)
 
