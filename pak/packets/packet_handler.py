@@ -386,12 +386,14 @@ class PacketHandler:
         >>> ex = Example()
         >>> ex.has_packet_listener(MyPacket())
         True
-        >>> ex.has_packet_listener(pak.Packet)
+        >>> ex.has_packet_listener(pak.Packet())
         False
         >>>
         >>> # You can also get whether a 'Packet' class has a listener:
         >>> ex.has_packet_listener(MyPacket)
         True
+        >>> ex.has_packet_listener(pak.Packet)
+        False
         """
 
         for packet_types, listener_flags in self._packet_listeners.values():

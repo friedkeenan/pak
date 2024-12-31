@@ -13,7 +13,7 @@ class DeferringType(Type):
     to a certain :class:`.Type` depending on what it decides to return
     from its :meth:`_defer_to` method.
 
-    This deferring of behavior is useful for instance in
+    This deferring of behavior is useful, for instance, in
     protocols with multiple versions, where you may want
     to have a :class:`.Packet` field act like a different
     :class:`.Type` between different protocol versions.

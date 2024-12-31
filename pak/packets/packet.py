@@ -359,12 +359,12 @@ class Packet:
         Parameters
         ----------
         id
-            The ID of the generated :class:`GenericPacket`.
+            The ID of the generated :class:`Packet`.
 
         Returns
         -------
-        :class:`GenericPacket`
-            The generated :class:`GenericPacket`.
+        subclass of :class:`Packet`
+            The generated :class:`Packet`.
 
         Examples
         --------
@@ -414,7 +414,7 @@ class Packet:
 
         Returns
         -------
-        :class:`Packet`
+        subclass of :class:`Packet`
             The generated :class:`Packet`.
 
         Examples

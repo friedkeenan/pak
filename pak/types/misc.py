@@ -17,7 +17,7 @@ class EmptyType(Type):
 
     It always unpacks to ``None`` and always packs
     to ``b""``. It is useful in certain cases when you
-    would want to "disable" a packet field for instance.
+    would want to "disable" a packet field, for instance.
 
     ``None`` is a typelike value that translates to
     :class:`EmptyType`.

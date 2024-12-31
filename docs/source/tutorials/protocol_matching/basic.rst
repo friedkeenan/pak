@@ -151,7 +151,7 @@ This code is *much* more readable. It could even be made more readable with ``ma
 
 ----
 
-But let's say somehow, when we, the server, try to read the ``CatPicturesRequest`` packet, the data we get is ``b"\x03"``, corresponding to an unsigned byte value of ``3``. This could happen for instance if the client is using a newer version of the protocol that uses the value ``3`` to ask for the number of *hairless* cat pictures, or perhaps we're communicating with a malicious client who's trying to expose flaws in our code by sending unexpected values. Let's see what happens:
+But let's say somehow, when we, the server, try to read the ``CatPicturesRequest`` packet, the data we get is ``b"\x03"``, corresponding to an unsigned byte value of ``3``. This could happen, for instance, if the client is using a newer version of the protocol that uses the value ``3`` to ask for the number of *hairless* cat pictures, or perhaps we're communicating with a malicious client who's trying to expose flaws in our code by sending unexpected values. Let's see what happens:
 
 .. testcode::
 

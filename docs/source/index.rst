@@ -1,5 +1,5 @@
 Pak: A General Purpose Packet Marshaling Library
-===========================================================
+================================================
 
 **Pak** is a simple, yet powerful and extendable Python library
 for translating between raw data and usable, meaningful values.
@@ -64,6 +64,7 @@ Table of Contents
 
     tutorials
     reference
+    changelog
 
 
 Indices and Tables

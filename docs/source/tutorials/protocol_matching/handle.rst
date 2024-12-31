@@ -165,7 +165,7 @@ Packet listeners can also be associated with certain "flags" that must match wit
         def on_info_request(self, packet):
             self.write_packet(CatInfoResponse(...))
 
-This would then let us leverage our packet listening infrastructure for packets we send too, which could for instance be used for debugging purposes to print all the packets we send or to otherwise have special logic for whenever we send a certain packet. Here our listeners would only be called when receiving packets, because they have the ``outgoing`` flag set to ``False``. Since it's annoying and error-prone to always specify the ``outgoing`` flag, we can make it default to ``False`` (or make specifying it required if we wanted to) by overriding the :meth:`.PacketHandler.register_packet_listener` method, like so::
+This would then let us leverage our packet listening infrastructure for packets we send too, which could, for instance, be used for debugging purposes to print all the packets we send or to otherwise have special logic for whenever we send a certain packet. Here our listeners would only be called when receiving packets, because they have the ``outgoing`` flag set to ``False``. Since it's annoying and error-prone to always specify the ``outgoing`` flag, we can make it default to ``False`` (or make specifying it required if we wanted to) by overriding the :meth:`.PacketHandler.register_packet_listener` method, like so::
 
     class FelinePacketHandler(pak.PacketHandler):
         def register_packet_listener(self, listener, *packet_types, outgoing=False, **flags):

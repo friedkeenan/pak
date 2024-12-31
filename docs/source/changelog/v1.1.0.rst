@@ -1,0 +1,63 @@
+v1.1.0
+======
+
+:Date: TODO
+
+Changes
+*******
+
+- Drop support for Python 3.7.
+
+- Implement an asynchronous unpacking API.
+    - This allows users to unpack asynchronously using coroutines and the ``await`` syntax, which may in certain cases be necessary or otherwise desirable.
+    - Where there is something that involves unpacking, there will be an asynchronous version of it suffixed with ``_async``, including the following:
+        - The :meth:`.Type.unpack_async` method.
+        - The :meth:`.Packet.unpack_async` method.
+        - The new functions in the :mod:`.test` module.
+    - All :class:`.Type`\s in Pak provide both the synchronous and asynchronous unpacking APIs, however custom :class:`.Type`\s are empowered to only provide one or the other, as often only one will be relevant to a certain usecase.
+
+- Add :class:`.DeferringType`.
+    - This allows a :class:`.Type` to defer its behavior to another :class:`.Type` of its choosing depending on the relevant :class:`.Type.Context`. This is useful, for instance, if you are supporting multiple versions of a protocol which might have different fields act like different :class:`.Type`\s depending on the protocol version.
+
+- Improve customizing the endianness of :class:`.StructType`.
+    - The following methods were added to be able to tersely specify the desired endianness of a :class:`.StructType`:
+        - :meth:`.StructType.little_endian`
+        - :meth:`.StructType.big_endian`
+        - :meth:`.StructType.native_endian`
+    - This allows users to, for instance, call ``pak.UInt16.big_endian()`` in order to use a big-endian :class:`.UInt16`, instead of the default little-endian version.
+
+- Add :class:`.LEB128.Limited` and :class:`.ULEB128.Limited`.
+    - These allow users to limit the maximum number of bytes that a :class:`.LEB128` or :class:`.ULEB128` may have, which may be useful to prevent malicious actors from always setting the top bit of each byte to cause unpacking to never end.
+
+- Reorder the bases of the returned class of :meth:`.Packet.GenericWithID` to have more intuitive behavior.
+    - The ``data`` field from :class:`.GenericPacket` is now situated at the end of the :class:`.Packet`, so that it will capture any remaining uncaptured data after the rest of the fields.
+
+- Give :class:`.EmptyType` an alignment of ``1``.
+    - This better allows fields to be effectively "disabled" in an aligned context, such as when using :class:`.AlignedPacket`.
+
+- Give :class:`.RawByte` an alignment of ``1``.
+
+- Refactor :class:`.Array` to use specialized subclasses.
+    - These specialized subclasses are:
+        - :class:`.Array.FixedSize`
+        - :class:`.Array.SizePrefixed`
+        - :class:`.Array.Unbounded`
+        - :class:`.Array.FunctionSized`
+
+- Refactor :class:`.Optional` to use specialized subclasses.
+    - These specialized subclasses are:
+        - :class:`.Optional.PrefixChecked`
+        - :class:`.Optional.Unchecked`
+        - :class:`.Optional.FunctionChecked`
+
+- Add :exc:`.Type.UnsuppressedError`.
+    - Exceptions which inherit from :exc:`.Type.UnsuppressedError` indicate unambiguous errors in logic, which should not be suppressed by certain :class:`.Type` facilities like :class:`.Array.Unbounded` and :class:`.Optional.Unchecked`.
+
+- :class:`.Type`\s in Pak now more consistently raise errors if they are unable to read enough data when unpacking.
+
+- Make the :meth:`.Type.prepare_types` decorator remove all parameter annotations of :class:`.Type` from its decorated function.
+    - This prevents potentially confusing annotations of :class:`.Type` from leaking out into documentation or other tools where those annotations may be misinterpreted. For instance, they could be mistaken as type hints. Parameter annotations of :class:`.Type` when using :meth:`.Type.prepare_types` are only internally relevant, and should not be shown externally.
+
+- Restrict certain function parameters to being positional-only in order to better enforce caching.
+
+- Fix typo in the name of :meth:`.PacketHandler.unregister_packet_listener`, which was previously named ``unregsiter_packet_listener``.
