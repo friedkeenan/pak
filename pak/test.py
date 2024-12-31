@@ -49,19 +49,14 @@ def _common_type_behavior(type_cls, *, static_size, alignment, default, ctx):
         # We must have a static size if we are aligned.
         assert static_size is not None
 
-        # The alignment cannot be negative.
-        assert alignment >= 0
+        # The alignment must be positive.
+        assert alignment > 0
 
-        if alignment == 0:
-            # We must be the equivalent of 'EmptyType'
-            # if we have an alignment of '0'.
-            assert static_size == 0
-        else:
-            # Check that the alignment is a power of two.
-            assert (alignment & (alignment - 1)) == 0
+        # The alignment must be a power of two.
+        assert (alignment & (alignment - 1)) == 0
 
-            # Check that the static size is a multiple of the alignment.
-            assert static_size % alignment == 0
+        # The static size must be a multiple of the alignment.
+        assert static_size % alignment == 0
 
     if default is NO_DEFAULT:
         import pytest

@@ -13,7 +13,7 @@ async def test_empty():
         (None, b""),
 
         static_size = 0,
-        alignment   = 0,
+        alignment   = 1,
         default     = None,
     )
 

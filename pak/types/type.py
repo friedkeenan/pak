@@ -530,9 +530,6 @@ class Type:
 
     @staticmethod
     def _alignment_padding_at_offset(offset, alignment):
-        if alignment <= 0:
-            return 0
-
         return -offset & (alignment - 1)
 
     @staticmethod

@@ -24,7 +24,7 @@ class EmptyType(Type):
     """
 
     _size      = 0
-    _alignment = 0
+    _alignment = 1
 
     def __get__(self, instance, owner=None):
         if instance is None:
