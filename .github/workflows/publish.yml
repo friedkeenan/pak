@@ -1,0 +1,33 @@
+name: Publish Release
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  publish:
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pak
+    permissions:
+      id-token: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Install pypa/build
+        run: pip install build
+
+      - name: Run pypa/build
+        run: python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
