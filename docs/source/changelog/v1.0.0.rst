@@ -1,7 +1,7 @@
 v1.0.0
 ======
 
-:Date: June 16, 2023
+:Date: June 16th, 2023
 
 Changes
 *******

@@ -1,7 +1,7 @@
 v1.1.0
 ======
 
-:Date: TODO
+:Date: January 1st, 2025
 
 Changes
 *******
