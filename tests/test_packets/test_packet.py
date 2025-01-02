@@ -496,8 +496,7 @@ async def test_id():
     # protocol from Python 3.9 to Python 3.12,
     # after being deprecated in Python 3.11.
     #
-    # TODO: Change condition when Python 3.8 support is dropped.
-    # TODO: Remove entirely when Python 3.12 support is dropped.
+    # TODO: Remove when Python 3.12 support is dropped.
     if sys.version_info.minor in range(9, 13):
         class TestClassPropertyId(pak.Packet):
             class Header(pak.Packet.Header):
