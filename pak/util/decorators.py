@@ -1,6 +1,8 @@
 """Custom decorators."""
 
 import functools
+import types
+
 from collections.abc import Hashable
 
 __all__ = [
@@ -139,12 +141,17 @@ class class_or_instance_method:
             raise TypeError(f"{type(self).__qualname__} '{owner.__qualname__}.{name}' must have an instance method")
 
     def __get__(self, instance, owner=None):
-        # 'classmethod' in fact propagates the '__get__' call instead of
-        # just returning a bound method. This allows users to create
-        # "class properties" by combining 'classmethod' and 'property'.
-        # We support the same here.
+        # From Python 3.9 to Python 3.12, 'classmethod'
+        # in fact propagates the '__get__' call instead
+        # of just returning a bound method. This allows
+        # users to create "class properties" by combining
+        # 'classmethod' and 'property'.
+        #
+        # We do not model the same, as it was decided that
+        # that design was unsound and was deprecated in
+        # Python 3.11 and then removed in Python 3.13.
 
         if instance is None:
-            return self._class_method.__get__(owner, owner)
+            return types.MethodType(self._class_method, owner)
 
-        return self._instance_method.__get__(instance, owner)
+        return types.MethodType(self._instance_method, instance)

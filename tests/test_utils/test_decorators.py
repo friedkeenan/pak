@@ -74,21 +74,6 @@ def test_class_or_instance_method():
             def method(cls):
                 pass
 
-def test_class_or_instance_method_descriptor_propagate():
-    class Test:
-        @pak.util.class_or_instance_method
-        @property
-        def attr(cls):
-            return "class"
-
-        @attr.instance_method
-        @property
-        def attr(self):
-            return "instance"
-
-    assert Test.attr   == "class"
-    assert Test().attr == "instance"
-
 def test_class_or_instance_method_copy():
     class Test:
         @pak.util.class_or_instance_method
