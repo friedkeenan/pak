@@ -3,8 +3,6 @@
 import abc
 import asyncio
 
-from .. import util
-
 __all__ = [
     "Connection",
 ]
@@ -182,9 +180,9 @@ class Connection(abc.ABC):
     def _dispatch_to_packet_watches(self, packet):
         # Make a copy of the items so we may modify
         # 'self._packet_watch_info' within the same loop.
-        for packet_cls, packet_holder in list(self._packet_watch_info.items()):
+        for packet_cls, packet_future in list(self._packet_watch_info.items()):
             if isinstance(packet, packet_cls):
-                packet_holder.set(packet)
+                packet_future.set_result(packet)
                 self._packet_watch_info.pop(packet_cls)
 
                 # Don't break here since there could be other
@@ -194,8 +192,12 @@ class Connection(abc.ABC):
     def _cancel_packet_watches(self):
         # Make a copy of the items so we may modify
         # 'self._packet_watch_info' within the same loop.
-        for packet_cls, packet_holder in list(self._packet_watch_info.items()):
-            packet_holder.set(None)
+        for packet_cls, packet_future in list(self._packet_watch_info.items()):
+            # We could attempt to cancel the watches
+            # right as they receive their values.
+            if not packet_future.done():
+                packet_future.set_result(None)
+
             self._packet_watch_info.pop(packet_cls)
 
     async def continuously_read_packets(self):
@@ -260,12 +262,14 @@ class Connection(abc.ABC):
             or EOF is reached.
         """
 
-        packet_holder = self._packet_watch_info.get(packet_cls)
-        if packet_holder is None:
-            packet_holder                       = util.AsyncValueHolder()
-            self._packet_watch_info[packet_cls] = packet_holder
+        packet_future = self._packet_watch_info.get(packet_cls)
+        if packet_future is None:
+            loop          = asyncio.get_running_loop()
+            packet_future = loop.create_future()
 
-        return await packet_holder.get()
+            self._packet_watch_info[packet_cls] = packet_future
+
+        return await packet_future
 
     def is_watching_for_packet(self, packet_cls):
         """Gets whether a specific type of :class:`.Packet` is being watched for.
