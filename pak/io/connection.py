@@ -80,7 +80,7 @@ class Connection(abc.ABC):
         This method should be used along with the :meth:`wait_closed` method.
         """
 
-        self._cancel_packet_watches()
+        self._end_packet_watches()
 
         if self.writer is None:
             return
@@ -189,11 +189,11 @@ class Connection(abc.ABC):
                 # packet watches that requested a more derived
                 # subclass of 'packet_cls'.
 
-    def _cancel_packet_watches(self):
+    def _end_packet_watches(self):
         # Make a copy of the items so we may modify
         # 'self._packet_watch_info' within the same loop.
         for packet_cls, packet_future in list(self._packet_watch_info.items()):
-            # We could attempt to cancel the watches
+            # We could attempt to end the watches
             # right as they receive their values.
             if not packet_future.done():
                 packet_future.set_result(None)
@@ -262,6 +262,16 @@ class Connection(abc.ABC):
             or EOF is reached.
         """
 
+        if self.is_closing():
+            # If we're already closing, then
+            # don't bother waiting for a packet.
+            #
+            # This would appear important to do
+            # so that we don't end up creating
+            # and awaiting a future that is
+            # never completed, and so deadlocking.
+            return None
+
         packet_future = self._packet_watch_info.get(packet_cls)
         if packet_future is None:
             loop          = asyncio.get_running_loop()
@@ -269,7 +279,10 @@ class Connection(abc.ABC):
 
             self._packet_watch_info[packet_cls] = packet_future
 
-        return await packet_future
+        # NOTE: We shield the future so that
+        # if it gets canceled, then we can still
+        # reuse it for other packet watches.
+        return await asyncio.shield(packet_future)
 
     def is_watching_for_packet(self, packet_cls):
         """Gets whether a specific type of :class:`.Packet` is being watched for.

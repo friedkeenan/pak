@@ -271,6 +271,29 @@ async def test_connection_watch_for_packet_on_close():
 
     await watch_for_packet_task
 
+async def test_connection_watch_for_packet_on_cancel():
+    connection = DummyConnection(
+        # A single DummyValuePacket(value=2).
+        data = b"\x00\x01\x02"
+    )
+
+    async def watch_for_packet():
+        return await connection.watch_for_packet(DummyValuePacket)
+
+    watch_for_packet_task_cancel  = asyncio.create_task(watch_for_packet())
+    watch_for_packet_task_succeed = asyncio.create_task(watch_for_packet())
+
+    watch_for_packet_task_cancel.cancel()
+
+    with pytest.raises(asyncio.CancelledError):
+        await watch_for_packet_task_cancel
+
+    # Needed to dispatch packets to 'watch_for_packet'.
+    async for packet in connection.continuously_read_packets():
+        pass
+
+    assert await watch_for_packet_task_succeed == DummyValuePacket(value=2)
+
 async def test_connection_is_watching_for_packet():
     connection = DummyConnection(data=b"")
 
