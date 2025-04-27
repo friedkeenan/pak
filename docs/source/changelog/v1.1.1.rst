@@ -1,0 +1,20 @@
+v1.1.1
+======
+
+:Date: April 27th, 2025
+
+Changes
+*******
+
+- Drop support for Python 3.8.
+
+- Fix bug that occurred when a call to :meth:`io.Connection.watch_for_packet() <.Connection.watch_for_packet>` was canceled.
+    - If a call to :meth:`io.Connection.watch_for_packet() <.Connection.watch_for_packet>` were canceled, e.g. by a timeout, then future calls for the same :class:`.Packet` class would immediately cancel as well, due to internal reuse of a canceled :class:`asyncio.Future` object. This is fixed, now.
+
+- Remove :class:`util.AsyncValueHolder <.AsyncValueHolder>`.
+    - It was a thin wrapper over an :class:`asyncio.Future`, that was previously believed to have a better API. That belief changed, and so it was removed.
+
+- The :class:`util.class_or_instance_method <.class_or_instance_method>` decorator no longer propagates the descriptor protocol to its decorated entity.
+    - This previously enabled being able to wrap a :class:`property` with the decorator, as one can with :class:`classmethod` from Python 3.9 to Python 3.12.
+
+    - That behavior for :class:`classmethod` was however deemed unsound, and was deprecated in Python 3.11 and removed in Python 3.13. Because of that, that behavior was removed from :class:`util.class_or_instance_method <.class_or_instance_method>` as well.
