@@ -13,7 +13,7 @@ def subclasses(parent_class):
 
     Parameters
     ----------
-    *parent_class : :class:`type`
+    parent_class : :class:`type`
         The type to get the subclasses of.
 
     Returns
