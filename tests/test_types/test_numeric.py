@@ -327,6 +327,57 @@ async def test_leb128_limited_unbounded_array():
     with pytest.raises(pak.MaxBytesExceededError, match=r"ULEB128\.Limited\(max_bytes=1\)"):
         await pak.ULEB128.Limited(max_bytes=1)[None].unpack_async(b"\x80")
 
+test_not_static = pak.test.type_behavior_func_both(
+    pak.Not(pak.Bool),
+
+    (False, b"\x01"),
+    (True,  b"\x00"),
+
+    static_size = 1,
+    alignment   = 1,
+    default     = False,
+)
+
+async def test_not_dynamic():
+    # 'False' marshals to one byte, 'True' to two bytes.
+    class TestBool(pak.Type):
+        _default = False
+
+        @classmethod
+        def _unpack(cls, buf, *, ctx):
+            if buf.read(1) == b"\x00":
+                return False
+
+            buf.read(1)
+
+            return True
+
+        @classmethod
+        async def _unpack_async(cls, reader, *, ctx):
+            if await reader.readexactly(1) == b"\x00":
+                return False
+
+            await reader.readexactly(1)
+
+            return True
+
+        @classmethod
+        def _pack(cls, value, *, ctx):
+            if not value:
+                return b"\x00"
+
+            return b"\x01\x00"
+
+    await pak.test.type_behavior_both(
+        pak.Not(TestBool),
+
+        (False, b"\x01\x00"),
+        (True,  b"\x00"),
+
+        static_size = None,
+        default     = False,
+    )
+
 test_scaled_integer_static = pak.test.type_behavior_func_both(
     pak.ScaledInteger(pak.Int8, 2),
 

@@ -18,11 +18,17 @@ __all__ = [
     "Float64",
     "LEB128",
     "ULEB128",
+    "Not",
     "ScaledInteger",
 ]
 
 class Bool(StructType):
-    """A single byte truth-value."""
+    """A single byte truth-value.
+
+    .. seealso::
+
+        :class:`Not`
+    """
 
     _alignment = 1
     _default   = False
@@ -448,6 +454,83 @@ class ULEB128(Type):
 
             if value == 0:
                 return data
+
+class Not(Type):
+    r"""A boolean value transformed by the ``not`` operation.
+
+    In certain cases the plain value of a boolean marshaled
+    from its raw data will sometimes be inverted from what
+    would be more straightforward for understanding what
+    the value really represents.
+
+    For instance, if one were unpacking information about
+    a particular animal, and one of the values was a :class:`Bool`
+    which represented the attribute ``is_not_a_fish``, then
+    it could be better to invert that to ``is_a_fish`` using
+    a :class:`Not`.
+
+    The default value of a :class:`Not` will be the same as
+    the default value of its underlying :class:`.Type`. This
+    is because the ``not`` operation is not generally relevant
+    to the end user's preferences, but rather only towards
+    packing and unpacking.
+
+    Parameters
+    ----------
+    underlying : typelike
+        The underlying boolean :class:`.Type`.
+
+    Examples
+    --------
+    >>> import pak
+    >>> NotBool = pak.Not(pak.Bool)
+    >>> NotBool.unpack(b"\x01") # Underlying value of 'True'.
+    False
+    >>> NotBool.unpack(b"\x00") # Underlying value of 'False'.
+    True
+    >>> NotBool.pack(False)
+    b'\x01'
+    >>> NotBool.pack(True)
+    b'\x00'
+    """
+
+    underlying = None
+
+    @classmethod
+    def _size(cls, value, *, ctx):
+        if value is cls.STATIC_SIZE:
+            return cls.underlying.size(ctx=ctx)
+
+        return cls.underlying.size(not value, ctx=ctx)
+
+    @classmethod
+    def _alignment(cls, *, ctx):
+        return cls.underlying.alignment(ctx=ctx)
+
+    @classmethod
+    def _default(cls, *, ctx):
+        return cls.underlying.default(ctx=ctx)
+
+    @classmethod
+    def _unpack(cls, buf, *, ctx):
+        return not cls.underlying.unpack(buf, ctx=ctx)
+
+    @classmethod
+    async def _unpack_async(cls, reader, *, ctx):
+        return not await cls.underlying.unpack_async(reader, ctx=ctx)
+
+    @classmethod
+    def _pack(cls, value, *, ctx):
+        return cls.underlying.pack(not value, ctx=ctx)
+
+    @classmethod
+    @Type.prepare_types
+    def _call(cls, underlying: Type):
+        return cls.make_type(
+            f"{cls.__qualname__}({underlying.__qualname__})",
+
+            underlying = underlying,
+        )
 
 class ScaledInteger(Type):
     r"""A floating-point value derived from scaling an integer.
