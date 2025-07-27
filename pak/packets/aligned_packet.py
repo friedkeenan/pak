@@ -15,7 +15,7 @@ class AlignedPacket(Packet):
     """A :class:`.Packet` which aligns its fields.
 
     The fields of an :class:`AlignedPacket` are aligned in the
-    same way the fields of a struct would be in  C or C++, including
+    same way the fields of a struct would be in C or C++, including
     the ending padding.
 
     The header of an :class:`AlignedPacket` is not taken into account

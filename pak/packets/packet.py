@@ -1327,7 +1327,7 @@ class Packet:
             .. seealso::
                 :meth:`Packet.id`
         ctx : :class:`Packet.Context` or ``None``
-            The context for  the :class:`Packet`.
+            The context for the :class:`Packet`.
 
         Returns
         -------

@@ -84,7 +84,7 @@ class SubPacket(Packet, metaclass=_SubPacketMeta):
         as they should receive and use the context of their super :class:`.Packet`.
 
     :class:`SubPacket` headers may only have a ``size`` field and/or an
-    ``id`` field.  When a :class:`SubPacket` header contains a ``size``
+    ``id`` field. When a :class:`SubPacket` header contains a ``size``
     field, then that many bytes will be read from the buffer supplied to
     the super :class:`.Packet` and used to unpack the :class:`SubPacket`:
 
