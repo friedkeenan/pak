@@ -1,7 +1,7 @@
 [project]
 name            = "pak"
-version         = "1.1.1"
 description     = "A general purpose packet marshaling library"
+dynamic         = ["version"]
 readme          = "README.md"
 requires-python = ">=3.9"
 license         = {file = "LICENSE"}
@@ -36,6 +36,9 @@ docs = [
     "furo",
     "sphinx-copybutton",
 ]
+
+[tool.setuptools.dynamic]
+version = {attr = "pak.__version__"}
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

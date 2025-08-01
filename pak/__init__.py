@@ -1,10 +1,4 @@
-import importlib.metadata
-
-# Dynamically get version.
-__version__ = importlib.metadata.version(__name__)
-
-# Remove import from our exported variables
-del importlib
+__version__ = "1.1.1"
 
 from .bit_field import *
 from .dyn_value import *
