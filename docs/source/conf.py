@@ -61,7 +61,7 @@ exclude_patterns = []
 html_theme = "furo"
 
 html_static_path = ["_static"]
-html_css_files   = ["css/uniform_tables.css", "css/highlighting.css"]
+html_css_files   = ["css/uniform_tables.css"]
 html_js_files    = ["js/highlighting.js"]
 
 # Make literal nodes like ``text`` and :class:`text` syntax-highlighted.
@@ -74,7 +74,7 @@ import docutils.nodes
 old_literal_init = docutils.nodes.literal.__init__
 
 def new_literal_init(self, rawsource="", text="", *children, classes=None, language="", **attributes):
-    if classes is None and len(language) <= 0:
+    if classes is None and language == "":
         # These settings emulate what a ':code:' directive
         # would do with its language set to 'python'.
         classes  = ["code", "highlight", "python"]

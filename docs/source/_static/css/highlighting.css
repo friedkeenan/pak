@@ -1,4 +1,0 @@
-/* Change exception colors. */
-body[data-theme="light"]       .highlight .ne { color: #ff2000 }
-body[data-theme="dark"]        .highlight .ne { color: #ff2000 }
-body:not([data-theme="light"]) .highlight .ne { color: #ff2000 }
