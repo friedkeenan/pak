@@ -3,7 +3,7 @@ name            = "pak"
 description     = "A general purpose packet marshaling library"
 dynamic         = ["version"]
 readme          = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license         = {file = "LICENSE"}
 
 authors = [
@@ -11,11 +11,11 @@ authors = [
 ]
 
 classifiers = [
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "License :: OSI Approved :: ISC License (ISCL)",
     "Operating System :: OS Independent",
 ]

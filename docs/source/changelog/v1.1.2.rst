@@ -1,0 +1,17 @@
+v1.1.2
+======
+
+:Date: February 5th, 2026
+
+Changes
+*******
+
+- Drop support for Python 3.9.
+
+- Remove :func:`util.annotations <.annotations>`.
+    - Its prior inclusion was only to backport the functionality of :func:`inspect.get_annotations`.
+    - With Python 3.9 no longer supported, it is no longer needed.
+
+- Add the :class:`.Not` type.
+    - This type negates the value of a boolean :class:`.Type`.
+    - It is useful in instances where the semantic meaning is clearer were the value inverted, without affecting the corresponding raw data.
