@@ -528,7 +528,7 @@ class Packet:
                 cls._fields[attr] = attr_type
 
         # Collect fields of the new Packet.
-        annotations = util.annotations(cls)
+        annotations = inspect.get_annotations(cls)
         for attr, attr_type in annotations.items():
             if attr in reserved_fields:
                 raise ReservedFieldError(cls, attr)

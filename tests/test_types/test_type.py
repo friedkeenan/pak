@@ -1,4 +1,5 @@
 import inspect
+import sys
 import pak
 import pytest
 
@@ -90,6 +91,33 @@ def test_prepare_types():
     assert test.__annotations__ == test.__wrapped__.__annotations__
 
     assert str(inspect.signature(test)) == "(x: 1, y, *args, **kwargs) -> pak.types.type.Type"
+
+def test_prepare_types_other_formats():
+    # TODO: Remove when Python 3.13 support is dropped.
+    if sys.version_info.minor < 14:
+        return
+
+    import annotationlib
+
+    @pak.Type.prepare_types
+    def test(x: cannot_eval, y: pak.Type) -> pak.Type:
+        assert issubclass(y, pak.Type)
+
+    test(1, None)
+
+    annotations = annotationlib.get_annotations(test, format=annotationlib.Format.FORWARDREF)
+
+    assert "y" not in annotations
+
+    assert annotations["return"] is pak.Type
+    assert isinstance(annotations["x"], annotationlib.ForwardRef)
+
+    annotations = annotationlib.get_annotations(test, format=annotationlib.Format.STRING)
+
+    assert annotations == {
+        "x":      "cannot_eval",
+        "return": "pak.Type",
+    }
 
 def test_prepare_types_unwrapped():
     def no_annotations(x, y, z):

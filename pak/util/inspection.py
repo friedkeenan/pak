@@ -4,7 +4,6 @@ import inspect
 
 __all__ = [
     "subclasses",
-    "annotations",
     "bind_annotations",
 ]
 
@@ -34,38 +33,6 @@ def subclasses(parent_class):
         remaining_classes.extend(direct_subclasses)
 
     return frozenset(subclasses)
-
-def annotations(obj):
-    """Gets the annotations of a callable, :class:`type`, or module.
-
-    Parameters
-    ----------
-    obj : callable or :class:`type` or module
-        The object to get the annotations of.
-
-    Returns
-    -------
-    :class:`dict`
-        The annotations of ``obj``. If ``obj`` has no annotations,
-        an empty :class:`dict` is returned.
-
-        Inherited annotations are ignored.
-    """
-
-    # TODO: Remove when Python 3.9 support is dropped.
-    # Replace with 'inspect.get_annotations'.
-
-    if isinstance(obj, type):
-        # Access annotations through the '__dict__' attribute
-        # so that inherited annotations are ignored.
-
-        obj_dict = getattr(obj, "__dict__", None)
-        if obj_dict is None or not hasattr(obj_dict, "get"):
-            return {}
-
-        return obj_dict.get("__annotations__", {})
-
-    return getattr(obj, "__annotations__", {})
 
 def bind_annotations(func_or_signature, /, *args, **kwargs):
     """Maps function arguments to their annotations.
@@ -103,6 +70,7 @@ def bind_annotations(func_or_signature, /, *args, **kwargs):
 
         if param.kind == param.VAR_POSITIONAL:
             args_annotations += [(x, param.annotation) for x in args[i:]]
+
             break
 
         args_annotations.append((arg, param.annotation))
@@ -119,6 +87,7 @@ def bind_annotations(func_or_signature, /, *args, **kwargs):
     for param in parameters.values():
         if param.kind == param.VAR_KEYWORD:
             var_kwarg = param
+
             break
 
     for name, value in kwargs.items():

@@ -1,5 +1,7 @@
 """Contains :class:`.BitField`."""
 
+import inspect
+
 from . import util
 
 from .types.type import Type
@@ -94,7 +96,7 @@ class BitField:
             if issubclass(base, BitField):
                 raise TypeError("BitFields may not be inherited from")
 
-        cls._fields = util.annotations(cls)
+        cls._fields = inspect.get_annotations(cls)
 
         if 0 in cls._fields.values():
             raise TypeError("A BitField may not have a field of width '0'")

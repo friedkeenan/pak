@@ -20,64 +20,6 @@ def test_subclasses():
     assert subclasses == {Child1, Child2, GrandChild1}
     assert isinstance(subclasses, frozenset)
 
-def test_annotations():
-    def test_empty_callable(x):
-        pass
-
-    def test_annotated_callable(x: 1):
-        pass
-
-    assert pak.util.annotations(test_empty_callable)     == {}
-    assert pak.util.annotations(test_annotated_callable) == {"x": 1}
-
-    class TestEmptyClass:
-        pass
-
-    class TestAnnotatedClass:
-        x: 1
-
-    class TestEmptyChildClass(TestAnnotatedClass):
-        pass
-
-    assert pak.util.annotations(TestEmptyClass)      == {}
-    assert pak.util.annotations(TestAnnotatedClass)  == {"x": 1}
-    assert pak.util.annotations(TestEmptyChildClass) == {}
-
-    from . import empty_module
-    from . import annotated_module
-
-    assert pak.util.annotations(empty_module)     == {}
-    assert pak.util.annotations(annotated_module) == {"x": 1}
-
-def test_annotations_pathological():
-    class NoDictAttrMeta(type):
-        def __getattribute__(self, attr):
-            if attr == "__dict__":
-                raise AttributeError
-
-            return super().__getattribute__(attr)
-
-    class NoDictAttr(metaclass=NoDictAttrMeta):
-        pass
-
-    with pytest.raises(AttributeError):
-        NoDictAttr.__dict__
-
-    assert pak.util.annotations(NoDictAttr) == {}
-
-    class NoGetMethodDictMeta(type):
-        def __getattribute__(self, attr):
-            if attr == "__dict__":
-                return 1
-
-            return super().__getattribute__(attr)
-
-    class NoGetMethodDict(metaclass=NoGetMethodDictMeta):
-        pass
-
-    assert NoGetMethodDict.__dict__ == 1
-    assert pak.util.annotations(NoGetMethodDict) == {}
-
 def test_bind_annotations():
     def test_basic(x, y, z):
         pass

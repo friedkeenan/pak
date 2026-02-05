@@ -3,6 +3,7 @@ r"""Base code for :class:`.Type`\s."""
 import inspect
 import copy
 import functools
+import sys
 
 from .. import io
 from .. import util
@@ -257,23 +258,59 @@ class Type:
         EmptyType
         """
 
-        annotations = util.annotations(func)
+        # TODO: Remove When Python 3.13 support is dropped.
+        if sys.version_info.minor >= 14:
+            # Since Python 3.14, not only does 'functools.wraps'
+            # not forward a manually-set '__annotations__' attribute,
+            # but as well we can be smarter about how we handle
+            # annotations, and so we do so here.
 
-        if len(annotations) == 0 or ("return" in annotations and len(annotations) == 1):
-            # If 'func' doesn't have any parameter annotations, don't bother wrapping it.
+            import annotationlib
 
-            return func
+            # NOTE: If one is calling 'Type.prepare_types', then
+            # presumably annotations for 'Type' can be evaluated,
+            # and will not end up as forward references.
+            original_signature = inspect.signature(func, annotation_format=annotationlib.Format.FORWARDREF)
 
-        original_signature = inspect.signature(func)
+            if all(
+                param.annotation is not Type
 
-        # Remove parameter annotations of 'Type'.
-        func.__annotations__ = {
-            name: annotation
+                for param in original_signature.parameters.values()
+            ):
+                # No parameter annotations of 'Type', don't bother wrapping.
 
-            for name, annotation in annotations.items()
+                return func
 
-            if annotation is not Type or name == "return"
-        }
+            # Remove parameter annotations of 'Type'.
+            original_annotate = func.__annotate__
+
+            def new_annotate_func(format):
+                result = annotationlib.call_annotate_function(original_annotate, format)
+
+                for name, param in original_signature.parameters.items():
+                    if param.annotation is Type:
+                        result.pop(name)
+
+                return result
+
+            func.__annotate__ = new_annotate_func
+
+        else:
+            original_signature = inspect.signature(func)
+
+            if all(
+                param.annotation is not Type
+
+                for param in original_signature.parameters.values()
+            ):
+                # No parameter annotations of 'Type', don't bother wrapping.
+
+                return func
+
+            # Remove parameter annotations of 'Type'.
+            for name, param in original_signature.parameters.items():
+                if param.annotation is Type:
+                    func.__annotations__.pop(name)
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
