@@ -64,10 +64,6 @@ class class_or_instance_method:
     The :attr:`__doc__` attribute is set to the :attr:`__doc__` attribute
     of the associated class method.
 
-    This, similarly to :class:`classmethod`, propagates other descriptors
-    as well, allowing combinations of :class:`class_or_instance_method` with
-    :class:`property` for example.
-
     Parameters
     ----------
     class_method : function
